@@ -1,98 +1,140 @@
-# Khung Làm Việc Cộng Tác AI-Native Cho Dự Án Khoa Học (AgenticAI - Scientific Version) 🚀🔬
+# Hệ thống Quản lý Học tập Nội bộ Doanh nghiệp (Company LMS) 🚀🏢
 
-**AgenticAI (Scientific Version)** là bộ khung boilerplate chuẩn hóa quy trình phát triển thuật toán, phân tích dữ liệu và nghiên cứu khoa học cộng tác giữa **Nghiên cứu viên/Lập trình viên (Researcher/Developer)** và **AI Agent** (như Antigravity, Claude, v.v.). Bộ khung này giải quyết bài toán quản lý tài liệu thực nghiệm, kiểm chứng tính đúng đắn toán học, bảo vệ dữ liệu nội bộ công ty và đảm bảo tính tái lập (reproducibility) của các thử nghiệm.
+Chào mừng bạn đến với **CompanyLMS** – một nền tảng quản lý học tập (LMS) nội bộ hiện đại, bảo mật và hiệu năng cao dành cho doanh nghiệp. Hệ thống được xây dựng theo mô hình **MVC** (Model-View-Controller) chuẩn hóa, tích hợp cơ cấu tổ chức sơ đồ phòng ban tương tác trực quan, phân quyền chặt chẽ và trợ lý AI thông minh.
 
 ---
 
-## 📁 Cấu Trúc Thư Mục và Vai Trò
+## 🌟 Tính năng nổi bật
+
+### 1. Sơ đồ tổ chức & Quản lý phòng ban (Org Chart & Departments)
+* **Sơ đồ cây dạng thư mục tương tác:** Thiết kế cấu trúc thư mục phân cấp đệ quy vô hạn cấp độ. Tự động thu gọn mặc định, hỗ trợ đóng/mở từng thư mục bằng một click hoặc mở rộng/thu gọn toàn bộ.
+* **Bộ lọc sơ đồ thông minh:** Ô tìm kiếm tự động định vị phòng ban khớp từ khóa, tự động mở rộng đường dẫn từ gốc và làm nổi bật kết quả.
+* **Bảng danh sách tối ưu hóa:** Tích hợp bộ lọc nhanh tức thì ở client-side, cuộn độc lập với thanh cuộn cách điệu màu Cyan và tiêu đề cố định (Sticky Headers) khi cuộn danh sách dài.
+* **Tự động chuẩn hóa danh xưng:** Định dạng chuẩn hóa chữ viết thường/hoa và các từ chuyên ngành (`UI/UX`, `DevOps`, `R&D`, `AI`, `HR`).
+
+### 2. Quản lý tài khoản & Phân trang tối ưu (Users & Pagination)
+* **Phân trang Server-side:** Hiển thị 20 tài khoản mỗi trang giúp giảm tải lượng dữ liệu truyền tải và tăng tốc độ phản hồi của cơ sở dữ liệu.
+* **Bộ lọc và tìm kiếm:** Tìm kiếm theo tên/email và lọc theo phòng ban trực thuộc trên toàn hệ thống (giữ nguyên tham số truy vấn khi chuyển trang).
+* **Sắp xếp thời gian thực:** Tài khoản mới tạo luôn được đẩy lên đầu tiên (`ORDER BY id DESC`) giúp dễ dàng theo dõi.
+* **Tách biệt luồng nghiệp vụ:** Dropdown gán lộ trình khóa học vẫn tải đầy đủ danh sách rút gọn của người dùng hoạt động thay vì bị giới hạn phân trang.
+
+### 3. Phân quyền ma trận & Nhật ký bảo mật (RBAC & Audit logs)
+* **Hệ thống phân quyền Role-Based Access Control (RBAC):** Quản lý quyền hạn chặt chẽ (Super Admin, HR Manager, Instructor, Employee) và bảo vệ an toàn các tác vụ nhạy cảm.
+* **Đồng bộ hóa Session bằng Redis:** Khi vai trò hoặc quyền hạn của một tài khoản thay đổi, hệ thống sẽ đồng bộ hóa quyền tức thì và cập nhật nóng session thông qua Redis Cache.
+* **Nhật ký hệ thống (Audit Logs):** Ghi chép tự động mọi hành động chỉnh sửa, nâng quyền, thêm/xóa tài khoản để phục vụ công tác thanh tra bảo mật.
+
+### 4. Lộ trình đào tạo & Đánh giá tự động (Courses & Quizzes)
+* **Khóa học & Bài giảng:** Hỗ trợ bài học đa phương tiện (Văn bản, Video trực tuyến).
+* **Ngân hàng câu hỏi & Đề thi:** Trắc nghiệm tự động chấm điểm tức thì, ghi nhận lịch sử và kết quả học tập chi tiết.
+* **Lộ trình học tập cá nhân hóa (Learning Paths):** Quản trị viên HR gán lộ trình học bắt buộc theo phòng ban.
+* **Chứng chỉ kỹ thuật số:** Tự động cấp chứng chỉ PDF/HTML có mã số xác thực khi học viên hoàn thành khóa học đạt chuẩn.
+
+### 5. Trợ lý học tập AI (Gemini AI Assistant)
+* Tích hợp chatbot hỗ trợ học tập trực tiếp bằng Google Gemini AI API, giúp giải đáp thắc mắc bài học và gợi ý câu hỏi ôn tập theo ngữ cảnh cho học viên.
+
+---
+
+## 🛠️ Công nghệ sử dụng
+
+* **Backend core:** Node.js, Express (MVC architecture)
+* **Template Engine:** EJS (Embedded JavaScript)
+* **Database:** PostgreSQL (Lưu trữ quan hệ dữ liệu người dùng, phòng ban, khóa học, audit logs)
+* **Caching & Session:** Redis (Quản lý phiên đăng nhập và đồng bộ hóa quyền hạn)
+* **Real-time Engine:** Socket.io (Đồng bộ đổi vai trò và thông báo trực tuyến)
+* **AI integration:** Google Generative AI (Gemini API)
+* **Security:** bcryptjs (Mã hóa mật khẩu), Session-based Auth với cơ chế bảo vệ CSRF/XSS cơ bản.
+
+---
+
+## 📁 Cấu trúc thư mục chính
 
 ```text
-📦 hocp1 (Thư mục dự án khoa học của bạn)
- ┣ 📂 .antigravity            # "Bộ não" vận hành của AI Agent
- ┃ ┣ 📂 rules                 # Các quy định lập trình bắt buộc
- ┃ ┃ ┗ 📜 comment.md          # Quy tắc chú thích công thức toán học và logic bằng Tiếng Việt
- ┃ ┗ 📂 skills                # Các kỹ năng nâng cao của Agent
- ┃   ┣ 📂 lifecycles          # Chu trình nghiên cứu cốt lõi (Vòng đời phát triển)
- ┃   ┃ ┣ 📜 01-generate.md    # Bước 1: Xây dựng mô hình & Viết mã nguồn thuật toán
- ┃   ┃ ┣ 📜 02-review.md      # Bước 2: Tự rà soát thuật toán & Bảo mật tránh rò rỉ dữ liệu
- ┃   ┃ ┣ 📜 03-test.md        # Bước 3: Huấn luyện, đánh giá mô hình trên dữ liệu thử nghiệm
- ┃   ┃ ┗ 📜 04-push.md        # Bước 4: Lưu trữ Git nội bộ công ty & Ghi nhận kết quả
- ┃   ┗ 📜 workflow.md         # Tệp điều phối chính quy trình (Orchestrator)
- ┣ 📂 docs                    # Kho tri thức nghiên cứu khoa học của dự án (Source of Truth)
- ┃ ┣ 📂 cores                 # Các tài liệu đặc tả nền tảng hệ thống (Scientific Cores)
- ┃ ┃ ┣ 📜 01-data-pipeline.md # Quy trình tiền xử lý, cấu trúc dữ liệu và nguồn dữ liệu
- ┃ ┃ ┣ 📜 02-scientific-models.md # Đặc tả mô hình toán học, phương pháp mô phỏng, thuật toán
- ┃ ┃ ┣ 📜 03-visualizations.md # Thiết kế biểu đồ trực quan hóa dữ liệu và Dashboard kết quả
- ┃ ┃ ┣ 📜 04-confidentiality-security.md # Quy chế bảo mật dữ liệu, khử định danh & phân quyền nội bộ
- ┃ ┃ ┣ 📜 05-validation-testing.md # Chiến lược kiểm chứng độ chính xác toán học & unit test logic
- ┃ ┃ ┗ 📜 06-reproducibility-deployment.md # Quản lý môi trường (Docker/Conda) & chạy thực nghiệm
- ┃ ┣ 📂 features              # Đặc tả các thực nghiệm cụ thể (Experiment & Task Specs)
- ┃ ┃ ┗ 📜 00-experiment-spec-template.md # Mẫu lập đặc tả thực nghiệm mới (định nghĩa mục tiêu, siêu tham số, logs)
- ┃ ┗ 📂 walkthroughs          # Báo cáo kết quả nghiên cứu chi tiết qua từng giai đoạn
- ┣ 📜 ANTIGRAVITY.md          # Bản đồ định hướng chính cho AI Agent
- ┗ 📜 PROJECT_REQUIREMENTS.md # Đặc tả yêu cầu nghiên cứu khoa học & Thuật toán tổng quát
+├── .antigravity/         # Cấu trúc kỹ năng và quy tắc tương tác AI Agent
+├── config/               # Cấu hình kết nối cơ sở dữ liệu (PostgreSQL, Redis, Socket)
+├── controllers/          # Bộ điều hướng logic (Auth, Admin, Courses, AI)
+├── docs/                 # Tài liệu đặc tả hệ thống và hướng dẫn phát triển
+├── middleware/           # Lớp lọc trung gian (Bảo mật quyền hạn, xác thực session)
+├── models/               # Định nghĩa các truy vấn SQL và schema dữ liệu
+├── public/               # Tài nguyên tĩnh (CSS, JS Client-side, hình ảnh SVG)
+├── research/             # Mã nguồn chạy thử nghiệm huấn luyện và các suite test
+├── routes/               # Định nghĩa định tuyến đường dẫn API và giao diện Web
+├── services/             # Dịch vụ gửi Email, Data Pipeline, kết nối Gemini AI
+├── views/                # Thư mục chứa giao diện EJS (được phân chia theo quyền hạn)
+├── app.js                # Điểm khởi chạy ứng dụng chính
+├── Dockerfile            # Hướng dẫn đóng gói container ứng dụng
+├── docker-compose.yml    # Cấu hình container hóa ứng dụng, PostgreSQL và Redis
+├── init-db.sql           # Script khởi tạo cấu trúc bảng cơ sở dữ liệu ban đầu
+└── package.json          # Quản lý thư viện phụ thuộc và các câu lệnh run script
 ```
 
 ---
 
-## 🔄 Quy Trình Phát Triển Khoa Học (Scientific Lifecycle)
+## 🚀 Hướng dẫn cài đặt & Chạy ứng dụng
 
-Quy trình phát triển trong **AgenticAI** đảm bảo tính chính xác của thuật toán và độ an toàn của dữ liệu nội bộ.
+### 1. Chuẩn bị môi trường
+Yêu cầu máy tính cài đặt sẵn:
+* **Node.js** (Phiên bản v18 trở lên)
+* **PostgreSQL** (Phiên bản v14 trở lên)
+* **Redis Server**
 
-```mermaid
-sequenceDiagram
-    autonumber
-    actor Dev as Nghiên cứu viên (User)
-    participant Agent as AI Agent (Antigravity)
-    participant Code as Mã nguồn thuật toán
-    participant Test as Bộ kiểm chứng/Thử nghiệm
-    participant Doc as Tài liệu đặc tả (Docs Cores)
+### 2. Thiết lập cấu hình hệ thống (`.env`)
+Tạo một file `.env` tại thư mục gốc của dự án với nội dung cấu hình tương tự như sau:
+```env
+PORT=3000
+SESSION_SECRET=your_super_secret_session_key
 
-    Dev->>Agent: Giao nhiệm vụ thực nghiệm (Experiment Task)
-    Note over Agent: Đọc hiểu mục tiêu khoa học trong Spec mới
-    Agent->>Code: [Bước 1: Generate] Viết mã thuật toán & Thiết kế mô hình
-    Note over Agent: Tránh tuyệt đối việc hardcode tập dữ liệu thực tế
-    Agent->>Agent: [Bước 2: Review] Rà soát độ ổn định số học & Bảo mật dữ liệu
-    Agent->>Test: [Bước 3: Test] Chạy thử nghiệm đánh giá độ chính xác (Accuracy, Loss)
-    alt Thử nghiệm chưa đạt mục tiêu (Metrics Fail)
-        Test-->>Agent: Kết quả thấp hơn mong đợi
-        Agent->>Code: Tối ưu lại mã nguồn/Điều chỉnh kiến trúc mô hình
-    else Thử nghiệm thành công (Metrics PASS)
-        Test-->>Agent: Xác nhận đạt chỉ số mục tiêu
-        Agent->>Doc: Đồng bộ tham số & Sơ đồ thuật toán (Doc-Code Sync)
-        Note over Doc: Ghi nhận kết quả thực tế vào tệp đặc tả của thực nghiệm
-    end
-    Agent->>Dev: [Bước 4: Push] Đẩy code lên Git Server nội bộ & Báo cáo kết quả
+# Cấu hình PostgreSQL
+DB_USER=postgres
+DB_HOST=127.0.0.1
+DB_NAME=course_lms
+DB_PASSWORD=your_postgres_password
+DB_PORT=5432
+
+# Cấu hình Redis
+REDIS_HOST=127.0.0.1
+REDIS_PORT=6379
+
+# Cấu hình Google Gemini AI (Tùy chọn cho tính năng Chatbot AI)
+GEMINI_API_KEY=your_gemini_api_key
 ```
 
-### 🔄 Chi Tiết Chu Trình 4 Bước
+### 3. Khởi tạo Cơ sở dữ liệu
+Chạy các truy vấn trong file `init-db.sql` trên cơ sở dữ liệu PostgreSQL của bạn để tạo toàn bộ cấu trúc bảng, các khóa ngoại và vai trò mặc định ban đầu.
 
-1.  **Bước 1: Generate (Xây dựng mô hình & Viết mã)**
-    *   **Nhiệm vụ**: Phân tích đặc tả từ tệp thực nghiệm cụ thể trong `docs/features/` và viết mã nguồn thuật toán (Python, R, v.v.).
-    *   **Nguyên tắc**: Mã nguồn đặt tên biến/hàm bằng tiếng Anh chuẩn khoa học. Chú thích logic, công thức toán bằng tiếng Việt. Không viết mã giả, không hardcode đường dẫn dữ liệu cá nhân hay dữ liệu nhạy cảm.
+Sau đó, bạn có thể nạp các khóa học mẫu giàu nội dung bằng câu lệnh:
+```bash
+node seed-rich-courses.js
+```
 
-2.  **Bước 2: Review (Kiểm chứng khoa học & Rà soát)**
-    *   **Nhiệm vụ**: Rà soát độ ổn định số học (ví dụ: chia cho 0, tràn số - overflow, biến mất gradient), kiểm tra tính tối ưu của các vòng lặp xử lý ma trận.
-    *   **Bảo mật dữ liệu**: Đảm bảo không chứa bất kỳ thông tin mật, API keys hoặc dữ liệu nội bộ chưa khử định danh trực tiếp trong code.
+### 4. Cài đặt thư viện & Khởi chạy cục bộ
+```bash
+# Cài đặt các package phụ thuộc
+npm install
 
-3.  **Bước 3: Test (Thử nghiệm & Đánh giá)**
-    *   **Nhiệm vụ**: Thực thi các ca kiểm thử đơn vị đối với logic toán học và chạy thực nghiệm huấn luyện/đánh giá mô hình trên dữ liệu thử nghiệm (mock/test dataset).
-    *   **Đồng bộ đặc tả**: Sau khi chạy thử thành công và đạt được các chỉ số mong đợi, Agent tự động điền các siêu tham số tối ưu và các chỉ số hiệu năng thực tế (Loss, Accuracy, F1...) vào tệp đặc tả của thực nghiệm đó.
+# Chạy ở chế độ phát triển (Tự động tải lại file khi thay đổi code)
+npm run dev
 
-4.  **Bước 4: Push (Lưu trữ nội bộ & Ghi nhận)**
-    *   **Nhiệm vụ**: Tạo báo cáo kết quả thực nghiệm `walkthrough.md` và thực hiện commit.
-    *   **Nguyên tắc**: **Tuyệt đối cấm đẩy mã nguồn hay dữ liệu lên các kho lưu trữ công cộng (GitHub public, GitLab public).** Chỉ được phép push lên Git Server nội bộ của công ty. Commit bằng Tiếng Anh phân tách rõ tiêu đề và mô tả.
+# Chạy ở chế độ Production
+npm start
+```
+Ứng dụng sẽ chạy tại địa chỉ: `http://localhost:3000`
+
+### 5. Chạy bằng Docker Compose (Khuyên dùng)
+Nếu máy bạn đã cài đặt Docker, bạn có thể khởi chạy toàn bộ dịch vụ (App, PostgreSQL, Redis) chỉ với một câu lệnh:
+```bash
+docker-compose up --build -d
+```
 
 ---
 
-## 🛠️ Hướng Dẫn Dành Cho Nghiên cứu viên / Lập trình viên
+## 🧪 Hệ thống Kiểm thử (Tests)
 
-### Bước 1: Thiết Lập Yêu Cầu Nghiên Cứu
-Xác định các mục tiêu khoa học tổng quát, nguồn dữ liệu và phạm vi nghiên cứu của công ty tại tệp [PROJECT_REQUIREMENTS.md](file:///d:/antigravity/hocp1/PROJECT_REQUIREMENTS.md).
-
-### Bước 2: Thiết Lập Cấu Hình Thực Nghiệm Mới
-1. Sao chép tệp mẫu [00-experiment-spec-template.md](file:///d:/antigravity/hocp1/docs/features/00-experiment-spec-template.md) thành một file đặc tả thực nghiệm mới trong thư mục `docs/features/` (ví dụ: `01-resnet-image-classification.md`).
-2. Định nghĩa rõ: Giả thuyết khoa học cần chứng minh, tập dữ liệu đầu vào sử dụng và các chỉ số hiệu năng tối thiểu cần đạt được.
-
-### Bước 3: Ra Lệnh Cho AI Agent Triển Khai
-Ra lệnh cho AI Agent (như Antigravity): *"Hãy sử dụng cấu hình thực nghiệm tại `docs/features/01-resnet-image-classification.md` để triển khai mô hình"*. AI Agent sẽ tự động làm việc tuân thủ nghiêm ngặt theo chỉ dẫn trong [ANTIGRAVITY.md](file:///d:/antigravity/hocp1/ANTIGRAVITY.md).
+Hệ thống được trang bị bộ kiểm thử tích hợp tự động cho cả logic toán học và phân quyền RBAC.
+Để thực thi toàn bộ bài test:
+```bash
+npm test
+```
+*Kết quả bao gồm:*
+* **Toán học & Pipeline:** Đảm bảo làm sạch dữ liệu PII và xử lý nội suy chuỗi thời gian chính xác.
+* **Kiểm thử Ma trận Vai trò:** Đảm bảo vai trò HR Manager cập nhật quyền hạn đồng bộ tức thì lên Redis cache và ghi nhật ký Audit Log đầy đủ.
+* **Kiểm thử Học viên:** Kiểm tra hiển thị Lộ trình, Lịch học, Đổi mật khẩu bảo mật và cấu hình học tập cá nhân.
