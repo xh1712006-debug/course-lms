@@ -1,0 +1,180 @@
+<%- include('../partials/header') %>
+
+<div style="margin-bottom: 2rem;">
+  <h1 style="font-size: 2.2rem; font-weight: 800; background: var(--primary-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+    Nhật Ký Hệ Thống (Audit Logs)
+  </h1>
+  <p style="color: var(--text-muted); margin-top: 0.25rem;">Giám sát vết hoạt động, kiểm tra các thay đổi cấu hình bảo mật và phân quyền vai trò.</p>
+</div>
+
+<!-- Bộ lọc và Tìm kiếm Nhật ký -->
+<div class="glass-card" style="padding: 1.25rem 1.5rem; margin-bottom: 1.5rem; border-color: rgba(255, 255, 255, 0.05);">
+  <form action="/audit" method="GET" style="display: flex; gap: 1rem; align-items: flex-end; flex-wrap: wrap;">
+    <div style="flex: 1.5; min-width: 200px;">
+      <label class="form-label" style="font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); font-weight: 600; display: block; margin-bottom: 0.4rem;">
+        Tìm kiếm nhân sự / Email
+      </label>
+      <div style="position: relative;">
+        <input 
+          type="text" 
+          name="search" 
+          placeholder="Nhập họ tên hoặc email..." 
+          value="<%= search %>"
+          style="width: 100%; padding: 0.65rem 1rem 0.65rem 2.5rem; background: rgba(255,255,255,0.03); border: 1px solid var(--border-light); border-radius: 8px; color: var(--text-main); font-size: 0.9rem; outline: none; transition: border-color 0.2s;"
+        >
+        <i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 0.9rem; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 0.85rem;"></i>
+      </div>
+    </div>
+    
+    <div style="flex: 1; min-width: 180px;">
+      <label class="form-label" style="font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); font-weight: 600; display: block; margin-bottom: 0.4rem;">
+        Loại hành động
+      </label>
+      <select name="action" style="width: 100%; padding: 0.65rem 1rem; background: rgba(15, 23, 42, 0.5); border: 1px solid var(--border-light); border-radius: 8px; color: var(--text-main); font-size: 0.9rem; outline: none;">
+        <% actionTypes.forEach(type => { %>
+          <option value="<%= type.value %>" <%= action === type.value ? 'selected' : '' %>><%= type.label %></option>
+        <% }) %>
+      </select>
+    </div>
+
+    <div style="flex: 0.8; min-width: 140px;">
+      <label class="form-label" style="font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); font-weight: 600; display: block; margin-bottom: 0.4rem;">
+        Từ ngày
+      </label>
+      <input 
+        type="date" 
+        name="startDate" 
+        value="<%= startDate %>"
+        style="width: 100%; padding: 0.55rem 1rem; background: rgba(15, 23, 42, 0.5); border: 1px solid var(--border-light); border-radius: 8px; color: var(--text-main); font-size: 0.9rem; outline: none;"
+      >
+    </div>
+
+    <div style="flex: 0.8; min-width: 140px;">
+      <label class="form-label" style="font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); font-weight: 600; display: block; margin-bottom: 0.4rem;">
+        Đến ngày
+      </label>
+      <input 
+        type="date" 
+        name="endDate" 
+        value="<%= endDate %>"
+        style="width: 100%; padding: 0.55rem 1rem; background: rgba(15, 23, 42, 0.5); border: 1px solid var(--border-light); border-radius: 8px; color: var(--text-main); font-size: 0.9rem; outline: none;"
+      >
+    </div>
+    
+    <div style="display: flex; gap: 0.5rem;">
+      <button type="submit" class="btn btn-primary" style="padding: 0.65rem 1.25rem; font-size: 0.85rem; border-radius: 8px; height: 38px;">
+        <i class="fa-solid fa-filter"></i> Lọc kết quả
+      </button>
+      <% if (search || (action && action !== 'all') || startDate || endDate) { %>
+        <a href="/audit" class="btn btn-secondary" style="padding: 0.65rem 1.25rem; font-size: 0.85rem; border-radius: 8px; height: 38px; display: inline-flex; align-items: center; justify-content: center;">
+          <i class="fa-solid fa-arrow-rotate-left"></i> Nhập lại
+        </a>
+      <% } %>
+    </div>
+  </form>
+</div>
+
+<!-- Bảng nhật ký Audit Logs mờ kính -->
+<div class="glass-card" style="padding: 1.5rem; overflow-x: auto;">
+  <h3 style="font-size: 1.2rem; margin-bottom: 1.25rem;"><i class="fa-solid fa-clock-rotate-left" style="color: #a5b4fc;"></i> Nhật ký hoạt động hệ thống (Tổng số: <%= totalLogs %>)</h3>
+  
+  <table class="custom-table" style="margin-top: 0; font-size: 0.85rem;">
+    <thead>
+      <tr>
+        <th>Mã log</th>
+        <th>Thời gian</th>
+        <th>Nhân sự</th>
+        <th>Email</th>
+        <th>Hành động</th>
+        <th>Chi tiết JSON</th>
+        <th>Địa chỉ IP</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% if (logs.length === 0) { %>
+        <tr>
+          <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 2rem;">Không tìm thấy nhật ký hoạt động nào khớp với bộ lọc.</td>
+        </tr>
+      <% } else { %>
+        <% logs.forEach(log => { %>
+          <tr>
+            <td><strong>#<%= log.id %></strong></td>
+            <td><%= new Date(log.created_at).toLocaleString() %></td>
+            <td><strong><%= log.username || 'Hệ thống' %></strong></td>
+            <td style="color: var(--text-muted);"><%= log.email || 'N/A' %></td>
+            <td>
+              <span style="background: rgba(99, 102, 241, 0.15); color: var(--text-accent); padding: 0.2rem 0.5rem; border-radius: 4px; font-family: monospace; font-size: 0.75rem; border: 1px solid rgba(99, 102, 241, 0.3);">
+                <%= log.action %>
+              </span>
+            </td>
+            <td style="max-width: 250px; color: var(--text-muted); font-size: 0.8rem; font-family: monospace; overflow-x: auto; white-space: nowrap;">
+              <%= JSON.stringify(log.details) %>
+            </td>
+            <td><span style="color: var(--text-muted);"><%= log.ip_address || '127.0.0.1' %></span></td>
+          </tr>
+        <% }) %>
+      <% } %>
+    </tbody>
+  </table>
+
+  <!-- Bộ điều khiển phân trang Glassmorphism -->
+  <div style="margin-top: 1.5rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+    <div style="font-size: 0.85rem; color: var(--text-muted);">
+      Hiển thị <%= logs.length > 0 ? (currentPage - 1) * 20 + 1 : 0 %> - <%= Math.min(currentPage * 20, totalLogs) %> trong tổng số <strong><%= totalLogs %></strong> hoạt động
+    </div>
+    
+    <% if (totalPages > 1) { %>
+      <div style="display: flex; gap: 0.35rem; align-items: center;">
+        <!-- Nút trang trước -->
+        <% if (currentPage > 1) { %>
+          <a href="/audit?page=<%= currentPage - 1 %>&search=<%= encodeURIComponent(search) %>&action=<%= encodeURIComponent(action) %>&startDate=<%= encodeURIComponent(startDate) %>&endDate=<%= encodeURIComponent(endDate) %>" class="btn btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.8rem; border-radius: 8px;">
+            <i class="fa-solid fa-chevron-left"></i> Trước
+          </a>
+        <% } else { %>
+          <button class="btn btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.8rem; border-radius: 8px; opacity: 0.4; cursor: not-allowed;" disabled>
+            <i class="fa-solid fa-chevron-left"></i> Trước
+          </button>
+        <% } %>
+        
+        <!-- Các số trang -->
+        <% 
+          let startPage = Math.max(1, currentPage - 2);
+          let endPage = Math.min(totalPages, currentPage + 2);
+          
+          if (startPage > 1) { %>
+            <a href="/audit?page=1&search=<%= encodeURIComponent(search) %>&action=<%= encodeURIComponent(action) %>&startDate=<%= encodeURIComponent(startDate) %>&endDate=<%= encodeURIComponent(endDate) %>" class="btn <%= currentPage === 1 ? 'btn-primary' : 'btn-secondary' %>" style="padding: 0.4rem 0.8rem; font-size: 0.8rem; border-radius: 8px;">1</a>
+            <% if (startPage > 2) { %>
+              <span style="color: var(--text-muted); padding: 0 0.25rem;">...</span>
+            <% } %>
+          <% } %>
+          
+          <% for (let i = startPage; i <= endPage; i++) { %>
+            <a href="/audit?page=<%= i %>&search=<%= encodeURIComponent(search) %>&action=<%= encodeURIComponent(action) %>&startDate=<%= encodeURIComponent(startDate) %>&endDate=<%= encodeURIComponent(endDate) %>" class="btn <%= currentPage === i ? 'btn-primary' : 'btn-secondary' %>" style="padding: 0.4rem 0.8rem; font-size: 0.8rem; border-radius: 8px; <%= currentPage === i ? 'pointer-events: none;' : '' %>">
+              <%= i %>
+            </a>
+          <% } %>
+          
+          <% if (endPage < totalPages) { %>
+            <% if (endPage < totalPages - 1) { %>
+              <span style="color: var(--text-muted); padding: 0 0.25rem;">...</span>
+            <% } %>
+            <a href="/audit?page=<%= totalPages %>&search=<%= encodeURIComponent(search) %>&action=<%= encodeURIComponent(action) %>&startDate=<%= encodeURIComponent(startDate) %>&endDate=<%= encodeURIComponent(endDate) %>" class="btn <%= currentPage === totalPages ? 'btn-primary' : 'btn-secondary' %>" style="padding: 0.4rem 0.8rem; font-size: 0.8rem; border-radius: 8px;"><%= totalPages %></a>
+          <% } 
+        %>
+        
+        <!-- Nút trang sau -->
+        <% if (currentPage < totalPages) { %>
+          <a href="/audit?page=<%= currentPage + 1 %>&search=<%= encodeURIComponent(search) %>&action=<%= encodeURIComponent(action) %>&startDate=<%= encodeURIComponent(startDate) %>&endDate=<%= encodeURIComponent(endDate) %>" class="btn btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.8rem; border-radius: 8px;">
+            Sau <i class="fa-solid fa-chevron-right"></i>
+          </a>
+        <% } else { %>
+          <button class="btn btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.8rem; border-radius: 8px; opacity: 0.4; cursor: not-allowed;" disabled>
+            Sau <i class="fa-solid fa-chevron-right"></i>
+          </button>
+        <% } %>
+      </div>
+    <% } %>
+  </div>
+</div>
+
+<%- include('../partials/footer') %>

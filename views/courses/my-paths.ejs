@@ -1,0 +1,117 @@
+<%- include('../partials/header') %>
+
+<div style="margin-bottom: 2rem;">
+  <h1 style="font-size: 2.2rem; font-weight: 800; background: var(--primary-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+    Lộ Trình Học Tập Của Tôi
+  </h1>
+  <p style="color: var(--text-muted); margin-top: 0.25rem;">
+    Theo dõi các lộ trình đào tạo bắt buộc hoặc tự nguyện của bạn trong tổ chức.
+  </p>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 2rem;">
+  <% if (paths.length === 0) { %>
+    <div class="glass-card" style="text-align: center; padding: 4rem 2rem;">
+      <i class="fa-solid fa-route fa-4x" style="color: var(--text-muted); margin-bottom: 1.5rem;"></i>
+      <h3>Chưa cấu hình lộ trình học tập nào</h3>
+      <p style="color: var(--text-muted); margin-top: 0.5rem;">Vui lòng liên hệ Admin hoặc HR Manager để được chỉ định lộ trình học tập phù hợp.</p>
+    </div>
+  <% } else { %>
+    <% paths.forEach(path => { %>
+      <div class="glass-card" style="padding: 2rem; border-left: 5px solid #06b6d4;">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.5rem;">
+          <div>
+            <h2 style="font-size: 1.4rem; font-weight: 700; color: #f1f5f9; display: flex; align-items: center; gap: 0.6rem;">
+              <i class="fa-solid fa-route" style="color: #06b6d4;"></i> <%= path.name %>
+            </h2>
+            <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 0.4rem; max-width: 700px;"><%= path.description %></p>
+          </div>
+          
+          <div style="text-align: right;">
+            <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.25rem;">
+              Đã tham gia: <strong style="color: #06b6d4;"><%= path.enrolledCount %>/<%= path.totalCourses %></strong> khóa học
+            </div>
+            <div style="font-size: 1.8rem; font-weight: 800; color: #10b981;"><%= path.progress %>%</div>
+          </div>
+        </div>
+
+        <!-- Thanh tiến độ tổng quan của lộ trình -->
+        <div style="margin-bottom: 2rem;">
+          <div style="display: flex; justify-content: space-between; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.4rem;">
+            <span>Tiến độ hoàn thành lộ trình</span>
+            <span><%= path.progress %>%</span>
+          </div>
+          <div class="progress-container" style="height: 10px;">
+            <div class="progress-bar" style="width: <%= path.progress %>%; background: linear-gradient(90deg, #06b6d4 0%, #10b981 100%);"></div>
+          </div>
+        </div>
+
+        <h3 style="font-size: 1.05rem; font-weight: 600; color: #a5b4fc; margin-bottom: 1rem; border-bottom: 1px solid var(--border-light); padding-bottom: 0.5rem; display: flex; align-items: center; gap: 0.4rem;">
+          <i class="fa-solid fa-graduation-cap"></i> Các khóa học thuộc lộ trình này
+        </h3>
+
+        <!-- Danh sách khóa học trong lộ trình -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1.25rem;">
+          <% path.courses.forEach(c => { %>
+            <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--border-light); border-radius: 12px; padding: 1.25rem; display: flex; flex-direction: column; justify-content: space-between; gap: 0.75rem;">
+              <div>
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 0.5rem;">
+                  <h4 style="font-size: 0.95rem; font-weight: 700; margin: 0; color: #f8fafc;"><%= c.title %></h4>
+                  <% if (c.isEnrolled) { %>
+                    <span style="font-size: 0.7rem; background: rgba(16, 185, 129, 0.1); color: #10b981; padding: 0.15rem 0.5rem; border-radius: 8px; border: 1px solid rgba(16, 185, 129, 0.2); white-space: nowrap;">
+                      Đang học
+                    </span>
+                  <% } else if (c.isPending) { %>
+                    <span style="font-size: 0.7rem; background: rgba(245, 158, 11, 0.1); color: #f59e0b; padding: 0.15rem 0.5rem; border-radius: 8px; border: 1px solid rgba(245, 158, 11, 0.2); white-space: nowrap;">
+                      Chờ duyệt
+                    </span>
+                  <% } else { %>
+                    <span style="font-size: 0.7rem; background: rgba(255,255,255,0.05); color: var(--text-muted); padding: 0.15rem 0.5rem; border-radius: 8px; border: 1px solid var(--border-light); white-space: nowrap;">
+                      Chưa đăng ký
+                    </span>
+                  <% } %>
+                </div>
+                <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.4rem; margin-bottom: 0.75rem; line-height: 1.4;">
+                  <%= c.description %>
+                </p>
+              </div>
+
+              <div>
+                <% if (c.isEnrolled) { %>
+                  <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--text-muted); margin-bottom: 0.3rem;">
+                    <span>Tiến độ:</span>
+                    <span style="font-weight: 600; color: #10b981;"><%= c.progress %>%</span>
+                  </div>
+                  <div class="progress-container" style="height: 6px; margin-bottom: 0.75rem;">
+                    <div class="progress-bar" style="width: <%= c.progress %>%;"></div>
+                  </div>
+                  
+                  <div style="display: flex; gap: 0.5rem;">
+                    <% if (c.progress === 100) { %>
+                      <a href="/courses/<%= c.id %>/certificate" class="btn btn-secondary" style="flex: 1; padding: 0.4rem; font-size: 0.8rem; border-color: #f59e0b; color: #f59e0b; text-align: center;">
+                        <i class="fa-solid fa-award"></i> Chứng chỉ
+                      </a>
+                    <% } %>
+                    <a href="/courses/<%= c.id %>/lessons/1" class="btn btn-primary" style="flex: 2; padding: 0.4rem; font-size: 0.8rem; text-align: center;">
+                      <i class="fa-solid fa-circle-play"></i> <%= c.progress === 100 ? 'Ôn tập' : 'Vào học' %>
+                    </a>
+                  </div>
+                <% } else if (c.isPending) { %>
+                  <button class="btn btn-secondary" disabled style="width: 100%; padding: 0.4rem; font-size: 0.8rem;">
+                    <i class="fa-solid fa-clock"></i> Đang chờ duyệt từ Admin/HR
+                  </button>
+                <% } else { %>
+                  <a href="/courses/<%= c.id %>" class="btn btn-primary" style="width: 100%; padding: 0.4rem; font-size: 0.8rem; text-align: center; background: var(--secondary-gradient);">
+                    Đăng ký khóa học
+                  </a>
+                <% } %>
+              </div>
+            </div>
+          <% }) %>
+        </div>
+      </div>
+    <% }) %>
+  <% } %>
+</div>
+
+<%- include('../partials/footer') %>

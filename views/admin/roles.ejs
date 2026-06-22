@@ -1,0 +1,403 @@
+<%- include('../partials/header') %>
+
+<div style="margin-bottom: 2rem;">
+  <h1 style="font-size: 2.2rem; font-weight: 800; background: var(--primary-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+    Ma Trận Vai Trò & Quyền Hạn (RBAC Matrix)
+  </h1>
+  <p style="color: var(--text-muted); margin-top: 0.25rem;">
+    Quản lý đặc quyền tập trung. Bật/tắt các đặc quyền của từng vai trò tức thời và an toàn thông qua bảng ma trận.
+  </p>
+</div>
+
+<!-- Thông báo thành công / lỗi -->
+<% if (success) { %>
+  <div class="alert-banner alert-success" style="margin-bottom: 1.5rem; padding: 1rem 1.5rem; border-radius: 12px; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); color: #10b981; display: flex; align-items: center; gap: 0.75rem;">
+    <i class="fa-solid fa-circle-check"></i>
+    <span><%= success %></span>
+  </div>
+<% } %>
+<% if (error) { %>
+  <div class="alert-banner alert-error" style="margin-bottom: 1.5rem; padding: 1rem 1.5rem; border-radius: 12px; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); color: #f87171; display: flex; align-items: center; gap: 0.75rem;">
+    <i class="fa-solid fa-circle-exclamation"></i>
+    <span><%= error %></span>
+  </div>
+<% } %>
+
+<!-- Panel tạo vai trò mới -->
+<div class="glass-card" style="padding: 1.5rem; margin-bottom: 1.5rem; border: 1px solid rgba(99, 102, 241, 0.2);">
+  <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem;">
+    <h2 style="font-size: 1.1rem; font-weight: 700; color: var(--text-accent); display: flex; align-items: center; gap: 0.6rem;">
+      <i class="fa-solid fa-circle-plus"></i> Tạo vai trò mới
+    </h2>
+    <button id="toggle-create-form" onclick="toggleCreateForm()" class="btn btn-secondary" style="font-size: 0.85rem; padding: 0.5rem 1rem;">
+      <i class="fa-solid fa-chevron-down" id="form-chevron"></i> Mở rộng
+    </button>
+  </div>
+  
+  <div id="create-role-form" style="display: none;">
+    <form action="/permissions/create" method="POST">
+      <div style="display: grid; grid-template-columns: 1fr 2fr auto; gap: 1rem; align-items: end;">
+        <div>
+          <label style="display: block; font-size: 0.8rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.4rem; text-transform: uppercase; letter-spacing: 0.05em;">
+            Tên vai trò <span style="color: #f87171;">*</span>
+          </label>
+          <input 
+            type="text" 
+            name="name" 
+            id="role-name-input"
+            placeholder="Ví dụ: Content Manager" 
+            required
+            style="width: 100%; padding: 0.7rem 1rem; background: rgba(255,255,255,0.05); border: 1px solid var(--border-light); border-radius: 10px; color: var(--text-main); font-size: 0.9rem; outline: none; transition: border-color 0.2s;"
+            onfocus="this.style.borderColor='rgba(99,102,241,0.5)'"
+            onblur="this.style.borderColor='var(--border-light)'"
+          >
+        </div>
+        <div>
+          <label style="display: block; font-size: 0.8rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.4rem; text-transform: uppercase; letter-spacing: 0.05em;">
+            Mô tả vai trò
+          </label>
+          <input 
+            type="text" 
+            name="description" 
+            placeholder="Mô tả ngắn chức năng và phạm vi của vai trò này" 
+            style="width: 100%; padding: 0.7rem 1rem; background: rgba(255,255,255,0.05); border: 1px solid var(--border-light); border-radius: 10px; color: var(--text-main); font-size: 0.9rem; outline: none; transition: border-color 0.2s;"
+            onfocus="this.style.borderColor='rgba(99,102,241,0.5)'"
+            onblur="this.style.borderColor='var(--border-light)'"
+          >
+        </div>
+        <button type="submit" class="btn btn-primary" style="padding: 0.7rem 1.5rem; white-space: nowrap;">
+          <i class="fa-solid fa-plus"></i> Tạo vai trò
+        </button>
+      </div>
+      <p style="font-size: 0.78rem; color: var(--text-muted); margin-top: 0.75rem;">
+        <i class="fa-solid fa-circle-info" style="margin-right: 0.3rem; color: #818cf8;"></i>
+        Sau khi tạo, bạn có thể gán quyền hạn cho vai trò này ngay trong bảng ma trận bên dưới.
+      </p>
+    </form>
+  </div>
+</div>
+
+
+<!-- Định nghĩa mảng dữ liệu quyền hạn trực tiếp trong EJS để lặp cấu trúc dễ dàng -->
+<% 
+const permissionGroups = [
+  {
+    title: 'Quản lý Khóa học (Course Management)',
+    icon: 'fa-folder-open',
+    color: '#6366f1',
+    sidebarNote: 'Quản lý khóa học',
+    sidebarUrl: '/course-management',
+    perms: [
+      { key: 'COURSE_VIEW',    desc: 'Xem danh sách khóa học (mở sidebar Quản lý khóa học)' },
+      { key: 'COURSE_CREATE',  desc: 'Tạo khóa học mới' },
+      { key: 'COURSE_UPDATE',  desc: 'Sửa tiêu đề, mô tả, ảnh bìa khóa học' },
+      { key: 'COURSE_DELETE',  desc: 'Xóa khóa học khỏi hệ thống' },
+      { key: 'COURSE_PUBLISH', desc: 'Xuất bản khóa học (chuyển Draft → Public)' }
+    ]
+  },
+  {
+    title: 'Bài giảng & Học liệu (Lesson & Content)',
+    icon: 'fa-file-video',
+    color: '#a78bfa',
+    sidebarNote: 'Bài học & Nội dung',
+    sidebarUrl: '/lessons',
+    perms: [
+      { key: 'LESSON_CREATE',   desc: 'Thêm bài học mới vào khóa học (mở sidebar Bài học & Nội dung)' },
+      { key: 'CONTENT_UPLOAD',  desc: 'Tải lên video bài giảng & Slide/PDF học liệu' },
+      { key: 'LESSON_MANAGE',   desc: 'Sửa/Xóa bài giảng đã có (mở sidebar Bài học & Nội dung)' }
+    ]
+  },
+  {
+    title: 'Đề thi & Ngân hàng (Quiz & Question Bank)',
+    icon: 'fa-circle-question',
+    color: '#34d399',
+    sidebarNote: 'Đề thi & Câu hỏi',
+    sidebarUrl: '/quiz-management',
+    perms: [
+      { key: 'QUIZ_BANK_VIEW',    desc: 'Xem ngân hàng câu hỏi (mở sidebar Đề thi & Câu hỏi)' },
+      { key: 'QUIZ_BANK_MANAGE',  desc: 'Soạn câu hỏi đề thi' },
+      { key: 'QUIZ_SETTING',      desc: 'Cấu hình đề kiểm tra khóa học' },
+      { key: 'QUIZ_GRADE',        desc: 'Chấm điểm bài tự luận (mở sidebar Chấm điểm)' }
+    ]
+  },
+  {
+    title: 'Lộ trình & Đăng ký (Learning Path & Enrollment)',
+    icon: 'fa-route',
+    color: '#22d3ee',
+    sidebarNote: 'Lộ trình đào tạo / Duyệt đăng ký',
+    sidebarUrl: '/paths',
+    perms: [
+      { key: 'PATH_MANAGE',        desc: 'Quản lý lộ trình học tập (mở sidebar Lộ trình đào tạo)' },
+      { key: 'ENROLL_ASSIGN',      desc: 'Giao khóa học bắt buộc và lộ trình đào tạo cho nhân viên/phòng ban' },
+      { key: 'ENROLL_APPROVE',     desc: 'Phê duyệt yêu cầu đăng ký học (mở sidebar Duyệt đăng ký)' }
+    ]
+  },
+  {
+    title: 'Quản lý Nhân sự (User Management)',
+    icon: 'fa-users-gear',
+    color: '#f472b6',
+    sidebarNote: 'Quản lý nhân sự',
+    sidebarUrl: '/users',
+    perms: [
+      { key: 'USER_VIEW',    desc: 'Xem danh sách nhân viên (mở sidebar Quản lý nhân sự)' },
+      { key: 'USER_MANAGE', desc: 'Thêm/Sửa vai trò & phòng ban nhân viên' },
+      { key: 'USER_DISABLE',desc: 'Vô hiệu hóa/Khóa tài khoản nhân viên' }
+    ]
+  },
+  {
+    title: 'Phòng ban & Cơ cấu (Department Structure)',
+    icon: 'fa-building',
+    color: '#06b6d4',
+    sidebarNote: 'Phòng ban',
+    sidebarUrl: '/departments',
+    perms: [
+      { key: 'DEPARTMENT_MANAGE', desc: 'Thêm/Sửa/Xóa sơ đồ phòng ban (mở sidebar Phòng ban)' }
+    ]
+  },
+  {
+    title: 'Báo cáo & Thống kê (Analytics & Reports)',
+    icon: 'fa-chart-pie',
+    color: '#fb923c',
+    sidebarNote: 'Báo cáo',
+    sidebarUrl: '/reports',
+    perms: [
+      { key: 'REPORT_VIEW',   desc: 'Xem biểu đồ thống kê tiến độ học (mở sidebar Báo cáo)' },
+      { key: 'REPORT_EXPORT', desc: 'Xuất báo cáo điểm dạng Excel/CSV' }
+    ]
+  },
+  {
+    title: 'Bảo mật & Đặc quyền Hệ thống (System Privileges)',
+    icon: 'fa-shield-halved',
+    color: '#f87171',
+    perms: [
+      { key: 'ROLE_MANAGE', desc: 'Cấu hình phân quyền hệ thống (Trang này)' },
+      { key: 'USER_IMPERSONATE', desc: 'Đóng vai người dùng khác để gỡ lỗi' },
+      { key: 'AUDIT_LOG_VIEW', desc: 'Xem nhật ký hoạt động hệ thống' }
+    ]
+  },
+  {
+    title: 'Học tập & Tiện ích (Learning & Utilities)',
+    icon: 'fa-graduation-cap',
+    color: '#fb7185',
+    perms: [
+      { key: 'PATH_VIEW', desc: 'Xem Lộ trình học tập của tôi' },
+      { key: 'COURSE_ENROLL_REQUEST', desc: 'Xem Kho khóa học & Đăng ký học' },
+      { key: 'HISTORY_VIEW', desc: 'Xem Lịch sử & Thành tựu thi' },
+      { key: 'PROGRESS_TRACK', desc: 'Xem Lịch học & Deadline hoàn thành' }
+    ]
+  }
+];
+%>
+
+<!-- Thùng chứa bảng ma trận -->
+<div class="glass-card" style="padding: 1.5rem; overflow-x: auto; margin-bottom: 2rem;">
+  <table class="matrix-table" style="width: 100%; border-collapse: collapse; text-align: left;">
+    <thead>
+      <tr style="border-bottom: 2px solid var(--border-light);">
+        <th style="padding: 1rem; width: 40%; font-size: 1.05rem; font-weight: 700; color: #a5b4fc;">QUYỀN HẠN & CHỨC NĂNG</th>
+        <% roles.forEach(role => { %>
+          <th style="padding: 1rem; text-align: center; font-size: 1rem; font-weight: 700; min-width: 130px;">
+            <div style="color: var(--text-accent); margin-bottom: 0.3rem;"><%= role.name %></div>
+            <div style="font-size: 0.72rem; color: var(--text-muted); font-weight: normal; margin-bottom: 0.5rem;">ID: <%= role.id %></div>
+            <% if (role.id !== 1) { %>
+              <form action="/permissions/<%= role.id %>/delete" method="POST" id="delete-form-<%= role.id %>" style="display:inline;">
+                <button type="button" 
+                  onclick="confirmDeleteRole('<%= role.id %>', '<%= role.name %>')"
+                  title="Xóa vai trò <%= role.name %>"
+                  style="background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3); color: #f87171; padding: 0.2rem 0.5rem; border-radius: 6px; font-size: 0.7rem; cursor: pointer; transition: all 0.2s;"
+                  onmouseover="this.style.background='rgba(239,68,68,0.2)'"
+                  onmouseout="this.style.background='rgba(239,68,68,0.1)'">
+                  <i class="fa-solid fa-trash-can"></i>
+                </button>
+              </form>
+            <% } else { %>
+              <span style="font-size: 0.68rem; color: rgba(251,191,36,0.7); background: rgba(251,191,36,0.08); padding: 0.2rem 0.5rem; border-radius: 6px; border: 1px solid rgba(251,191,36,0.2);">
+                <i class="fa-solid fa-lock"></i> Bảo vệ
+              </span>
+            <% } %>
+          </th>
+        <% }) %>
+      </tr>
+    </thead>
+    <tbody>
+      <% permissionGroups.forEach((group, gIdx) => { %>
+        <!-- Header của nhóm quyền -->
+        <tr style="background: rgba(255, 255, 255, 0.02); border-bottom: 1px solid var(--border-light);">
+          <td colspan="<%= roles.length + 1 %>" style="padding: 0.85rem 0.75rem;">
+            <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
+              <span style="font-size: 0.88rem; font-weight: 700; letter-spacing: 0.4px; text-transform: uppercase; color: <%= group.color %>;">
+                <i class="fa-solid <%= group.icon %>" style="margin-right: 0.4rem;"></i><%= group.title %>
+              </span>
+              <% if (group.sidebarNote) { %>
+                <a href="<%= group.sidebarUrl %>" target="_blank"
+                  style="display: inline-flex; align-items: center; gap: 0.35rem; font-size: 0.7rem; font-weight: 600; padding: 0.2rem 0.6rem; border-radius: 999px; border: 1px solid <%= group.color %>40; background: <%= group.color %>15; color: <%= group.color %>; text-decoration: none; transition: all 0.2s;"
+                  onmouseover="this.style.background='<%= group.color %>25'" onmouseout="this.style.background='<%= group.color %>15'"
+                  title="Xem trang sidebar này">
+                  <i class="fa-solid fa-sidebar" style="font-size: 0.62rem;"></i>
+                  Sidebar: <%= group.sidebarNote %>
+                  <i class="fa-solid fa-arrow-up-right-from-square" style="font-size: 0.55rem; opacity: 0.7;"></i>
+                </a>
+              <% } %>
+            </div>
+          </td>
+        </tr>
+
+        <% group.perms.forEach(perm => { %>
+          <!-- Dòng cho từng quyền cụ thể -->
+          <tr class="matrix-row" style="border-bottom: 1px solid rgba(255, 255, 255, 0.03); transition: background 0.2s ease;">
+            <td style="padding: 0.85rem 1rem;">
+              <div style="font-weight: 600; font-size: 0.9rem; color: #f1f5f9;"><%= perm.desc %></div>
+              <div style="font-family: monospace; font-size: 0.72rem; color: var(--text-muted); margin-top: 0.15rem;"><%= perm.key %></div>
+            </td>
+            <% roles.forEach(role => { %>
+              <td style="padding: 0.85rem 1rem; text-align: center;">
+                <input type="checkbox" 
+                       class="matrix-checkbox" 
+                       data-role-id="<%= role.id %>" 
+                       data-role-name="<%= role.name %>"
+                       data-permission="<%= perm.key %>"
+                       <%= role.permissions.includes(perm.key) ? 'checked' : '' %>
+                       <%= role.id === 1 ? 'disabled' : '' %>
+                       style="transform: scale(1.25); accent-color: #6366f1; cursor: <%= role.id === 1 ? 'not-allowed' : 'pointer' %>; vertical-align: middle;">
+              </td>
+            <% }) %>
+          </tr>
+        <% }) %>
+      <% }) %>
+    </tbody>
+  </table>
+</div>
+
+<!-- Vùng chứa các thông báo Toast nổi -->
+<div id="toast-container" style="position: fixed; bottom: 2rem; right: 2rem; display: flex; flex-direction: column; gap: 0.75rem; z-index: 9999;"></div>
+
+<!-- Thông báo Toast và các tương tác được định nghĩa phong cách trong style.css -->
+
+<!-- Script AJAX tương tác bật tắt quyền động -->
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const checkboxes = document.querySelectorAll('.matrix-checkbox');
+    const toastContainer = document.getElementById('toast-container');
+
+    // Hàm tạo và hiển thị thông báo Toast nổi
+    function showToast(message, type = 'success') {
+      const toast = document.createElement('div');
+      toast.className = 'toast-box';
+      
+      let icon = '<i class="fa-solid fa-circle-check" style="color: #10b981;"></i>';
+      if (type === 'error') {
+        icon = '<i class="fa-solid fa-circle-exclamation" style="color: #f87171;"></i>';
+        toast.style.borderLeft = '4px solid #f87171';
+      } else {
+        toast.style.borderLeft = '4px solid #10b981';
+      }
+
+      toast.innerHTML = `${icon} <span style="flex-grow: 1; font-weight: 500;">${message}</span>`;
+      toastContainer.appendChild(toast);
+
+      // Animation trượt lên
+      setTimeout(() => {
+        toast.classList.add('show');
+      }, 50);
+
+      // Tự biến mất sau 3 giây
+      setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => {
+          toast.remove();
+        }, 350);
+      }, 3000);
+    }
+
+    // Gán sự kiện thay đổi cho các checkbox ma trận
+    checkboxes.forEach(cb => {
+      cb.addEventListener('change', async (e) => {
+        const checkbox = e.target;
+        const roleId = parseInt(checkbox.getAttribute('data-role-id'));
+        const roleName = checkbox.getAttribute('data-role-name');
+        const permission = checkbox.getAttribute('data-permission');
+        const isChecked = checkbox.checked;
+
+        // Khóa giao diện click tạm thời trong khi gọi API
+        checkbox.disabled = true;
+
+        try {
+          const response = await fetch('/permissions/toggle', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              roleId,
+              permission,
+              isChecked
+            })
+          });
+
+          const resData = await response.json();
+
+          if (resData.success) {
+            showToast(`Đã ${isChecked ? 'cấp' : 'thu hồi'} quyền "${permission}" cho vai trò ${roleName}.`, 'success');
+          } else {
+            showToast(`Lỗi: ${resData.error || 'Cập nhật thất bại'}`, 'error');
+            // Reset trạng thái nếu lưu lỗi
+            checkbox.checked = !isChecked;
+          }
+        } catch (err) {
+          showToast(`Lỗi hệ thống khi kết nối: ${err.message}`, 'error');
+          checkbox.checked = !isChecked;
+        } finally {
+          // Bật lại checkbox khi hoàn tất
+          checkbox.disabled = false;
+        }
+      });
+    });
+  });
+</script>
+
+<script>
+  // Toggle form tạo vai trò mới
+  function toggleCreateForm() {
+    const form = document.getElementById('create-role-form');
+    const chevron = document.getElementById('form-chevron');
+    const btn = document.getElementById('toggle-create-form');
+    const isHidden = form.style.display === 'none';
+    
+    if (isHidden) {
+      form.style.display = 'block';
+      form.style.opacity = '0';
+      setTimeout(() => { form.style.opacity = '1'; form.style.transition = 'opacity 0.3s'; }, 10);
+      chevron.className = 'fa-solid fa-chevron-up';
+      btn.innerHTML = '<i class="fa-solid fa-chevron-up" id="form-chevron"></i> Thu gọn';
+      document.getElementById('role-name-input').focus();
+    } else {
+      form.style.display = 'none';
+      chevron.className = 'fa-solid fa-chevron-down';
+      btn.innerHTML = '<i class="fa-solid fa-chevron-down" id="form-chevron"></i> Mở rộng';
+    }
+  }
+
+  // Xác nhận trước khi xóa vai trò
+  function confirmDeleteRole(roleId, roleName) {
+    const confirmMsg = `⚠️ Bạn có chắc muốn xóa vai trò "${roleName}"?\n\nHành động này sẽ:\n• Xóa toàn bộ quyền hạn của vai trò\n• Không thể hoàn tác\n\nLưu ý: Chỉ có thể xóa nếu không có nhân viên nào đang dùng vai trò này.`;
+    if (confirm(confirmMsg)) {
+      document.getElementById('delete-form-' + roleId).submit();
+    }
+  }
+
+  // Tự động mở form nếu có lỗi (để user thấy gì đã nhập)
+  <% if (error) { %>
+    // Không auto-open vì lỗi được hiển thị ở trên rồi
+  <% } %>
+
+  // Tự động ẩn alert sau 5 giây
+  setTimeout(() => {
+    document.querySelectorAll('.alert-banner').forEach(el => {
+      el.style.transition = 'opacity 0.5s';
+      el.style.opacity = '0';
+      setTimeout(() => el.remove(), 500);
+    });
+  }, 5000);
+</script>
+
+<%- include('../partials/footer') %>

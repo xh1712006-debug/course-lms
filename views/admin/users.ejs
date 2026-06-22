@@ -1,0 +1,485 @@
+<%- include('../partials/header') %>
+
+<div style="margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem;">
+  <div>
+    <h1 style="font-size: 2.2rem; font-weight: 800; background: var(--primary-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+      Quản Lý Nhân Sự
+    </h1>
+    <p style="color: var(--text-muted); margin-top: 0.25rem;">Quản lý tài khoản nhân viên, phân vai trò & trạng thái. Quản lý phòng ban tại <a href="/departments" style="color: #06b6d4; text-decoration: none;"><i class="fa-solid fa-building" style="font-size: 0.8rem;"></i> Trang Phòng ban</a>.</p>
+  </div>
+  <% if (user.permissions.includes('USER_MANAGE')) { %>
+    <button onclick="toggleCreateUserForm()" class="btn btn-primary" style="white-space: nowrap;">
+      <i class="fa-solid fa-user-plus"></i> Tạo tài khoản mới
+    </button>
+  <% } %>
+</div>
+
+<!-- Thông báo -->
+<% if (createSuccess) { %>
+  <div id="create-success-alert" style="margin-bottom: 1.5rem; padding: 1rem 1.5rem; border-radius: 12px; background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.3); color: #10b981; display: flex; align-items: center; gap: 0.75rem;">
+    <i class="fa-solid fa-circle-check fa-lg"></i>
+    <span><%- createSuccess %></span>
+  </div>
+<% } %>
+<% if (createError) { %>
+  <div id="create-error-alert" style="margin-bottom: 1.5rem; padding: 1rem 1.5rem; border-radius: 12px; background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3); color: #f87171; display: flex; align-items: center; gap: 0.75rem;">
+    <i class="fa-solid fa-circle-exclamation fa-lg"></i>
+    <span><%= createError %></span>
+  </div>
+<% } %>
+
+<!-- Form tạo tài khoản mới (ẩn mặc định) -->
+<% if (user.permissions.includes('USER_MANAGE')) { %>
+<div id="create-user-panel" style="display: none; margin-bottom: 2rem;">
+  <div class="glass-card" style="border: 1px solid rgba(99,102,241,0.25);">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+      <h2 style="font-size: 1.15rem; font-weight: 700; color: var(--text-accent); display: flex; align-items: center; gap: 0.6rem;">
+        <i class="fa-solid fa-user-plus"></i> Tạo tài khoản nhân viên mới
+      </h2>
+      <button onclick="toggleCreateUserForm()" style="background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 1.1rem;">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+
+    <form action="/users/create" method="POST">
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; margin-bottom: 1.25rem;">
+        <div>
+          <label class="form-label" style="font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.05em;">
+            Họ và tên <span style="color: #f87171;">*</span>
+          </label>
+          <input 
+            type="text" 
+            name="username" 
+            placeholder="Nguyễn Văn A" 
+            required
+            style="width: 100%; padding: 0.75rem 1rem; background: rgba(255,255,255,0.05); border: 1px solid var(--border-light); border-radius: 10px; color: var(--text-main); font-size: 0.9rem; outline: none;"
+          >
+        </div>
+        <div>
+          <label class="form-label" style="font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.05em;">
+            Email công ty <span style="color: #f87171;">*</span>
+          </label>
+          <input 
+            type="email" 
+            name="email" 
+            placeholder="nva@company.com" 
+            required
+            style="width: 100%; padding: 0.75rem 1rem; background: rgba(255,255,255,0.05); border: 1px solid var(--border-light); border-radius: 10px; color: var(--text-main); font-size: 0.9rem; outline: none;"
+          >
+        </div>
+        <div>
+          <label class="form-label" style="font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.05em;">
+            Mật khẩu ban đầu <span style="color: #f87171;">*</span>
+          </label>
+          <div style="position: relative;">
+            <input 
+              type="text" 
+              name="password"
+              id="new-user-password"
+              placeholder="Mật khẩu tạm thời" 
+              required
+              minlength="6"
+              style="width: 100%; padding: 0.75rem 2.75rem 0.75rem 1rem; background: rgba(255,255,255,0.05); border: 1px solid var(--border-light); border-radius: 10px; color: var(--text-main); font-size: 0.9rem; outline: none;"
+            >
+            <button type="button" onclick="generatePassword()" title="Tạo mật khẩu ngẫu nhiên"
+              style="position: absolute; right: 0.75rem; top: 50%; transform: translateY(-50%); background: none; border: none; color: #818cf8; cursor: pointer; font-size: 0.85rem;">
+              <i class="fa-solid fa-dice"></i>
+            </button>
+          </div>
+          <p style="font-size: 0.72rem; color: var(--text-muted); margin-top: 0.35rem;">
+            <i class="fa-solid fa-wand-magic-sparkles" style="color: #818cf8;"></i> Nhấn 🎲 để tạo mật khẩu ngẫu nhiên
+          </p>
+        </div>
+        <div>
+          <label class="form-label" style="font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.05em;">
+            Vai trò
+          </label>
+          <select name="roleId" style="width: 100%; padding: 0.75rem 1rem; background: rgba(255,255,255,0.05); border: 1px solid var(--border-light); border-radius: 10px; color: var(--text-main); font-size: 0.9rem; outline: none;">
+            <% roles.forEach(role => { %>
+              <option value="<%= role.id %>" <%= role.id === 4 ? 'selected' : '' %>><%= role.name %></option>
+            <% }) %>
+          </select>
+        </div>
+        <div>
+          <label class="form-label" style="font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.05em;">
+            Phòng ban
+          </label>
+          <select name="departmentId" style="width: 100%; padding: 0.75rem 1rem; background: rgba(255,255,255,0.05); border: 1px solid var(--border-light); border-radius: 10px; color: var(--text-main); font-size: 0.9rem; outline: none;">
+            <option value="">-- Chưa phân phòng ban --</option>
+            <% departments.forEach(dept => { %>
+              <option value="<%= dept.id %>"><%= dept.name %></option>
+            <% }) %>
+          </select>
+        </div>
+      </div>
+
+      <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+        <button type="button" onclick="toggleCreateUserForm()" class="btn btn-secondary">
+          Hủy
+        </button>
+        <button type="submit" class="btn btn-primary">
+          <i class="fa-solid fa-user-plus"></i> Tạo tài khoản
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+<% } %>
+
+
+<!-- Nội dung chính: chỉ quản lý nhân sự -->
+<div style="display: flex; flex-direction: column; gap: 2rem;">
+
+    <% if (user.permissions.includes('ENROLL_ASSIGN')) { %>
+      <div class="glass-card" style="padding: 1.5rem;">
+        <h3 style="font-size: 1.2rem; margin-bottom: 1rem; color: #a5b4fc;"><i class="fa-solid fa-bullhorn" style="color: #f59e0b;"></i> Giao khóa học bắt buộc</h3>
+        <form action="/course-management/assign" method="POST" style="display: flex; gap: 1rem; align-items: flex-end; flex-wrap: wrap;">
+          <div style="flex: 1; min-width: 150px;">
+            <label class="form-label" style="font-size: 0.8rem;">Hình thức giao</label>
+            <select name="targetType" id="assign-target-type" onchange="toggleAssignSelect(this.value)">
+              <option value="user">Theo cá nhân nhân viên</option>
+              <option value="department">Theo cả phòng ban</option>
+            </select>
+          </div>
+          
+          <div style="flex: 1; min-width: 180px;" id="assign-user-select-div">
+            <label class="form-label" style="font-size: 0.8rem;">Chọn nhân viên</label>
+            <select name="targetId" id="assign-user-id">
+              <% allUsers.forEach(u => { %>
+                <option value="<%= u.id %>"><%= u.username %> (<%= u.email %>)</option>
+              <% }) %>
+            </select>
+          </div>
+
+          <div style="flex: 1; min-width: 180px; display: none;" id="assign-dept-select-div">
+            <label class="form-label" style="font-size: 0.8rem;">Chọn phòng ban</label>
+            <select name="targetId" id="assign-dept-id" disabled>
+              <% departments.forEach(d => { %>
+                <option value="<%= d.id %>"><%= d.name %></option>
+              <% }) %>
+            </select>
+          </div>
+
+          <div style="flex: 1; min-width: 180px;">
+            <label class="form-label" style="font-size: 0.8rem;">Khóa học cần chỉ định</label>
+            <select name="courseId" required>
+              <% courses.forEach(c => { %>
+                <option value="<%= c.id %>"><%= c.title %></option>
+              <% }) %>
+            </select>
+          </div>
+
+          <button type="submit" class="btn btn-primary" style="padding: 0.7rem 1.25rem;">
+            Chỉ định học <i class="fa-solid fa-location-arrow" style="font-size: 0.8rem;"></i>
+          </button>
+        </form>
+      </div>
+    <% } %>
+
+    <!-- Bảng danh sách nhân sự -->
+    <div class="glass-card" style="padding: 1.5rem; overflow-x: auto;">
+      <h3 style="font-size: 1.2rem; margin-bottom: 1.25rem;"><i class="fa-solid fa-users" style="color: #6366f1;"></i> Danh sách tài khoản nhân viên</h3>
+      
+      <!-- Thanh tìm kiếm & lọc phòng ban -->
+      <form action="/users" method="GET" style="display: flex; gap: 1rem; align-items: flex-end; flex-wrap: wrap; margin-bottom: 1.5rem; padding-bottom: 1.25rem; border-bottom: 1px solid var(--border-light);">
+        <div style="flex: 1.5; min-width: 220px; position: relative;">
+          <label class="form-label" style="font-size: 0.8rem; margin-bottom: 0.4rem; display: block; color: var(--text-muted);">Tìm kiếm tài khoản</label>
+          <div style="position: relative;">
+            <i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 0.9rem; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 0.85rem;"></i>
+            <input type="text" name="search" placeholder="Nhập tên hiển thị hoặc email..." value="<%= search %>" style="width: 100%; padding: 0.65rem 1rem 0.65rem 2.2rem; background: rgba(255,255,255,0.03); border: 1px solid var(--border-light); border-radius: 8px; color: var(--text-main); font-size: 0.85rem; outline: none; box-sizing: border-box;">
+          </div>
+        </div>
+        
+        <div style="flex: 1; min-width: 180px;">
+          <label class="form-label" style="font-size: 0.8rem; margin-bottom: 0.4rem; display: block; color: var(--text-muted);">Phòng ban</label>
+          <select name="departmentId" style="width: 100%; padding: 0.65rem 1rem; background: rgba(255,255,255,0.03); border: 1px solid var(--border-light); border-radius: 8px; color: var(--text-main); font-size: 0.85rem; outline: none; box-sizing: border-box; height: 38px;">
+            <option value="all" <%= selectedDeptId === 'all' || selectedDeptId === '' ? 'selected' : '' %>>Tất cả phòng ban</option>
+            <option value="none" <%= selectedDeptId === 'none' ? 'selected' : '' %>>Chưa gán phòng ban</option>
+            <% departments.forEach(d => { %>
+              <option value="<%= d.id %>" <%= String(d.id) === String(selectedDeptId) ? 'selected' : '' %>><%= d.name %></option>
+            <% }) %>
+          </select>
+        </div>
+
+        <div style="display: flex; gap: 0.5rem;">
+          <button type="submit" class="btn btn-primary" style="padding: 0.65rem 1.25rem; font-size: 0.85rem; height: 38px; display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem;">
+            <i class="fa-solid fa-filter"></i> Lọc
+          </button>
+          <% if (search || selectedDeptId) { %>
+            <a href="/users" class="btn btn-secondary" style="padding: 0.65rem 1.25rem; font-size: 0.85rem; display: inline-flex; align-items: center; justify-content: center; gap: 0.25rem; text-decoration: none; box-sizing: border-box; height: 38px;">
+              <i class="fa-solid fa-rotate-left"></i> Đặt lại
+            </a>
+          <% } %>
+        </div>
+      </form>
+      
+      <table class="custom-table" style="margin-top: 0; font-size: 0.85rem;">
+        <thead>
+          <tr>
+            <th>Tên hiển thị</th>
+            <th>Email</th>
+            <th>Phòng ban</th>
+            <th>Vai trò</th>
+            <th>Trạng thái</th>
+            <th style="text-align: center;">Hành động</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% users.forEach(u => { %>
+            <tr>
+              <td><strong><%= u.username %></strong></td>
+              <td><%= u.email %></td>
+              <td><span style="color: var(--text-accent);"><%= u.department_name || '(Chưa gán)' %></span></td>
+              <td>
+                <span style="background: rgba(255,255,255,0.05); padding: 0.15rem 0.5rem; border-radius: 4px; font-weight: 500;">
+                  <%= u.role_name %>
+                </span>
+              </td>
+              <td>
+                <span class="btn" style="padding: 0.15rem 0.4rem; font-size: 0.7rem; cursor: default; <%= u.status === 'active' ? 'background: rgba(16,185,129,0.1); color: #10b981; border: 1px solid #10b981;' : 'background: rgba(239,68,68,0.1); color: #f87171; border: 1px solid #ef4444;' %>">
+                  <%= u.status === 'active' ? 'Hoạt động' : 'Khóa' %>
+                </span>
+              </td>
+              <td>
+                <div style="display: flex; justify-content: center; gap: 0.25rem;">
+                  
+                  <% if (user.permissions.includes('USER_IMPERSONATE') && u.id !== user.id) { %>
+                    <!-- Nút Đóng vai nhân viên (Impersonate) -->
+                    <form action="/auth/impersonate" method="POST" style="display: inline;">
+                      <input type="hidden" name="userId" value="<%= u.id %>">
+                      <button type="submit" class="btn btn-secondary" style="padding: 0.3rem 0.5rem; font-size: 0.75rem; color: #f59e0b;" title="Đóng vai nhân sự này">
+                        <i class="fa-solid fa-user-ninja"></i>
+                      </button>
+                    </form>
+                  <% } %>
+
+                  <% if (user.permissions.includes('USER_MANAGE')) { %>
+                    <!-- Nút mở modal chỉnh sửa profile -->
+                    <button class="btn btn-secondary" onclick="openEditUserModal('<%= u.id %>', '<%= u.username %>', '<%= u.role_id %>', '<%= u.department_id || '' %>', '<%= u.status %>')" style="padding: 0.3rem 0.5rem; font-size: 0.75rem;" title="Cập nhật quyền & phòng ban">
+                      <i class="fa-solid fa-user-pen"></i>
+                    </button>
+                  <% } %>
+
+                </div>
+              </td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+
+      <!-- Phân trang -->
+      <% if (totalPages > 1) { %>
+        <% 
+          // Tạo query string helper để bảo toàn tham số tìm kiếm & bộ lọc
+          const getPageUrl = (p) => {
+            let url = `/users?page=${p}`;
+            if (search) url += `&search=${encodeURIComponent(search)}`;
+            if (selectedDeptId) url += `&departmentId=${encodeURIComponent(selectedDeptId)}`;
+            return url;
+          };
+        %>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1.5rem; flex-wrap: wrap; gap: 1rem; border-top: 1px solid rgba(255, 255, 255, 0.05); padding-top: 1rem;">
+          <div style="color: var(--text-muted); font-size: 0.82rem;">
+            Hiển thị trang <strong style="color: var(--text-main);"><%= currentPage %></strong> / <strong><%= totalPages %></strong> (Tổng số <strong style="color: var(--text-main);"><%= totalCount %></strong> nhân sự)
+          </div>
+          
+          <div style="display: flex; gap: 0.35rem; align-items: center;">
+            <!-- Trang trước -->
+            <% if (currentPage > 1) { %>
+              <a href="<%= getPageUrl(currentPage - 1) %>" class="btn btn-secondary" style="padding: 0.4rem 0.75rem; font-size: 0.8rem; display: inline-flex; align-items: center; gap: 0.3rem; text-decoration: none;">
+                <i class="fa-solid fa-chevron-left"></i> Trang trước
+              </a>
+            <% } else { %>
+              <button class="btn btn-secondary" disabled style="padding: 0.4rem 0.75rem; font-size: 0.8rem; display: inline-flex; align-items: center; gap: 0.3rem; opacity: 0.4; cursor: not-allowed;">
+                <i class="fa-solid fa-chevron-left"></i> Trang trước
+              </button>
+            <% } %>
+
+            <!-- Các số trang -->
+            <% 
+              let startPage = Math.max(1, currentPage - 2);
+              let endPage = Math.min(totalPages, currentPage + 2);
+              
+              if (startPage > 1) { %>
+                <a href="<%= getPageUrl(1) %>" class="btn <%= currentPage === 1 ? 'btn-primary' : 'btn-secondary' %>" style="padding: 0.4rem 0.75rem; font-size: 0.8rem; text-decoration: none;">1</a>
+                <% if (startPage > 2) { %>
+                  <span style="color: var(--text-muted); font-size: 0.8rem; padding: 0 0.2rem;">...</span>
+                <% } %>
+              <% } %>
+
+              <% for (let i = startPage; i <= endPage; i++) { %>
+                <a href="<%= getPageUrl(i) %>" class="btn <%= currentPage === i ? 'btn-primary' : 'btn-secondary' %>" style="padding: 0.4rem 0.75rem; font-size: 0.8rem; text-decoration: none; <%= currentPage === i ? 'background: var(--primary-gradient); border-color: transparent;' : '' %>">
+                  <%= i %>
+                </a>
+              <% } %>
+
+              <% if (endPage < totalPages) { %>
+                <% if (endPage < totalPages - 1) { %>
+                  <span style="color: var(--text-muted); font-size: 0.8rem; padding: 0 0.2rem;">...</span>
+                <% } %>
+                <a href="<%= getPageUrl(totalPages) %>" class="btn <%= currentPage === totalPages ? 'btn-primary' : 'btn-secondary' %>" style="padding: 0.4rem 0.75rem; font-size: 0.8rem; text-decoration: none;">
+                  <%= totalPages %>
+                </a>
+              <% } %>
+
+            <!-- Trang sau -->
+            <% if (currentPage < totalPages) { %>
+              <a href="<%= getPageUrl(currentPage + 1) %>" class="btn btn-secondary" style="padding: 0.4rem 0.75rem; font-size: 0.8rem; display: inline-flex; align-items: center; gap: 0.3rem; text-decoration: none;">
+                Trang sau <i class="fa-solid fa-chevron-right"></i>
+              </a>
+            <% } else { %>
+              <button class="btn btn-secondary" disabled style="padding: 0.4rem 0.75rem; font-size: 0.8rem; display: inline-flex; align-items: center; gap: 0.3rem; opacity: 0.4; cursor: not-allowed;">
+                Trang sau <i class="fa-solid fa-chevron-right"></i>
+              </button>
+            <% } %>
+          </div>
+        </div>
+      <% } %>
+    </div>
+  </div>
+</div>
+<!-- Modal Chỉnh Sửa Người Dùng Mờ Kính -->
+<div id="edit-user-modal" class="glass-card" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 450px; max-width: 90%; z-index: 1000; box-shadow: 0 10px 50px rgba(0,0,0,0.8); border-color: var(--border-glow);">
+  <h3 style="font-size: 1.3rem; margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center;">
+    <span><i class="fa-solid fa-user-gear" style="color: #8b5cf6;"></i> Cập Nhật Thông Tin Nhân Sự</span>
+    <button class="btn btn-secondary" onclick="closeEditUserModal()" style="padding: 0.25rem 0.5rem; font-size: 0.85rem;"><i class="fa-solid fa-xmark"></i></button>
+  </h3>
+  <h4 style="font-weight: 500; margin-bottom: 1rem; color: var(--text-accent);" id="edit-user-display-name">Nhân viên: Nguyễn Văn A</h4>
+  <form id="edit-user-form" action="" method="POST">
+    
+    <div class="form-group">
+      <label class="form-label">Vai trò quyền hạn</label>
+      <select id="edit-user-role" name="roleId" required>
+        <% roles.forEach(r => { %>
+          <option value="<%= r.id %>"><%= r.name %> (<%= r.description %>)</option>
+        <% }) %>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Phòng ban trực thuộc</label>
+      <select id="edit-user-dept" name="departmentId">
+        <option value="">-- Chưa gán phòng ban --</option>
+        <% departments.forEach(d => { %>
+          <option value="<%= d.id %>"><%= d.name %></option>
+        <% }) %>
+      </select>
+    </div>
+
+    <% if (user.permissions.includes('USER_DISABLE')) { %>
+      <div class="form-group">
+        <label class="form-label">Trạng thái tài khoản</label>
+        <select id="edit-user-status" name="status" required>
+          <option value="active">Hoạt động (Active)</option>
+          <option value="disabled">Vô hiệu hóa / Nghỉ việc (Disabled)</option>
+        </select>
+      </div>
+    <% } else { %>
+      <div class="form-group">
+        <label class="form-label">Trạng thái tài khoản</label>
+        <div style="background: rgba(255,255,255,0.02); padding: 0.75rem 1rem; border-radius: 10px; border: 1px solid var(--border-light); font-size: 0.9rem;">
+          <span id="edit-user-status-text" style="font-weight: 600;">Hoạt động</span>
+        </div>
+        <input type="hidden" id="edit-user-status" name="status" value="">
+      </div>
+    <% } %>
+
+    <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+      <button type="submit" class="btn btn-primary">Lưu thay đổi</button>
+      <button type="button" class="btn btn-secondary" onclick="closeEditUserModal()">Hủy</button>
+    </div>
+  </form>
+</div>
+<!-- Lớp phủ modal -->
+<div id="modal-overlay-user" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); z-index: 999;" onclick="closeEditUserModal()"></div>
+
+<script>
+  function toggleAssignSelect(value) {
+    const userSelectDiv = document.getElementById('assign-user-select-div');
+    const deptSelectDiv = document.getElementById('assign-dept-select-div');
+    const userId = document.getElementById('assign-user-id');
+    const deptId = document.getElementById('assign-dept-id');
+
+    if (value === 'user') {
+      userSelectDiv.style.display = 'block';
+      deptSelectDiv.style.display = 'none';
+      userId.disabled = false;
+      deptId.disabled = true;
+    } else {
+      userSelectDiv.style.display = 'none';
+      deptSelectDiv.style.display = 'block';
+      userId.disabled = true;
+      deptId.disabled = false;
+    }
+  }
+
+  function openEditUserModal(id, username, roleId, departmentId, status) {
+    document.getElementById('edit-user-form').action = `/users/${id}/update`;
+    document.getElementById('edit-user-display-name').textContent = `Nhân viên: ${username}`;
+    document.getElementById('edit-user-role').value = roleId;
+    document.getElementById('edit-user-dept').value = departmentId;
+    document.getElementById('edit-user-status').value = status;
+
+    const statusTextEl = document.getElementById('edit-user-status-text');
+    if (statusTextEl) {
+      statusTextEl.textContent = status === 'active' ? 'Hoạt động (Active)' : 'Vô hiệu hóa / Nghỉ việc (Disabled)';
+      statusTextEl.style.color = status === 'active' ? '#10b981' : '#f87171';
+    }
+    
+    document.getElementById('edit-user-modal').style.display = 'block';
+    document.getElementById('modal-overlay-user').style.display = 'block';
+  }
+
+  function closeEditUserModal() {
+    document.getElementById('edit-user-modal').style.display = 'none';
+    document.getElementById('modal-overlay-user').style.display = 'none';
+  }
+
+  // Toggle panel tạo tài khoản mới
+  function toggleCreateUserForm() {
+    const panel = document.getElementById('create-user-panel');
+    if (!panel) return;
+    const isHidden = panel.style.display === 'none';
+    panel.style.display = isHidden ? 'block' : 'none';
+    if (isHidden) {
+      panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }
+
+  // Tạo mật khẩu ngẫu nhiên
+  function generatePassword() {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789@#$!';
+    let pwd = '';
+    for (let i = 0; i < 12; i++) {
+      pwd += chars[Math.floor(Math.random() * chars.length)];
+    }
+    const input = document.getElementById('new-user-password');
+    if (input) {
+      input.value = pwd;
+      input.style.borderColor = 'rgba(99,102,241,0.5)';
+      setTimeout(() => { input.style.borderColor = 'var(--border-light)'; }, 1500);
+    }
+  }
+
+  // Nếu có lỗi tạo tài khoản → tự động mở panel
+  <% if (createError) { %>
+    document.addEventListener('DOMContentLoaded', () => {
+      const panel = document.getElementById('create-user-panel');
+      if (panel) panel.style.display = 'block';
+    });
+  <% } %>
+
+  // Tự ẩn thông báo sau 7 giây
+  setTimeout(() => {
+    ['create-success-alert', 'create-error-alert'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) {
+        el.style.transition = 'opacity 0.5s';
+        el.style.opacity = '0';
+        setTimeout(() => el.remove(), 500);
+      }
+    });
+  }, 7000);
+</script>
+
+<%- include('../partials/footer') %>

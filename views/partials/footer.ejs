@@ -1,0 +1,18 @@
+    </main>
+  </div> <!-- Kết thúc app-container -->
+
+  <% if (user) { %>
+    <!-- Nạp thư viện client-side Socket.io và code socket đồng bộ -->
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+      // Lưu lại thông tin người dùng vào biến toàn cục tại Client để các script khác truy xuất
+      window.currentUser = {
+        id: "<%= user.id %>",
+        username: "<%= user.username %>",
+        departmentId: "<%= user.departmentId || '' %>"
+      };
+    </script>
+    <script src="/js/socket-client.js"></script>
+  <% } %>
+</body>
+</html>

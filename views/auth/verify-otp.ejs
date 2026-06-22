@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Xác thực OTP - LMS Nội Bộ Doanh Nghiệp</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
+    }
+    .auth-container {
+      width: 420px;
+      padding: 2.5rem;
+    }
+    .auth-header {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+    .auth-logo {
+      width: 60px;
+      height: 60px;
+      background: linear-gradient(135deg, rgba(99,102,241,0.2), rgba(139,92,246,0.2));
+      border: 1px solid rgba(99,102,241,0.3);
+      border-radius: 16px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 1.25rem;
+    }
+    .auth-title {
+      font-size: 1.75rem;
+      font-weight: 800;
+      background: var(--primary-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .auth-subtitle {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-top: 0.35rem;
+      line-height: 1.5;
+    }
+    .alert {
+      padding: 0.85rem 1rem;
+      border-radius: 10px;
+      font-size: 0.85rem;
+      margin-bottom: 1.5rem;
+      display: flex;
+      align-items: flex-start;
+      gap: 0.6rem;
+      line-height: 1.5;
+    }
+    .alert-error {
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      color: #fca5a5;
+    }
+    .alert-success {
+      background: rgba(16, 185, 129, 0.1);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      color: #a7f3d0;
+    }
+    .otp-input-wrapper {
+      position: relative;
+      margin-bottom: 1.5rem;
+    }
+    .form-input-otp {
+      width: 100%;
+      padding: 0.85rem 1rem;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border-light);
+      border-radius: 10px;
+      color: #818cf8;
+      font-size: 1.85rem;
+      font-weight: 700;
+      letter-spacing: 0.5em;
+      text-align: center;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .form-input-otp:focus {
+      border-color: rgba(99,102,241,0.5);
+      box-shadow: 0 0 0 3px rgba(99,102,241,0.1);
+    }
+    .back-link {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.4rem;
+      margin-top: 1.5rem;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+    .back-link:hover {
+      color: var(--text-accent);
+    }
+    .timer-container {
+      text-align: center;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-bottom: 1.5rem;
+      background: rgba(255, 255, 255, 0.02);
+      border-radius: 8px;
+      padding: 0.6rem;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    .timer-value {
+      font-weight: 700;
+      color: #818cf8;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="glass-card auth-container">
+    <div class="auth-header">
+      <div class="auth-logo">
+        <i class="fa-solid fa-shield-halved" style="font-size: 1.5rem; color: #818cf8;"></i>
+      </div>
+      <div class="auth-title">Xác thực OTP</div>
+      <div class="auth-subtitle">Vui lòng nhập mã xác nhận 6 số để tiếp tục</div>
+    </div>
+
+    <% if (error) { %>
+      <div class="alert alert-error">
+        <i class="fa-solid fa-circle-exclamation" style="margin-top: 0.1rem; flex-shrink: 0;"></i>
+        <span><%= error %></span>
+      </div>
+    <% } %>
+
+    <% if (success) { %>
+      <div class="alert alert-success">
+        <i class="fa-solid fa-circle-check" style="margin-top: 0.1rem; flex-shrink: 0;"></i>
+        <span><%= success %></span>
+      </div>
+    <% } %>
+
+    <div class="timer-container">
+      <i class="fa-regular fa-clock" style="margin-right: 0.3rem;"></i>
+      Mã OTP có hiệu lực trong: <span id="countdown" class="timer-value">05:00</span>
+    </div>
+
+    <form action="/auth/verify-otp" method="POST">
+      <input type="hidden" name="email" value="<%= email %>">
+      
+      <label class="form-label" for="otp" style="display: block; font-size: 0.8rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem; text-align: center;">
+        Mã xác nhận (OTP)
+      </label>
+      
+      <div class="otp-input-wrapper">
+        <input 
+          type="text" 
+          id="otp" 
+          name="otp" 
+          class="form-input-otp"
+          placeholder="••••••" 
+          maxlength="6"
+          pattern="[0-9]{6}"
+          inputmode="numeric"
+          autocomplete="one-time-code"
+          required
+          autofocus
+        >
+      </div>
+
+      <button type="submit" class="btn btn-primary" style="width: 100%; padding: 0.85rem;">
+        <i class="fa-solid fa-circle-check"></i> Xác nhận mã
+      </button>
+    </form>
+
+    <a href="/auth/forgot-password" class="back-link">
+      <i class="fa-solid fa-arrow-left"></i> Gửi lại mã xác nhận
+    </a>
+  </div>
+
+  <script>
+    // Xử lý bộ đếm ngược 5 phút
+    let timeRemaining = 300; // 5 phút = 300 giây
+    const countdownEl = document.getElementById('countdown');
+
+    const timer = setInterval(() => {
+      const minutes = Math.floor(timeRemaining / 60);
+      const seconds = timeRemaining % 60;
+
+      countdownEl.textContent = 
+        `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+
+      if (timeRemaining <= 0) {
+        clearInterval(timer);
+        countdownEl.textContent = "Hết hạn";
+        countdownEl.style.color = "#ef4444";
+      }
+      timeRemaining--;
+    }, 1000);
+
+    // Tự động bỏ khoảng trắng và chỉ cho nhập số
+    const otpInput = document.getElementById('otp');
+    otpInput.addEventListener('input', (e) => {
+      e.target.value = e.target.value.replace(/[^0-9]/g, '');
+    });
+  </script>
+
+</body>
+</html>

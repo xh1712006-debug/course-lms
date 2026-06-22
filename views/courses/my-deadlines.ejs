@@ -1,0 +1,94 @@
+<%- include('../partials/header') %>
+
+<div style="margin-bottom: 2rem;">
+  <h1 style="font-size: 2.2rem; font-weight: 800; background: var(--primary-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+    Lịch Học & Deadline
+  </h1>
+  <p style="color: var(--text-muted); margin-top: 0.25rem;">
+    Theo dõi thời hạn và lịch trình học tập bắt buộc để đảm bảo hoàn thành KPI đào tạo doanh nghiệp.
+  </p>
+</div>
+
+<div class="glass-card" style="padding: 2rem;">
+  <h2 style="font-size: 1.3rem; font-weight: 700; color: #f1f5f9; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem;">
+    <i class="fa-solid fa-calendar-check" style="color: #ef4444;"></i> Lịch trình hoàn thành bắt buộc
+  </h2>
+
+  <% if (deadlines.length === 0) { %>
+    <div style="text-align: center; padding: 4rem 1rem;">
+      <i class="fa-solid fa-calendar-xmark fa-3x" style="color: var(--text-muted); margin-bottom: 1rem;"></i>
+      <p style="color: var(--text-muted); font-size: 0.9rem;">Bạn chưa đăng ký hoặc chưa được giao khóa học bắt buộc nào.</p>
+      <a href="/courses" class="btn btn-primary" style="margin-top: 1rem;">Đăng ký khóa học ngay</a>
+    </div>
+  <% } else { %>
+    <div style="display: flex; flex-direction: column; gap: 1rem;">
+      <% deadlines.forEach(item => { %>
+        <div style="background: rgba(255,255,255,0.01); border: 1px solid var(--border-light); border-radius: 12px; padding: 1.25rem; display: flex; align-items: center; justify-content: space-between; gap: 1.5rem; flex-wrap: wrap; transition: all 0.3s;
+          <% if (item.status === 'overdue') { %> border-left: 4px solid #ef4444; <% } %>
+          <% if (item.status === 'warning') { %> border-left: 4px solid #f59e0b; <% } %>
+          <% if (item.status === 'completed') { %> border-left: 4px solid #10b981; <% } %>
+          <% if (item.status === 'active') { %> border-left: 4px solid #3b82f6; <% } %>
+        ">
+          <!-- Thông tin khóa học -->
+          <div style="display: flex; align-items: center; gap: 1rem; flex: 2; min-width: 250px;">
+            <img src="<%= item.image_url %>" alt="<%= item.title %>" style="width: 70px; height: 50px; object-fit: cover; border-radius: 8px; border: 1px solid var(--border-light); flex-shrink: 0;">
+            <div>
+              <h4 style="font-size: 1.05rem; font-weight: 700; margin: 0; color: #f8fafc;"><%= item.title %></h4>
+              <p style="font-size: 0.8rem; color: var(--text-muted); margin: 0.25rem 0 0 0;">
+                Thể loại: <strong><%= item.is_assigned ? 'HR Chỉ định bắt buộc' : 'Đăng ký tự nguyện' %></strong>
+              </p>
+            </div>
+          </div>
+
+          <!-- Tiến độ -->
+          <div style="flex: 1; min-width: 150px;">
+            <div style="display: flex; justify-content: space-between; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.25rem;">
+              <span>Tiến độ:</span>
+              <span style="font-weight: 700; color: #10b981;"><%= item.progress %>%</span>
+            </div>
+            <div class="progress-container" style="height: 6px;">
+              <div class="progress-bar" style="width: <%= item.progress %>%;"></div>
+            </div>
+          </div>
+
+          <!-- Mốc Deadline và Số ngày còn lại -->
+          <div style="flex: 1; min-width: 180px; text-align: left;">
+            <div style="font-size: 0.8rem; color: var(--text-muted);">Hạn chót hoàn thành:</div>
+            <div style="font-size: 0.95rem; font-weight: 700; color: #cbd5e1; margin-top: 0.15rem;">
+              <i class="fa-solid fa-clock" style="margin-right: 0.25rem;"></i> <%= item.deadlineDate %>
+            </div>
+            
+            <div style="margin-top: 0.4rem;">
+              <% if (item.status === 'completed') { %>
+                <span style="font-size: 0.72rem; font-weight: 700; background: rgba(16, 185, 129, 0.1); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.2); padding: 0.2rem 0.5rem; border-radius: 6px;">
+                  <i class="fa-solid fa-circle-check"></i> Đã hoàn thành
+                </span>
+              <% } else if (item.status === 'overdue') { %>
+                <span style="font-size: 0.72rem; font-weight: 700; background: rgba(239, 68, 68, 0.1); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.2); padding: 0.2rem 0.5rem; border-radius: 6px;">
+                  <i class="fa-solid fa-circle-exclamation"></i> Quá hạn <%= Math.abs(item.daysRemaining) %> ngày
+                </span>
+              <% } else if (item.status === 'warning') { %>
+                <span style="font-size: 0.72rem; font-weight: 700; background: rgba(245, 158, 11, 0.1); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.2); padding: 0.2rem 0.5rem; border-radius: 6px;">
+                  <i class="fa-solid fa-circle-nodes"></i> Cấp bách: Còn <%= item.daysRemaining %> ngày
+                </span>
+              <% } else { %>
+                <span style="font-size: 0.72rem; font-weight: 700; background: rgba(59, 130, 246, 0.1); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.2); padding: 0.2rem 0.5rem; border-radius: 6px;">
+                  <i class="fa-solid fa-circle-play"></i> Đang học: Còn <%= item.daysRemaining %> ngày
+                </span>
+              <% } %>
+            </div>
+          </div>
+
+          <!-- Nút hành động -->
+          <div style="flex-shrink: 0; min-width: 100px; text-align: right;">
+            <a href="/courses/<%= item.course_id %>/lessons/1" class="btn btn-primary" style="padding: 0.5rem 1rem; font-size: 0.8rem;">
+              <i class="fa-solid fa-door-open"></i> Vào học
+            </a>
+          </div>
+        </div>
+      <% }) %>
+    </div>
+  <% } %>
+</div>
+
+<%- include('../partials/footer') %>

@@ -1,0 +1,279 @@
+<%- include('../partials/header') %>
+
+<div style="margin-bottom: 2rem;">
+  <h1 style="font-size: 2.2rem; font-weight: 800; background: var(--primary-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+    Lộ Trình Đào Tạo (Learning Paths)
+  </h1>
+  <p style="color: var(--text-muted); margin-top: 0.25rem;">Gom nhóm nhiều khóa học riêng lẻ thành một chuỗi lộ trình bắt buộc cho từng vai trò nhân sự.</p>
+</div>
+
+<% if (typeof success !== 'undefined' && success) { %>
+  <div class="alert-banner alert-success" style="margin-bottom: 1.5rem; padding: 1rem 1.5rem; border-radius: 12px; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); color: #10b981; display: flex; align-items: center; gap: 0.75rem; font-size: 0.9rem;">
+    <i class="fa-solid fa-circle-check"></i>
+    <span><%= success %></span>
+  </div>
+<% } %>
+<% if (typeof error !== 'undefined' && error) { %>
+  <div class="alert-banner alert-error" style="margin-bottom: 1.5rem; padding: 1rem 1.5rem; border-radius: 12px; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); color: #f87171; display: flex; align-items: center; gap: 0.75rem; font-size: 0.9rem;">
+    <i class="fa-solid fa-circle-exclamation"></i>
+    <span><%= error %></span>
+  </div>
+<% } %>
+
+<div style="display: grid; grid-template-columns: 1fr 1.8fr; gap: 2rem; align-items: start;">
+  
+  <!-- Cột bên trái: Thêm lộ trình mới -->
+  <% if (user.permissions.includes('PATH_MANAGE')) { %>
+    <div class="glass-card">
+      <h3 style="font-size: 1.2rem; margin-bottom: 1.5rem;"><i class="fa-solid fa-square-plus" style="color: #6366f1;"></i> Thêm lộ trình mới</h3>
+      <form action="/paths" method="POST">
+        <div class="form-group">
+          <label class="form-label">Tên lộ trình đào tạo</label>
+          <input type="text" name="name" placeholder="Ví dụ: Lộ trình Thử việc Backend Dev" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Mô tả mục tiêu lộ trình</label>
+          <textarea name="description" rows="3" placeholder="Nhập mục tiêu đào tạo..." required></textarea>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Chọn các khóa học thuộc lộ trình (Tích chọn nhiều)</label>
+          <div style="display: flex; flex-direction: column; gap: 0.5rem; background: rgba(0,0,0,0.15); padding: 1rem; border-radius: 8px; max-height: 150px; overflow-y: auto; border: 1px solid var(--border-light);">
+            <% courses.forEach(course => { %>
+              <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; cursor: pointer;">
+                <input type="checkbox" name="courseIds" value="<%= course.id %>"> <%= course.title %>
+              </label>
+            <% }) %>
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">
+          Tạo lộ trình học
+        </button>
+      </form>
+    </div>
+  <% } %>
+
+  <!-- Cột bên phải: Danh sách lộ trình đang vận hành -->
+  <div class="glass-card" style="padding: 1.5rem;">
+    <h3 style="font-size: 1.2rem; margin-bottom: 1.25rem;"><i class="fa-solid fa-route" style="color: #06b6d4;"></i> Các lộ trình hiện tại</h3>
+    
+    <% if (paths.length === 0) { %>
+      <p style="color: var(--text-muted); font-size: 0.85rem; text-align: center; padding: 2rem;">Chưa có lộ trình nào được lập.</p>
+    <% } else { %>
+      <div style="display: flex; flex-direction: column; gap: 1rem;">
+        <% paths.forEach(path => { %>
+          <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--border-light); padding: 1.25rem; border-radius: 12px;">
+            <h4 style="font-size: 1.1rem; font-weight: 700; color: var(--text-accent);"><%= path.name %></h4>
+            <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.25rem; margin-bottom: 0.75rem;"><%= path.description %></p>
+            
+            <div style="border-top: 1px solid var(--border-light); padding-top: 0.75rem;">
+              <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600; display: block; margin-bottom: 0.4rem;">Chuỗi khóa học trong lộ trình:</span>
+              <div style="display: flex; flex-direction: column; gap: 0.25rem;">
+                <% if (path.courses.length === 0) { %>
+                  <span style="font-size: 0.8rem; color: var(--text-muted); italic">(Chưa liên kết khóa học nào)</span>
+                <% } else { %>
+                  <% path.courses.forEach((c, idx) => { %>
+                    <div style="font-size: 0.8rem; display: flex; align-items: center; gap: 0.5rem;">
+                      <span style="font-weight: 800; color: #06b6d4;">Step <%= idx + 1 %>:</span>
+                      <span><%= c.title %></span>
+                    </div>
+                  <% }) %>
+                <% } %>
+              </div>
+            </div>
+
+            <!-- Nút mở Modal Giao Lộ Trình (chỉ hiển thị nếu có quyền ENROLL_ASSIGN) -->
+            <% if (user.permissions.includes('ENROLL_ASSIGN')) { %>
+              <div style="border-top: 1px dashed var(--border-light); margin-top: 1.25rem; padding-top: 1rem;">
+                <button type="button" class="btn btn-primary" onclick="openAssignModal(<%= path.id %>)" style="width: 100%; display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 0.6rem 1.2rem; font-size: 0.85rem; border-radius: 8px;">
+                  <i class="fa-solid fa-user-plus"></i> Giao lộ trình học tập
+                </button>
+              </div>
+            <% } %>
+
+          </div>
+        <% }) %>
+      </div>
+    <% } %>
+  </div>
+</div>
+
+<!-- Lớp phủ modal dùng chung -->
+<div id="modal-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.6); backdrop-filter: blur(5px); z-index: 1999;"></div>
+
+<!-- Render các Modal Giao Lộ Trình ở cấp độ gốc (Root Level) để tránh lỗi Stacking Context của CSS -->
+<% if (user.permissions.includes('ENROLL_ASSIGN') && paths.length > 0) { %>
+  <% paths.forEach(path => { %>
+    <div id="assignModal-<%= path.id %>" class="glass-card" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 640px; max-width: 95%; max-height: 85vh; overflow-y: auto; z-index: 2050; box-shadow: 0 10px 50px rgba(0,0,0,0.9); border-color: var(--border-glow); padding: 1.75rem;">
+      <h3 style="font-size: 1.3rem; margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-light); padding-bottom: 0.75rem;">
+        <span><i class="fa-solid fa-user-plus" style="color: #10b981; margin-right: 0.5rem;"></i>Giao Lộ Trình: <%= path.name %></span>
+        <button class="btn btn-secondary" onclick="closeAssignModal(<%= path.id %>)" style="padding: 0.25rem 0.5rem; font-size: 0.85rem;"><i class="fa-solid fa-xmark"></i></button>
+      </h3>
+      
+      <form action="/paths/<%= path.id %>/assign" method="POST">
+        <div style="display: grid; grid-template-columns: 1fr 1.3fr; gap: 1.5rem; margin-bottom: 1.5rem; text-align: left;">
+          
+          <!-- Cột trái: Danh sách Phòng ban -->
+          <div>
+            <h4 style="font-size: 0.92rem; margin-bottom: 0.75rem; color: #06b6d4; display: flex; justify-content: space-between; align-items: center;">
+              <span><i class="fa-solid fa-building"></i> Chọn Phòng ban</span>
+              <button type="button" onclick="selectAllDepts(<%= path.id %>)" style="background: none; border: none; color: var(--text-accent); font-size: 0.72rem; cursor: pointer; font-weight: 600;">Chọn hết</button>
+            </h4>
+            <div style="background: rgba(0,0,0,0.4); border: 1px solid var(--border-light); border-radius: 8px; padding: 0.75rem; max-height: 270px; overflow-y: auto; display: flex; flex-direction: column; gap: 0.5rem;">
+              <% departments.forEach(d => { %>
+                <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; cursor: pointer; color: #cbd5e1;">
+                  <input type="checkbox" name="departmentIds" value="<%= d.id %>" class="dept-check-<%= path.id %>">
+                  <%= d.name %>
+                </label>
+              <% }) %>
+            </div>
+          </div>
+
+          <!-- Cột phải: Danh sách Nhân viên (Phân nhóm theo Phòng ban + Tìm kiếm) -->
+          <div>
+            <h4 style="font-size: 0.92rem; margin-bottom: 0.75rem; color: #a78bfa; display: flex; justify-content: space-between; align-items: center;">
+              <span><i class="fa-solid fa-users"></i> Chọn Cá nhân</span>
+              <button type="button" onclick="selectAllUsers(<%= path.id %>)" style="background: none; border: none; color: var(--text-accent); font-size: 0.72rem; cursor: pointer; font-weight: 600;">Chọn hết</button>
+            </h4>
+
+            <!-- Ô tìm kiếm nhân sự thời gian thực -->
+            <div style="margin-bottom: 0.5rem; position: relative;">
+              <i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 0.6rem; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 0.8rem;"></i>
+              <input type="text" id="userSearch-<%= path.id %>" placeholder="Tìm tên nhân sự..." oninput="filterUsersList(<%= path.id %>)" style="width: 100%; padding: 0.45rem 0.6rem 0.45rem 1.8rem; background: rgba(255,255,255,0.05); border: 1px solid var(--border-light); border-radius: 6px; color: var(--text-main); font-size: 0.8rem; outline: none; box-sizing: border-box;">
+            </div>
+
+            <!-- Container danh sách nhân sự phân nhóm -->
+            <div id="usersListContainer-<%= path.id %>" style="background: rgba(0,0,0,0.4); border: 1px solid var(--border-light); border-radius: 8px; padding: 0.75rem; max-height: 220px; overflow-y: auto; display: flex; flex-direction: column; gap: 0.75rem;">
+              <% 
+                // Phân nhóm nhân viên theo phòng ban trong bộ nhớ
+                const groupedUsers = {};
+                departments.forEach(d => {
+                  groupedUsers[d.id] = { name: d.name, list: [] };
+                });
+                groupedUsers['none'] = { name: 'Không thuộc phòng ban', list: [] };
+
+                users.forEach(u => {
+                  const dId = u.department_id || 'none';
+                  if (!groupedUsers[dId]) {
+                    groupedUsers[dId] = { name: u.department_name || 'Không thuộc phòng ban', list: [] };
+                  }
+                  groupedUsers[dId].list.push(u);
+                });
+              %>
+              <% Object.keys(groupedUsers).forEach(dId => { %>
+                <% if (groupedUsers[dId].list.length > 0) { %>
+                  <div class="user-group-container-<%= path.id %>" data-dept-id="<%= dId %>">
+                    <!-- Tiêu đề nhóm phòng ban + Chọn nhóm -->
+                    <div class="user-group-header" style="font-size: 0.78rem; font-weight: 700; color: #a78bfa; margin-bottom: 0.35rem; border-bottom: 1px solid rgba(167, 139, 250, 0.15); padding-bottom: 0.15rem; display: flex; justify-content: space-between; align-items: center;">
+                      <span><i class="fa-solid fa-folder-open" style="font-size: 0.7rem; margin-right: 0.25rem;"></i> <%= groupedUsers[dId].name %></span>
+                      <button type="button" onclick="selectGroupUsers(<%= path.id %>, '<%= dId %>')" style="background: none; border: none; color: var(--text-accent); font-size: 0.65rem; cursor: pointer; font-weight: 600; padding: 0;">Chọn nhóm</button>
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 0.4rem; padding-left: 0.4rem;">
+                      <% groupedUsers[dId].list.forEach(u => { %>
+                        <label class="user-item-label-<%= path.id %>" data-search-name="<%= u.username.toLowerCase() %>" style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; cursor: pointer; color: #cbd5e1;">
+                          <input type="checkbox" name="userIds" value="<%= u.id %>" class="user-check-<%= path.id %>" data-dept-id="<%= dId %>">
+                          <span><%= u.username %></span>
+                        </label>
+                      <% }) %>
+                    </div>
+                  </div>
+                <% } %>
+              <% }) %>
+            </div>
+
+          </div>
+
+        </div>
+
+        <div style="display: flex; gap: 1rem; justify-content: flex-end; border-top: 1px solid var(--border-light); padding-top: 1.25rem;">
+          <button type="button" class="btn btn-secondary" onclick="closeAssignModal(<%= path.id %>)">Hủy</button>
+          <button type="submit" class="btn btn-primary"><i class="fa-solid fa-check"></i> Xác nhận giao</button>
+        </div>
+      </form>
+    </div>
+  <% }) %>
+<% } %>
+
+<script>
+  function openAssignModal(pathId) {
+    document.getElementById(`assignModal-${pathId}`).style.display = 'block';
+    document.getElementById('modal-overlay').style.display = 'block';
+  }
+
+  function closeAssignModal(pathId) {
+    document.getElementById(`assignModal-${pathId}`).style.display = 'none';
+    document.getElementById('modal-overlay').style.display = 'none';
+  }
+
+  function selectAllDepts(pathId) {
+    const checkboxes = document.querySelectorAll(`.dept-check-${pathId}`);
+    const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+    checkboxes.forEach(cb => cb.checked = !allChecked);
+  }
+
+  function selectAllUsers(pathId) {
+    // Chỉ chọn tất cả những checkboxes đang được hiển thị (được filter)
+    const checkboxes = document.querySelectorAll(`.user-check-${pathId}`);
+    const visibleCheckboxes = Array.from(checkboxes).filter(cb => {
+      const parentLabel = cb.closest(`.user-item-label-${pathId}`);
+      return parentLabel && parentLabel.style.display !== 'none';
+    });
+    const allChecked = visibleCheckboxes.every(cb => cb.checked);
+    visibleCheckboxes.forEach(cb => cb.checked = !allChecked);
+  }
+
+  function selectGroupUsers(pathId, deptId) {
+    const checkboxes = document.querySelectorAll(`.user-check-${pathId}[data-dept-id="${deptId}"]`);
+    // Chỉ chọn những user của nhóm đang được hiển thị
+    const visibleCheckboxes = Array.from(checkboxes).filter(cb => {
+      const parentLabel = cb.closest(`.user-item-label-${pathId}`);
+      return parentLabel && parentLabel.style.display !== 'none';
+    });
+    const allChecked = visibleCheckboxes.every(cb => cb.checked);
+    visibleCheckboxes.forEach(cb => cb.checked = !allChecked);
+  }
+
+  function filterUsersList(pathId) {
+    const query = document.getElementById(`userSearch-${pathId}`).value.toLowerCase().trim();
+    const container = document.getElementById(`usersListContainer-${pathId}`);
+    const groups = container.querySelectorAll(`.user-group-container-${pathId}`);
+
+    groups.forEach(group => {
+      let visibleInGroup = 0;
+      const items = group.querySelectorAll(`.user-item-label-${pathId}`);
+      
+      items.forEach(item => {
+        const name = item.getAttribute('data-search-name');
+        if (name.includes(query)) {
+          item.style.display = 'flex';
+          visibleInGroup++;
+        } else {
+          item.style.display = 'none';
+        }
+      });
+
+      // Nếu có ít nhất 1 user khớp, hiện tiêu đề nhóm phòng ban, ngược lại ẩn nhóm
+      if (visibleInGroup > 0) {
+        group.style.display = 'block';
+      } else {
+        group.style.display = 'none';
+      }
+    });
+  }
+  
+  // Đóng modal khi nhấp ra ngoài (lớp phủ)
+  document.addEventListener('DOMContentLoaded', () => {
+    const overlay = document.getElementById('modal-overlay');
+    if (overlay) {
+      overlay.addEventListener('click', () => {
+        const modals = document.querySelectorAll('[id^="assignModal-"]');
+        modals.forEach(m => m.style.display = 'none');
+        overlay.style.display = 'none';
+      });
+    }
+  });
+</script>
+
+<%- include('../partials/footer') %>

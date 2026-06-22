@@ -1,0 +1,308 @@
+<%- include('../partials/header') %>
+
+<div style="margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem;">
+  <div>
+    <h1 style="font-size: 2.2rem; font-weight: 800; background: linear-gradient(135deg, #a78bfa, #06b6d4); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+      <i class="fa-solid fa-file-video" style="-webkit-text-fill-color: #a78bfa; font-size: 1.8rem; margin-right: 0.5rem;"></i>Bài Học & Nội Dung
+    </h1>
+    <p style="color: var(--text-muted); margin-top: 0.25rem;">
+      Tổng hợp tất cả bài giảng trong hệ thống. Chọn một khóa học để thêm hoặc chỉnh sửa bài học chi tiết.
+    </p>
+  </div>
+  <% if (user.permissions.includes('COURSE_VIEW')) { %>
+    <a href="/course-management" class="btn btn-secondary" style="white-space: nowrap; display: inline-flex; align-items: center; gap: 0.5rem;">
+      <i class="fa-solid fa-folder-open"></i> Đến Quản lý khóa học
+    </a>
+  <% } %>
+</div>
+
+<!-- Stats nhanh -->
+<%
+const totalLessons = allLessons.length;
+const coursesWithLessons = lessonsByCourse.filter(g => g.lessons.length > 0).length;
+const coursesEmpty = lessonsByCourse.filter(g => g.lessons.length === 0).length;
+const hasVideo = allLessons.filter(l => l.video_url && l.video_url.trim() !== '').length;
+%>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 1.25rem; margin-bottom: 2rem;">
+  <div class="glass-card" style="padding: 1.25rem; text-align: center; border: 1px solid rgba(167,139,250,0.25);">
+    <div style="font-size: 2rem; font-weight: 800; color: #a78bfa;"><%= totalLessons %></div>
+    <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 0.25rem;">Tổng bài học</div>
+  </div>
+  <div class="glass-card" style="padding: 1.25rem; text-align: center; border: 1px solid rgba(6,182,212,0.25);">
+    <div style="font-size: 2rem; font-weight: 800; color: #06b6d4;"><%= courses.length %></div>
+    <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 0.25rem;">Khóa học</div>
+  </div>
+  <div class="glass-card" style="padding: 1.25rem; text-align: center; border: 1px solid rgba(16,185,129,0.25);">
+    <div style="font-size: 2rem; font-weight: 800; color: #10b981;"><%= hasVideo %></div>
+    <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 0.25rem;">Có video</div>
+  </div>
+  <div class="glass-card" style="padding: 1.25rem; text-align: center; border: 1px solid rgba(245,158,11,0.25);">
+    <div style="font-size: 2rem; font-weight: 800; color: #f59e0b;"><%= coursesEmpty %></div>
+    <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 0.25rem;">Chưa có bài</div>
+  </div>
+</div>
+
+<!-- Bộ lọc tìm kiếm -->
+<div class="glass-card" style="padding: 1rem 1.5rem; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;">
+  <div style="flex: 1; min-width: 220px; position: relative;">
+    <i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 0.85rem; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 0.85rem;"></i>
+    <input
+      id="lesson-search-input"
+      type="text"
+      placeholder="Tìm bài học hoặc khóa học..."
+      oninput="filterLessons()"
+      style="width: 100%; padding: 0.65rem 0.85rem 0.65rem 2.4rem; background: rgba(255,255,255,0.05); border: 1px solid var(--border-light); border-radius: 10px; color: var(--text-main); font-size: 0.9rem; outline: none; box-sizing: border-box;"
+    >
+  </div>
+  <select id="course-filter" onchange="filterLessons()" style="padding: 0.65rem 1rem; background: rgba(255,255,255,0.05); border: 1px solid var(--border-light); border-radius: 10px; color: var(--text-main); font-size: 0.875rem; min-width: 200px;">
+    <option value="">— Tất cả khóa học —</option>
+    <% courses.forEach(c => { %>
+      <option value="<%= c.id %>"><%= c.title %></option>
+    <% }) %>
+  </select>
+  <select id="video-filter" onchange="filterLessons()" style="padding: 0.65rem 1rem; background: rgba(255,255,255,0.05); border: 1px solid var(--border-light); border-radius: 10px; color: var(--text-main); font-size: 0.875rem;">
+    <option value="">— Tất cả loại —</option>
+    <option value="has_video">Có video</option>
+    <option value="no_video">Chưa có video</option>
+  </select>
+  <div style="font-size: 0.8rem; color: var(--text-muted); white-space: nowrap;">
+    Hiển thị: <span id="lesson-count-display" style="font-weight: 700; color: var(--text-accent);"><%= totalLessons %></span> bài học
+  </div>
+</div>
+
+<!-- Bảng tổng hợp tất cả bài học -->
+<div class="glass-card" style="padding: 1.5rem; overflow-x: auto;">
+  <h3 style="font-size: 1.1rem; font-weight: 700; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 0.6rem;">
+    <i class="fa-solid fa-layer-group" style="color: #a78bfa;"></i> Danh sách tất cả bài học
+  </h3>
+
+  <% if (allLessons.length === 0) { %>
+    <div style="text-align: center; padding: 4rem 1rem; color: var(--text-muted);">
+      <i class="fa-solid fa-file-circle-question" style="font-size: 3rem; opacity: 0.3; display: block; margin-bottom: 1rem;"></i>
+      Chưa có bài học nào trong hệ thống.<br>
+      <small>Hãy vào <a href="/course-management" style="color: #6366f1;">Quản lý khóa học</a> để thêm bài học đầu tiên.</small>
+    </div>
+  <% } else { %>
+    <table class="custom-table" style="margin-top: 0; font-size: 0.85rem;" id="lessons-table">
+      <thead>
+        <tr>
+          <th style="width: 50px;">STT</th>
+          <th>Tên bài học</th>
+          <th>Thuộc khóa học</th>
+          <th style="text-align: center; width: 80px;">Thứ tự</th>
+          <th style="text-align: center; width: 90px;">Video</th>
+          <th style="text-align: center; width: 90px;">Tài liệu</th>
+          <% if (user.permissions.includes('LESSON_MANAGE')) { %>
+          <th style="text-align: center; width: 100px;">Thao tác</th>
+          <% } %>
+        </tr>
+      </thead>
+      <tbody id="lessons-tbody">
+        <% let rowIndex = 0; allLessons.forEach(lesson => { rowIndex++; %>
+          <tr
+            class="lesson-row"
+            data-title="<%= lesson.title.toLowerCase() %>"
+            data-course="<%= lesson.course_id %>"
+            data-course-title="<%= lesson.course_title.toLowerCase() %>"
+            data-has-video="<%= (lesson.video_url && lesson.video_url.trim()) ? 'yes' : 'no' %>"
+          >
+            <td style="color: var(--text-muted); font-size: 0.78rem;"><%= rowIndex %></td>
+            <td>
+              <div style="font-weight: 600; color: #e2e8f0; margin-bottom: 0.15rem;"><%= lesson.title %></div>
+              <% if (lesson.content) { %>
+              <div style="font-size: 0.75rem; color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 280px;">
+                <%= lesson.content.substring(0, 80) %><%= lesson.content.length > 80 ? '…' : '' %>
+              </div>
+              <% } %>
+            </td>
+            <td>
+              <a href="/course-management/<%= lesson.course_id %>/lessons"
+                style="display: inline-flex; align-items: center; gap: 0.4rem; color: #6366f1; text-decoration: none; font-size: 0.82rem; font-weight: 500; padding: 0.2rem 0.55rem; background: rgba(99,102,241,0.1); border: 1px solid rgba(99,102,241,0.2); border-radius: 6px; transition: all 0.2s;"
+                onmouseover="this.style.background='rgba(99,102,241,0.2)'" onmouseout="this.style.background='rgba(99,102,241,0.1)'"
+              >
+                <i class="fa-solid fa-folder-open" style="font-size: 0.7rem;"></i>
+                <%= lesson.course_title %>
+              </a>
+            </td>
+            <td style="text-align: center;">
+              <span style="background: rgba(255,255,255,0.05); border: 1px solid var(--border-light); padding: 0.15rem 0.5rem; border-radius: 5px; font-size: 0.78rem; font-weight: 700; color: var(--text-muted);">
+                #<%= lesson.order_index %>
+              </span>
+            </td>
+            <td style="text-align: center;">
+              <% if (lesson.video_url && lesson.video_url.trim()) { %>
+                <span style="color: #10b981; font-size: 0.8rem;" title="<%= lesson.video_url %>">
+                  <i class="fa-solid fa-circle-play"></i> Có
+                </span>
+              <% } else { %>
+                <span style="color: rgba(255,255,255,0.2); font-size: 0.8rem;">
+                  <i class="fa-solid fa-circle-xmark"></i>
+                </span>
+              <% } %>
+            </td>
+            <td style="text-align: center;">
+              <% if (lesson.attachment_url && lesson.attachment_url.trim()) { %>
+                <span style="color: #f59e0b; font-size: 0.8rem;" title="<%= lesson.attachment_url %>">
+                  <i class="fa-solid fa-paperclip"></i> Có
+                </span>
+              <% } else { %>
+                <span style="color: rgba(255,255,255,0.2); font-size: 0.8rem;">
+                  <i class="fa-solid fa-minus"></i>
+                </span>
+              <% } %>
+            </td>
+            <% if (user.permissions.includes('LESSON_MANAGE')) { %>
+            <td>
+              <div style="display: flex; justify-content: center; gap: 0.35rem;">
+                <!-- Nút sửa → chuyển đến trang bài học của khóa đó -->
+                <a href="/course-management/<%= lesson.course_id %>/lessons"
+                  class="btn btn-secondary"
+                  style="padding: 0.3rem 0.5rem; font-size: 0.75rem; color: #a5b4fc; text-decoration: none;"
+                  title="Đến trang chỉnh sửa bài học này">
+                  <i class="fa-solid fa-pen-to-square"></i>
+                </a>
+              </div>
+            </td>
+            <% } %>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+
+    <!-- Thông báo khi lọc không có kết quả -->
+    <div id="no-filter-result" style="display: none; text-align: center; padding: 3rem; color: var(--text-muted);">
+      <i class="fa-solid fa-filter-circle-xmark" style="font-size: 2rem; opacity: 0.4; display: block; margin-bottom: 0.75rem;"></i>
+      Không tìm thấy bài học phù hợp với bộ lọc.
+    </div>
+  <% } %>
+</div>
+
+<!-- Phân nhóm theo khóa học (accordion) -->
+<% if (lessonsByCourse.length > 0) { %>
+<div style="margin-top: 2rem;">
+  <h3 style="font-size: 1.1rem; font-weight: 700; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 0.6rem; color: var(--text-muted);">
+    <i class="fa-solid fa-folder-tree" style="color: #06b6d4;"></i> Phân nhóm theo khóa học
+  </h3>
+  <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+    <% lessonsByCourse.forEach((group, gi) => { %>
+    <div class="glass-card" style="padding: 0; overflow: hidden; border: 1px solid var(--border-light);">
+      <!-- Header accordion -->
+      <button
+        onclick="toggleAccordion(<%= gi %>)"
+        style="width: 100%; background: none; border: none; padding: 1rem 1.25rem; display: flex; align-items: center; justify-content: space-between; cursor: pointer; color: var(--text-main); text-align: left;"
+      >
+        <div style="display: flex; align-items: center; gap: 0.75rem;">
+          <div style="width: 32px; height: 32px; border-radius: 8px; background: linear-gradient(135deg, #6366f1, #8b5cf6); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+            <i class="fa-solid fa-book-open" style="color: #fff; font-size: 0.8rem;"></i>
+          </div>
+          <div>
+            <div style="font-weight: 700; font-size: 0.92rem;"><%= group.course.title %></div>
+            <div style="font-size: 0.72rem; color: var(--text-muted); margin-top: 0.1rem;">
+              <%= group.lessons.length %> bài học ·
+              <span style="color: <%= group.course.is_published ? '#10b981' : '#f59e0b' %>;">
+                <%= group.course.is_published ? 'Đã xuất bản' : 'Bản nháp' %>
+              </span>
+            </div>
+          </div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 0.75rem;">
+          <% if (user.permissions.includes('LESSON_CREATE') || user.permissions.includes('LESSON_MANAGE')) { %>
+          <a href="/course-management/<%= group.course.id %>/lessons"
+            onclick="event.stopPropagation()"
+            style="font-size: 0.78rem; color: #6366f1; text-decoration: none; padding: 0.25rem 0.6rem; border: 1px solid rgba(99,102,241,0.3); border-radius: 6px; background: rgba(99,102,241,0.08);">
+            <i class="fa-solid fa-arrow-up-right-from-square"></i> Quản lý
+          </a>
+          <% } %>
+          <i id="accordion-icon-<%= gi %>" class="fa-solid fa-chevron-down" style="color: var(--text-muted); font-size: 0.8rem; transition: transform 0.3s;"></i>
+        </div>
+      </button>
+
+      <!-- Nội dung accordion -->
+      <div id="accordion-body-<%= gi %>" style="display: none; border-top: 1px solid var(--border-light);">
+        <% if (group.lessons.length === 0) { %>
+          <div style="padding: 1.5rem; text-align: center; color: var(--text-muted); font-size: 0.85rem;">
+            <i class="fa-solid fa-inbox" style="margin-right: 0.4rem;"></i> Khóa học chưa có bài giảng nào.
+            <% if (user.permissions.includes('LESSON_CREATE')) { %>
+              <a href="/course-management/<%= group.course.id %>/lessons" style="color: #6366f1; margin-left: 0.4rem;">Thêm ngay →</a>
+            <% } %>
+          </div>
+        <% } else { %>
+          <div style="padding: 0.5rem 0;">
+            <% group.lessons.forEach((lesson, li) => { %>
+              <div style="
+                display: flex; align-items: center; gap: 0.75rem;
+                padding: 0.7rem 1.25rem;
+                border-bottom: 1px solid rgba(255,255,255,0.03);
+                transition: background 0.15s;
+              " onmouseover="this.style.background='rgba(255,255,255,0.03)'" onmouseout="this.style.background='none'">
+                <span style="font-size: 0.7rem; color: var(--text-muted); min-width: 24px; text-align: right;">#<%= lesson.order_index %></span>
+                <div style="flex: 1; min-width: 0;">
+                  <div style="font-size: 0.88rem; font-weight: 600; color: #e2e8f0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                    <%= lesson.title %>
+                  </div>
+                </div>
+                <div style="display: flex; align-items: center; gap: 0.5rem; flex-shrink: 0;">
+                  <% if (lesson.video_url && lesson.video_url.trim()) { %>
+                    <span style="font-size: 0.72rem; color: #10b981;"><i class="fa-solid fa-circle-play"></i></span>
+                  <% } %>
+                  <% if (lesson.attachment_url && lesson.attachment_url.trim()) { %>
+                    <span style="font-size: 0.72rem; color: #f59e0b;"><i class="fa-solid fa-paperclip"></i></span>
+                  <% } %>
+                </div>
+              </div>
+            <% }) %>
+          </div>
+        <% } %>
+      </div>
+    </div>
+    <% }) %>
+  </div>
+</div>
+<% } %>
+
+<script>
+  // Accordion toggle
+  function toggleAccordion(index) {
+    const body = document.getElementById(`accordion-body-${index}`);
+    const icon = document.getElementById(`accordion-icon-${index}`);
+    const isOpen = body.style.display !== 'none';
+    body.style.display = isOpen ? 'none' : 'block';
+    icon.style.transform = isOpen ? '' : 'rotate(180deg)';
+  }
+
+  // Lọc bài học
+  function filterLessons() {
+    const search  = document.getElementById('lesson-search-input').value.toLowerCase().trim();
+    const courseId = document.getElementById('course-filter').value;
+    const videoFilter = document.getElementById('video-filter').value;
+
+    const rows = document.querySelectorAll('.lesson-row');
+    let visible = 0;
+
+    rows.forEach(row => {
+      const title       = row.dataset.title || '';
+      const courseTitle = row.dataset.courseTitle || '';
+      const rowCourse   = row.dataset.course;
+      const hasVideo    = row.dataset.hasVideo;
+
+      const matchText   = !search || title.includes(search) || courseTitle.includes(search);
+      const matchCourse = !courseId || rowCourse === courseId;
+      const matchVideo  = !videoFilter
+        || (videoFilter === 'has_video' && hasVideo === 'yes')
+        || (videoFilter === 'no_video'  && hasVideo === 'no');
+
+      if (matchText && matchCourse && matchVideo) {
+        row.style.display = '';
+        visible++;
+      } else {
+        row.style.display = 'none';
+      }
+    });
+
+    document.getElementById('lesson-count-display').textContent = visible;
+    const noResult = document.getElementById('no-filter-result');
+    if (noResult) noResult.style.display = visible === 0 ? 'block' : 'none';
+  }
+</script>
+
+<%- include('../partials/footer') %>

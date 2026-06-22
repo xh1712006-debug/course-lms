@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 250" width="100%" height="100%">
+  <defs>
+    <linearGradient id="grad5" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#475569;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#1e293b;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  <rect width="400" height="250" rx="15" fill="url(#grad5)" />
+  <circle cx="200" cy="110" r="50" fill="rgba(255,255,255,0.05)" />
+  <text x="200" y="120" fill="rgba(255,255,255,0.4)" font-family="'Outfit', sans-serif" font-size="48" font-weight="bold" text-anchor="middle">LMS</text>
+  <text x="200" y="200" fill="#ffffff" font-family="'Outfit', sans-serif" font-size="22" font-weight="bold" text-anchor="middle">Khóa Học Nội Bộ</text>
+  <text x="200" y="220" fill="rgba(255,255,255,0.7)" font-family="'Inter', sans-serif" font-size="12" text-anchor="middle">Chưa gán ảnh đại diện</text>
+</svg>

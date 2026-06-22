@@ -1,0 +1,63 @@
+<%- include('../partials/header') %>
+
+<div style="margin-bottom: 2rem;">
+  <h1 style="font-size: 2.2rem; font-weight: 800; background: var(--primary-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+    Phê Duyệt Đăng Ký Khóa Học
+  </h1>
+  <p style="color: var(--text-muted); margin-top: 0.25rem;">Duyệt yêu cầu xin tham gia khóa học nâng cao của nhân viên.</p>
+</div>
+
+<div class="glass-card" style="padding: 1.5rem; overflow-x: auto;">
+  <h3 style="font-size: 1.2rem; margin-bottom: 1.25rem;"><i class="fa-solid fa-user-clock" style="color: #6366f1;"></i> Danh sách yêu cầu chờ duyệt</h3>
+  
+  <table class="custom-table" style="margin-top: 0; font-size: 0.85rem;">
+    <thead>
+      <tr>
+        <th>Mã yêu cầu</th>
+        <th>Học viên</th>
+        <th>Email</th>
+        <th>Khóa học mong muốn</th>
+        <th>Thời gian gửi</th>
+        <th style="text-align: center;">Thao tác phê duyệt</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% if (pendings.length === 0) { %>
+        <tr>
+          <td colspan="6" style="text-align: center; color: var(--text-muted); padding: 2rem;">Hiện tại không có yêu cầu phê duyệt học tập nào chờ xử lý.</td>
+        </tr>
+      <% } else { %>
+        <% pendings.forEach(p => { %>
+          <tr>
+            <td><strong>#<%= p.id %></strong></td>
+            <td><strong><%= p.username %></strong></td>
+            <td style="color: var(--text-muted);"><%= p.email %></td>
+            <td><strong><%= p.course_title %></strong></td>
+            <td><%= new Date(p.created_at).toLocaleString() %></td>
+            <td>
+              <div style="display: flex; justify-content: center; gap: 0.5rem;">
+                <!-- Đồng ý -->
+                <form action="/approvals/<%= p.id %>" method="POST" style="display: inline;">
+                  <input type="hidden" name="action" value="approved">
+                  <button type="submit" class="btn btn-primary" style="padding: 0.35rem 0.75rem; font-size: 0.8rem; background: var(--secondary-gradient); border-color: #10b981;">
+                    <i class="fa-solid fa-check"></i> Đồng ý
+                  </button>
+                </form>
+                
+                <!-- Từ chối -->
+                <form action="/approvals/<%= p.id %>" method="POST" style="display: inline;">
+                  <input type="hidden" name="action" value="rejected">
+                  <button type="submit" class="btn btn-danger" style="padding: 0.35rem 0.75rem; font-size: 0.8rem;">
+                    <i class="fa-solid fa-xmark"></i> Từ chối
+                  </button>
+                </form>
+              </div>
+            </td>
+          </tr>
+        <% }) %>
+      <% } %>
+    </tbody>
+  </table>
+</div>
+
+<%- include('../partials/footer') %>

@@ -1,0 +1,26 @@
+{
+  "name": "internal-lms-mvc",
+  "version": "1.0.0",
+  "description": "Internal LMS Platform using MVC, Node.js, Express, EJS, PostgreSQL, Redis, Socket.io, Web Workers, Gemini AI, and Docker.",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js",
+    "dev": "node --watch app.js",
+    "test-conn": "node config/test-conn.js",
+    "test": "node research/testMath.js && node research/testRoleMatrix.js && node research/testLearnerSuite.js"
+  },
+  "dependencies": {
+    "@google/generative-ai": "^0.11.0",
+    "@tensorflow/tfjs": "^4.22.0",
+    "bcryptjs": "^2.4.3",
+    "connect-redis": "^9.0.0",
+    "dotenv": "^16.4.5",
+    "ejs": "^3.1.10",
+    "express": "^4.19.2",
+    "express-session": "^1.18.0",
+    "ioredis": "^5.4.1",
+    "nodemailer": "^9.0.1",
+    "pg": "^8.12.0",
+    "socket.io": "^4.7.5"
+  }
+}

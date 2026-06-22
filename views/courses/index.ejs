@@ -1,0 +1,70 @@
+<%- include('../partials/header') %>
+
+<div style="margin-bottom: 2.5rem;">
+  <h1 style="font-size: 2.2rem; font-weight: 800; background: var(--primary-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+    Kho Khóa Học Doanh Nghiệp
+  </h1>
+  <p style="color: var(--text-muted); margin-top: 0.25rem;">Nâng cao năng lực chuyên môn, kỹ năng làm việc và bảo mật thông tin.</p>
+</div>
+
+<!-- Thanh tìm kiếm khóa học mờ kính -->
+<div class="glass-card" style="padding: 1rem; margin-bottom: 2.5rem; display: flex; gap: 1rem; align-items: center;">
+  <div style="flex: 1; position: relative;">
+    <i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 1rem; top: 1rem; color: var(--text-muted);"></i>
+    <input type="text" id="search-input" placeholder="Tìm kiếm tên khóa học hoặc nội dung..." style="padding-left: 2.75rem;">
+  </div>
+  <select id="category-filter" style="width: 200px;">
+    <option value="all">Tất cả danh mục</option>
+    <option value="tech">Công nghệ & lập trình</option>
+    <option value="security">An toàn bảo mật</option>
+    <option value="soft-skills">Kỹ năng mềm</option>
+  </select>
+</div>
+
+<div class="course-grid">
+  <% if (courses.length === 0) { %>
+    <div class="glass-card" style="grid-column: 1 / -1; text-align: center; padding: 4rem 2rem;">
+      <i class="fa-solid fa-graduation-cap fa-3x" style="color: var(--text-muted); margin-bottom: 1rem;"></i>
+      <h3>Không tìm thấy khóa học nào</h3>
+      <p style="color: var(--text-muted); margin-top: 0.5rem;">Vui lòng quay lại sau hoặc liên hệ bộ phận L&D.</p>
+    </div>
+  <% } else { %>
+    <% courses.forEach(course => { %>
+      <div class="glass-card course-card search-target">
+        <img src="<%= course.image_url %>" alt="<%= course.title %>">
+        <div class="course-title"><%= course.title %></div>
+        <p class="course-desc"><%= course.description %></p>
+        
+        <div style="margin-top: auto; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border-light); padding-top: 1rem;">
+          <span style="font-size: 0.8rem; color: var(--text-muted);">
+            <i class="fa-solid fa-clock"></i> Học tự do
+          </span>
+          <a href="/courses/<%= course.id %>" class="btn btn-primary" style="padding: 0.5rem 1.25rem; font-size: 0.85rem;">
+            Chi tiết học <i class="fa-solid fa-arrow-right" style="font-size: 0.75rem;"></i>
+          </a>
+        </div>
+      </div>
+    <% }) %>
+  <% } %>
+</div>
+
+<script>
+  // Logic tìm kiếm thời gian thực tại Client
+  const searchInput = document.getElementById('search-input');
+  searchInput.addEventListener('input', function(e) {
+    const text = e.target.value.toLowerCase();
+    const cards = document.querySelectorAll('.search-target');
+    
+    cards.forEach(card => {
+      const title = card.querySelector('.course-title').textContent.toLowerCase();
+      const desc = card.querySelector('.course-desc').textContent.toLowerCase();
+      if (title.includes(text) || desc.includes(text)) {
+        card.style.display = 'flex';
+      } else {
+        card.style.display = 'none';
+      }
+    });
+  });
+</script>
+
+<%- include('../partials/footer') %>
