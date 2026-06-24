@@ -348,15 +348,29 @@ module.exports = {
       return res.rows;
     },
 
-    create: async (userId, courseId, isAssigned = false, status = 'approved') => {
-      const sql = `
-        INSERT INTO enrollments (user_id, course_id, is_assigned, status)
-        VALUES ($1, $2, $3, $4)
-        ON CONFLICT DO NOTHING
-        RETURNING *
-      `;
-      const res = await db.query(sql, [userId, courseId, isAssigned, status]);
-      return res.rows[0];
+    create: async (userId, courseId, isAssigned = false, status = 'approved', deadline = null) => {
+      // Kiểm tra xem đã đăng ký chưa để cập nhật hoặc thêm mới
+      const checkSql = `SELECT id FROM enrollments WHERE user_id = $1 AND course_id = $2`;
+      const checkRes = await db.query(checkSql, [userId, courseId]);
+      
+      if (checkRes.rows.length > 0) {
+        const updateSql = `
+          UPDATE enrollments 
+          SET is_assigned = $1, status = $2, deadline = $3
+          WHERE user_id = $4 AND course_id = $5
+          RETURNING *
+        `;
+        const res = await db.query(updateSql, [isAssigned, status, deadline, userId, courseId]);
+        return res.rows[0];
+      } else {
+        const insertSql = `
+          INSERT INTO enrollments (user_id, course_id, is_assigned, status, deadline)
+          VALUES ($1, $2, $3, $4, $5)
+          RETURNING *
+        `;
+        const res = await db.query(insertSql, [userId, courseId, isAssigned, status, deadline]);
+        return res.rows[0];
+      }
     },
 
     updateProgress: async (userId, courseId, progress) => {

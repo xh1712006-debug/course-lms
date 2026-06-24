@@ -96,6 +96,7 @@ CREATE TABLE enrollments (
     progress INTEGER DEFAULT 0, -- từ 0 -> 100
     is_assigned BOOLEAN DEFAULT false,
     status VARCHAR(20) DEFAULT 'pending', -- 'pending', 'approved', 'rejected'
+    deadline TIMESTAMP DEFAULT NULL,
     last_accessed TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

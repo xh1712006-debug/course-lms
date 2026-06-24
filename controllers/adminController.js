@@ -491,7 +491,7 @@ module.exports = {
       return res.status(403).json({ error: 'Không có quyền giao lộ trình học tập.' });
     }
     const pathId = parseInt(req.params.id);
-    const { userIds, departmentIds } = req.body;
+    const { userIds, departmentIds, timeLimitDays } = req.body;
 
     try {
       const path = await LearningPath.findById(pathId);
@@ -534,11 +534,18 @@ module.exports = {
         return res.redirect('/paths?error=' + encodeURIComponent('Không tìm thấy nhân sự phù hợp nào trong đối tượng đã chọn.'));
       }
 
+      // Tính toán deadline dựa trên số ngày chỉ định
+      let deadline = null;
+      if (timeLimitDays && !isNaN(timeLimitDays) && parseInt(timeLimitDays) > 0) {
+        deadline = new Date();
+        deadline.setDate(deadline.getDate() + parseInt(timeLimitDays));
+      }
+
       let assignedCount = 0;
       // Giao tất cả khóa học của lộ trình cho từng nhân sự
       for (let uId of targetUserIds) {
         for (let c of pathCourses) {
-          await Enrollment.create(uId, c.id, true, 'approved');
+          await Enrollment.create(uId, c.id, true, 'approved', deadline);
         }
         assignedCount++;
       }
@@ -572,17 +579,23 @@ module.exports = {
     if (!req.session.permissions.includes('ENROLL_ASSIGN')) {
       return res.status(403).json({ error: 'Không có quyền giao khóa học bắt buộc.' });
     }
-    const { targetType, targetId, courseId } = req.body;
+    const { targetType, targetId, courseId, timeLimitDays } = req.body;
     try {
       const cId = parseInt(courseId);
       let assignedCount = 0;
 
+      let deadline = null;
+      if (timeLimitDays && !isNaN(timeLimitDays) && parseInt(timeLimitDays) > 0) {
+        deadline = new Date();
+        deadline.setDate(deadline.getDate() + parseInt(timeLimitDays));
+      }
+
       if (targetType === 'user') {
         const uId = parseInt(targetId);
         // Đăng ký bắt buộc, tự động duyệt
-        await Enrollment.create(uId, cId, true, 'approved');
+        await Enrollment.create(uId, cId, true, 'approved', deadline);
         assignedCount = 1;
-        await AuditLog.create(req.session.userId, 'COURSE_ASSIGN_USER', { user_id: uId, course_id: cId });
+        await AuditLog.create(req.session.userId, 'COURSE_ASSIGN_USER', { user_id: uId, course_id: cId, deadline });
       } else if (targetType === 'department') {
         const deptId = parseInt(targetId);
         // Tìm toàn bộ user thuộc phòng ban này
@@ -590,10 +603,10 @@ module.exports = {
         const usersInDept = await require('../config/db').query(sql, [deptId]);
         
         for (let u of usersInDept.rows) {
-          await Enrollment.create(u.id, cId, true, 'approved');
+          await Enrollment.create(u.id, cId, true, 'approved', deadline);
           assignedCount++;
         }
-        await AuditLog.create(req.session.userId, 'COURSE_ASSIGN_DEPARTMENT', { department_id: deptId, course_id: cId, count: assignedCount });
+        await AuditLog.create(req.session.userId, 'COURSE_ASSIGN_DEPARTMENT', { department_id: deptId, course_id: cId, count: assignedCount, deadline });
       }
 
       // Thông báo qua WebSocket (sẽ bắt ở server sau qua getIO)

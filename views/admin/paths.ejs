@@ -187,6 +187,11 @@
 
         </div>
 
+        <div style="margin-top: 1rem; margin-bottom: 1.5rem; text-align: left;">
+          <label class="form-label" style="font-size: 0.85rem; margin-bottom: 0.4rem; display: block;">Thời hạn hoàn thành cho tất cả các khóa học (ngày)</label>
+          <input type="number" name="timeLimitDays" min="1" placeholder="Ví dụ: 30 (Bỏ trống nếu không giới hạn)" style="width: 100%; padding: 0.65rem 1rem; background: rgba(255,255,255,0.05); border: 1px solid var(--border-light); border-radius: 10px; color: var(--text-main); font-size: 0.9rem; outline: none; box-sizing: border-box;">
+        </div>
+
         <div style="display: flex; gap: 1rem; justify-content: flex-end; border-top: 1px solid var(--border-light); padding-top: 1.25rem;">
           <button type="button" class="btn btn-secondary" onclick="closeAssignModal(<%= path.id %>)">Hủy</button>
           <button type="submit" class="btn btn-primary"><i class="fa-solid fa-check"></i> Xác nhận giao</button>

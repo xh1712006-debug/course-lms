@@ -523,26 +523,36 @@ module.exports = {
       const enrollments = await Enrollment.findUserAllEnrollments(userId);
       const approvedEnrollments = enrollments.filter(e => e.status === 'approved');
       
-      // Giả lập thời gian hoàn thành bắt buộc là 30 ngày từ lúc bắt đầu/giao khóa học
       const deadlines = approvedEnrollments.map(e => {
-        const enrollDate = new Date(e.created_at);
-        const deadlineDate = new Date(enrollDate.getTime() + 30 * 24 * 60 * 60 * 1000);
-        const now = new Date();
-        const timeDiff = deadlineDate.getTime() - now.getTime();
-        const daysRemaining = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
-        
-        let status = 'active';
+        let deadlineDateText = 'Không giới hạn';
+        let daysRemaining = null;
+        let status = 'unlimited';
+
         if (e.progress === 100) {
           status = 'completed';
-        } else if (daysRemaining < 0) {
-          status = 'overdue';
-        } else if (daysRemaining <= 7) {
-          status = 'warning';
+        }
+
+        if (e.deadline) {
+          const deadlineDate = new Date(e.deadline);
+          deadlineDateText = deadlineDate.toLocaleDateString('vi-VN');
+          const now = new Date();
+          const timeDiff = deadlineDate.getTime() - now.getTime();
+          daysRemaining = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
+          
+          if (e.progress !== 100) {
+            if (daysRemaining < 0) {
+              status = 'overdue';
+            } else if (daysRemaining <= 7) {
+              status = 'warning';
+            } else {
+              status = 'active';
+            }
+          }
         }
         
         return {
           ...e,
-          deadlineDate: deadlineDate.toLocaleDateString('vi-VN'),
+          deadlineDate: deadlineDateText,
           daysRemaining,
           status
         };

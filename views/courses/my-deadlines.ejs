@@ -22,12 +22,13 @@
     </div>
   <% } else { %>
     <div style="display: flex; flex-direction: column; gap: 1rem;">
-      <% deadlines.forEach(item => { %>
+       <% deadlines.forEach(item => { %>
         <div style="background: rgba(255,255,255,0.01); border: 1px solid var(--border-light); border-radius: 12px; padding: 1.25rem; display: flex; align-items: center; justify-content: space-between; gap: 1.5rem; flex-wrap: wrap; transition: all 0.3s;
           <% if (item.status === 'overdue') { %> border-left: 4px solid #ef4444; <% } %>
           <% if (item.status === 'warning') { %> border-left: 4px solid #f59e0b; <% } %>
           <% if (item.status === 'completed') { %> border-left: 4px solid #10b981; <% } %>
           <% if (item.status === 'active') { %> border-left: 4px solid #3b82f6; <% } %>
+          <% if (item.status === 'unlimited') { %> border-left: 4px solid #0d9488; <% } %>
         ">
           <!-- Thông tin khóa học -->
           <div style="display: flex; align-items: center; gap: 1rem; flex: 2; min-width: 250px;">
@@ -55,13 +56,17 @@
           <div style="flex: 1; min-width: 180px; text-align: left;">
             <div style="font-size: 0.8rem; color: var(--text-muted);">Hạn chót hoàn thành:</div>
             <div style="font-size: 0.95rem; font-weight: 700; color: #cbd5e1; margin-top: 0.15rem;">
-              <i class="fa-solid fa-clock" style="margin-right: 0.25rem;"></i> <%= item.deadlineDate %>
+              <i class="fa-solid <%= item.status === 'unlimited' ? 'fa-infinity' : 'fa-clock' %>" style="margin-right: 0.25rem;"></i> <%= item.deadlineDate %>
             </div>
             
             <div style="margin-top: 0.4rem;">
               <% if (item.status === 'completed') { %>
                 <span style="font-size: 0.72rem; font-weight: 700; background: rgba(16, 185, 129, 0.1); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.2); padding: 0.2rem 0.5rem; border-radius: 6px;">
                   <i class="fa-solid fa-circle-check"></i> Đã hoàn thành
+                </span>
+              <% } else if (item.status === 'unlimited') { %>
+                <span style="font-size: 0.72rem; font-weight: 700; background: rgba(13, 148, 136, 0.1); color: #0d9488; border: 1px solid rgba(13, 148, 136, 0.2); padding: 0.2rem 0.5rem; border-radius: 6px;">
+                  <i class="fa-solid fa-infinity"></i> Tự học: Không giới hạn
                 </span>
               <% } else if (item.status === 'overdue') { %>
                 <span style="font-size: 0.72rem; font-weight: 700; background: rgba(239, 68, 68, 0.1); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.2); padding: 0.2rem 0.5rem; border-radius: 6px;">
