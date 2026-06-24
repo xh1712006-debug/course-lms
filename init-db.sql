@@ -274,3 +274,58 @@ SELECT setval('lessons_id_seq', COALESCE((SELECT MAX(id)+1 FROM lessons), 1), fa
 SELECT setval('quizzes_id_seq', COALESCE((SELECT MAX(id)+1 FROM quizzes), 1), false);
 SELECT setval('questions_id_seq', COALESCE((SELECT MAX(id)+1 FROM questions), 1), false);
 SELECT setval('learning_paths_id_seq', COALESCE((SELECT MAX(id)+1 FROM learning_paths), 1), false);
+
+-- ============================================================
+-- FEATURE: Bài Kiểm Tra Doanh Nghiệp (Assessment)
+-- ============================================================
+
+CREATE TABLE IF NOT EXISTS assessments (
+    id SERIAL PRIMARY KEY,
+    title VARCHAR(200) NOT NULL,
+    description TEXT,
+    course_ids JSONB NOT NULL DEFAULT '[]',
+    question_count INTEGER DEFAULT 50,
+    duration_minutes INTEGER DEFAULT 60,
+    passing_score INTEGER DEFAULT 70,
+    status VARCHAR(20) DEFAULT 'draft',
+    created_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS assessment_questions (
+    id SERIAL PRIMARY KEY,
+    assessment_id INTEGER REFERENCES assessments(id) ON DELETE CASCADE,
+    question_text TEXT NOT NULL,
+    options JSONB NOT NULL,
+    correct_answer TEXT NOT NULL,
+    order_index INTEGER DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS assessment_assignments (
+    id SERIAL PRIMARY KEY,
+    assessment_id INTEGER REFERENCES assessments(id) ON DELETE CASCADE,
+    target_type VARCHAR(20) NOT NULL,
+    target_id INTEGER NOT NULL,
+    deadline TIMESTAMP DEFAULT NULL,
+    assigned_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+    assigned_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS assessment_submissions (
+    id SERIAL PRIMARY KEY,
+    assessment_id INTEGER REFERENCES assessments(id) ON DELETE CASCADE,
+    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+    score NUMERIC(5,2),
+    total_questions INTEGER,
+    correct_count INTEGER,
+    is_passed BOOLEAN,
+    answers JSONB,
+    submitted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(assessment_id, user_id)
+);
+
+SELECT setval('assessments_id_seq', COALESCE((SELECT MAX(id)+1 FROM assessments), 1), false);
+SELECT setval('assessment_questions_id_seq', COALESCE((SELECT MAX(id)+1 FROM assessment_questions), 1), false);
+SELECT setval('assessment_assignments_id_seq', COALESCE((SELECT MAX(id)+1 FROM assessment_assignments), 1), false);
+SELECT setval('assessment_submissions_id_seq', COALESCE((SELECT MAX(id)+1 FROM assessment_submissions), 1), false);

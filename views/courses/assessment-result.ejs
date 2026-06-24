@@ -1,0 +1,126 @@
+<%- include('../partials/header') %>
+
+<%
+  const scoreNum = parseFloat(submission.score);
+  const isPassed = submission.is_passed;
+  const userAnswers = typeof submission.answers === 'string' ? JSON.parse(submission.answers) : submission.answers;
+%>
+
+<div style="max-width: 820px; margin: 0 auto;">
+
+  <!-- Kết quả tổng quan -->
+  <div class="glass-card" style="padding: 2.5rem; text-align: center; margin-bottom: 2rem;
+    border-color: <%= isPassed ? 'rgba(16,185,129,0.4)' : 'rgba(239,68,68,0.35)' %>;
+    background: <%= isPassed ? 'rgba(16,185,129,0.04)' : 'rgba(239,68,68,0.04)' %>;">
+
+    <div style="font-size: 4rem; margin-bottom: 0.75rem;">
+      <%= isPassed ? '🏆' : '📋' %>
+    </div>
+
+    <h1 style="font-size: 1.6rem; font-weight: 800; margin-bottom: 0.5rem; color: <%= isPassed ? '#34d399' : '#f87171' %>;">
+      <%= isPassed ? 'Chúc Mừng! Bạn Đã Đạt!' : 'Chưa Đạt — Hãy Cố Gắng Tiếp!' %>
+    </h1>
+
+    <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 2rem;"><%= assessment.title %></p>
+
+    <div style="display: flex; justify-content: center; align-items: center; gap: 0.5rem; margin-bottom: 2rem;">
+      <!-- Vòng tròn điểm số -->
+      <div style="position: relative; width: 130px; height: 130px;">
+        <svg width="130" height="130" style="transform: rotate(-90deg);">
+          <circle cx="65" cy="65" r="55" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="10"/>
+          <circle cx="65" cy="65" r="55" fill="none"
+            stroke="<%= isPassed ? '#10b981' : '#ef4444' %>"
+            stroke-width="10"
+            stroke-dasharray="<%= 2 * Math.PI * 55 %>"
+            stroke-dashoffset="<%= 2 * Math.PI * 55 * (1 - scoreNum/100) %>"
+            stroke-linecap="round"/>
+        </svg>
+        <div style="position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+          <span style="font-size: 2rem; font-weight: 900; color: <%= isPassed ? '#34d399' : '#f87171' %>; line-height: 1;"><%= scoreNum.toFixed(1) %></span>
+          <span style="font-size: 0.8rem; color: var(--text-muted);">điểm %</span>
+        </div>
+      </div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; max-width: 400px; margin: 0 auto 2rem;">
+      <div style="padding: 0.75rem; background: rgba(255,255,255,0.03); border-radius: 10px; border: 1px solid var(--border-light);">
+        <div style="font-size: 1.4rem; font-weight: 800; color: #6ee7b7;"><%= submission.correct_count %></div>
+        <div style="font-size: 0.75rem; color: var(--text-muted);">câu đúng</div>
+      </div>
+      <div style="padding: 0.75rem; background: rgba(255,255,255,0.03); border-radius: 10px; border: 1px solid var(--border-light);">
+        <div style="font-size: 1.4rem; font-weight: 800; color: #f87171;"><%= submission.total_questions - submission.correct_count %></div>
+        <div style="font-size: 0.75rem; color: var(--text-muted);">câu sai</div>
+      </div>
+      <div style="padding: 0.75rem; background: rgba(255,255,255,0.03); border-radius: 10px; border: 1px solid var(--border-light);">
+        <div style="font-size: 1.4rem; font-weight: 800; color: #a5b4fc;"><%= assessment.passing_score %>%</div>
+        <div style="font-size: 0.75rem; color: var(--text-muted);">điểm đạt</div>
+      </div>
+    </div>
+
+    <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+      <a href="/assessments" class="btn" style="background: rgba(255,255,255,0.06); border: 1px solid var(--border-light); padding: 0.65rem 1.5rem;">
+        <i class="fa-solid fa-arrow-left" style="margin-right: 0.4rem;"></i> Bài Kiểm Tra Của Tôi
+      </a>
+      <a href="/dashboard" class="btn btn-primary" style="padding: 0.65rem 1.5rem;">
+        <i class="fa-solid fa-house" style="margin-right: 0.4rem;"></i> Về Trang Chủ
+      </a>
+    </div>
+  </div>
+
+  <!-- Chi tiết từng câu hỏi -->
+  <div class="glass-card" style="padding: 0; overflow: hidden;">
+    <div style="padding: 1.5rem; border-bottom: 1px solid var(--border-light);">
+      <h3 style="font-size: 1.1rem; font-weight: 700; margin: 0; display: flex; align-items: center; gap: 0.6rem;">
+        <i class="fa-solid fa-list-check" style="color: #8b5cf6;"></i>
+        Xem Lại Đáp Án Chi Tiết
+      </h3>
+    </div>
+
+    <div style="padding: 1.5rem; display: flex; flex-direction: column; gap: 1.5rem;">
+      <% questions.forEach((q, idx) => {
+        const userAns = userAnswers ? userAnswers[String(q.id)] : null;
+        const isCorrect = userAns && userAns.trim() === q.correct_answer.trim();
+      %>
+      <div style="padding: 1.25rem; border-radius: 10px; border: 1px solid <%= isCorrect ? 'rgba(16,185,129,0.3)' : userAns ? 'rgba(239,68,68,0.3)' : 'rgba(245,158,11,0.3)' %>; background: <%= isCorrect ? 'rgba(16,185,129,0.04)' : userAns ? 'rgba(239,68,68,0.04)' : 'rgba(245,158,11,0.04)' %>;">
+        <div style="display: flex; align-items: flex-start; gap: 0.75rem; margin-bottom: 1rem;">
+          <span style="display: flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 50%; font-size: 0.8rem; font-weight: 800; flex-shrink: 0;
+            background: <%= isCorrect ? 'rgba(16,185,129,0.2)' : userAns ? 'rgba(239,68,68,0.2)' : 'rgba(245,158,11,0.2)' %>;
+            color: <%= isCorrect ? '#34d399' : userAns ? '#f87171' : '#fbbf24' %>;">
+            <%= idx + 1 %>
+          </span>
+          <div style="flex: 1;">
+            <p style="margin: 0; font-size: 0.92rem; font-weight: 600; line-height: 1.5;"><%= q.question_text %></p>
+          </div>
+          <i class="fa-solid fa-<%= isCorrect ? 'check-circle' : userAns ? 'circle-xmark' : 'circle-minus' %>"
+            style="font-size: 1.1rem; color: <%= isCorrect ? '#34d399' : userAns ? '#f87171' : '#fbbf24' %>; flex-shrink: 0;"></i>
+        </div>
+
+        <div style="display: grid; gap: 0.4rem; padding-left: 2.5rem;">
+          <% q.options.forEach((opt, optIdx) => {
+            const optLabel = ['A', 'B', 'C', 'D'][optIdx];
+            const isUserChoice = userAns === opt;
+            const isRightAnswer = opt.trim() === q.correct_answer.trim();
+          %>
+          <div style="display: flex; align-items: center; gap: 0.6rem; padding: 0.5rem 0.75rem; border-radius: 8px;
+            background: <%= isRightAnswer ? 'rgba(16,185,129,0.1)' : isUserChoice && !isRightAnswer ? 'rgba(239,68,68,0.1)' : 'transparent' %>;
+            border: 1px solid <%= isRightAnswer ? 'rgba(52,211,153,0.3)' : isUserChoice && !isRightAnswer ? 'rgba(239,68,68,0.3)' : 'var(--border-light)' %>;">
+            <span style="width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.72rem; font-weight: 700; flex-shrink: 0;
+              background: <%= isRightAnswer ? '#10b981' : isUserChoice && !isRightAnswer ? '#ef4444' : 'rgba(255,255,255,0.06)' %>;
+              color: <%= isRightAnswer || (isUserChoice && !isRightAnswer) ? 'white' : '#6b7280' %>;">
+              <%= optLabel %>
+            </span>
+            <span style="font-size: 0.88rem; color: <%= isRightAnswer ? '#6ee7b7' : isUserChoice && !isRightAnswer ? '#fca5a5' : 'var(--text-muted)' %>; font-weight: <%= isRightAnswer ? '600' : '400' %>;">
+              <%= opt %>
+              <% if (isUserChoice && !isRightAnswer) { %> <span style="font-size:0.75rem;">(Câu trả lời của bạn)</span><% } %>
+              <% if (isRightAnswer) { %> <span style="font-size:0.75rem;">✓ Đáp án đúng</span><% } %>
+            </span>
+          </div>
+          <% }) %>
+        </div>
+      </div>
+      <% }) %>
+    </div>
+  </div>
+</div>
+
+<%- include('../partials/footer') %>

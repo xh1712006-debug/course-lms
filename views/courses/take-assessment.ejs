@@ -1,0 +1,274 @@
+<%- include('../partials/header') %>
+
+<!-- Thanh tiến trình cố định trên đầu -->
+<div id="exam-topbar" style="position: fixed; top: 0; left: 0; right: 0; z-index: 8000; background: rgba(15,23,42,0.97); backdrop-filter: blur(12px); border-bottom: 1px solid var(--border-light); padding: 0.75rem 1.5rem; display: flex; align-items: center; gap: 1rem;">
+  <div style="display: flex; align-items: center; gap: 0.6rem; flex: 1; min-width: 0;">
+    <i class="fa-solid fa-file-pen" style="color: #8b5cf6; flex-shrink: 0;"></i>
+    <span style="font-weight: 700; font-size: 0.95rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"><%= assessment.title %></span>
+  </div>
+
+  <!-- Tiến trình trả lời -->
+  <div style="display: flex; align-items: center; gap: 0.75rem; flex-shrink: 0;">
+    <span id="progress-text" style="font-size: 0.82rem; color: var(--text-muted);">0 / <%= questions.length %> câu</span>
+    <div style="width: 100px; height: 6px; background: rgba(255,255,255,0.08); border-radius: 4px; overflow: hidden;">
+      <div id="progress-fill" style="height: 100%; width: 0; background: linear-gradient(90deg, #8b5cf6, #6366f1); border-radius: 4px; transition: width 0.3s;"></div>
+    </div>
+  </div>
+
+  <!-- Bộ đếm thời gian -->
+  <div id="timer-box" style="display: flex; align-items: center; gap: 0.5rem; background: rgba(99,102,241,0.12); border: 1px solid rgba(99,102,241,0.3); padding: 0.45rem 1rem; border-radius: 8px; flex-shrink: 0;">
+    <i class="fa-regular fa-clock" style="color: #8b5cf6;"></i>
+    <span id="timer-display" style="font-size: 1rem; font-weight: 800; font-family: 'Courier New', monospace; color: #a5b4fc; min-width: 60px;">--:--</span>
+  </div>
+
+  <!-- Nút nộp bài -->
+  <button id="btn-submit-exam" onclick="confirmSubmit()" class="btn btn-primary" style="flex-shrink: 0; padding: 0.5rem 1.25rem;">
+    <i class="fa-solid fa-paper-plane" style="margin-right: 0.4rem;"></i> Nộp Bài
+  </button>
+</div>
+
+<!-- Spacer cho topbar cố định -->
+<div style="height: 60px;"></div>
+
+<!-- Header bài kiểm tra -->
+<div style="margin-bottom: 2rem;">
+  <h1 style="font-size: 1.6rem; font-weight: 800; margin-bottom: 0.5rem;"><%= assessment.title %></h1>
+  <div style="display: flex; gap: 1.5rem; flex-wrap: wrap; font-size: 0.85rem; color: var(--text-muted);">
+    <span><i class="fa-solid fa-list-ol" style="margin-right: 0.4rem; color: #8b5cf6;"></i><strong><%= questions.length %></strong> câu hỏi</span>
+    <span><i class="fa-regular fa-clock" style="margin-right: 0.4rem; color: #6366f1;"></i><strong><%= assessment.duration_minutes %></strong> phút</span>
+    <span><i class="fa-solid fa-star-half-stroke" style="margin-right: 0.4rem; color: #fbbf24;"></i>Điểm đạt: <strong><%= assessment.passing_score %>%</strong></span>
+  </div>
+  <% if (assessment.description) { %>
+    <p style="margin-top: 0.75rem; font-size: 0.9rem; color: var(--text-muted); line-height: 1.6;"><%= assessment.description %></p>
+  <% } %>
+  <div style="margin-top: 1rem; padding: 0.75rem 1rem; background: rgba(245,158,11,0.08); border-radius: 8px; border: 1px solid rgba(251,191,36,0.2); font-size: 0.85rem; color: #fbbf24;">
+    <i class="fa-solid fa-triangle-exclamation" style="margin-right: 0.5rem;"></i>
+    <strong>Lưu ý:</strong> Bài kiểm tra có giới hạn thời gian. Sau khi hết giờ, bài sẽ <strong>tự động nộp</strong>. Mỗi người chỉ được làm <strong>1 lần</strong>.
+  </div>
+</div>
+
+<!-- Danh sách câu hỏi -->
+<div id="questions-container" style="display: flex; flex-direction: column; gap: 1.75rem; margin-bottom: 5rem;">
+  <% questions.forEach((q, idx) => { %>
+  <div class="glass-card question-card" id="q-card-<%= q.id %>" style="padding: 1.5rem; border-color: var(--border-light); transition: border-color 0.2s;">
+    <div style="display: flex; align-items: flex-start; gap: 1rem; margin-bottom: 1.25rem;">
+      <span id="q-num-<%= q.id %>" style="display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 50%; background: rgba(99,102,241,0.15); border: 1px solid rgba(99,102,241,0.3); font-weight: 800; font-size: 0.85rem; color: #a5b4fc; flex-shrink: 0;">
+        <%= idx + 1 %>
+      </span>
+      <h4 style="font-size: 1rem; font-weight: 600; line-height: 1.5; margin: 0; color: var(--text-primary);">
+        <%= q.question_text %>
+      </h4>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 0.6rem; padding-left: 2.5rem;">
+      <% q.options.forEach((opt, optIdx) => {
+        const optLabel = ['A', 'B', 'C', 'D'][optIdx];
+      %>
+      <label class="option-label" data-qid="<%= q.id %>" style="display: flex; align-items: center; gap: 0.75rem; padding: 0.8rem 1rem; border-radius: 10px; border: 1px solid var(--border-light); cursor: pointer; transition: all 0.15s; user-select: none;">
+        <input type="radio" name="q_<%= q.id %>" value="<%= opt %>" style="display:none;" onchange="onAnswerChange('<%= q.id %>')">
+        <span class="opt-badge" style="display: flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 50%; border: 2px solid #4b5563; font-size: 0.8rem; font-weight: 700; color: #6b7280; flex-shrink: 0; transition: all 0.15s;">
+          <%= optLabel %>
+        </span>
+        <span style="font-size: 0.92rem; line-height: 1.4;"><%= opt %></span>
+      </label>
+      <% }) %>
+    </div>
+  </div>
+  <% }) %>
+</div>
+
+<!-- Bottom nộp bài -->
+<div style="position: fixed; bottom: 0; left: 0; right: 0; background: rgba(15,23,42,0.97); backdrop-filter: blur(12px); border-top: 1px solid var(--border-light); padding: 1rem 1.5rem; display: flex; align-items: center; justify-content: space-between; z-index: 8000;">
+  <span id="bottom-progress" style="font-size: 0.85rem; color: var(--text-muted);">Đã trả lời: <strong id="answered-count">0</strong> / <%= questions.length %> câu</span>
+  <button onclick="confirmSubmit()" class="btn btn-primary" style="padding: 0.75rem 2rem; font-size: 1rem;">
+    <i class="fa-solid fa-paper-plane" style="margin-right: 0.5rem;"></i> Nộp Bài Kiểm Tra
+  </button>
+</div>
+
+<!-- Confirm Modal -->
+<div id="modal-confirm" style="display:none; position:fixed; inset:0; z-index:9999; background:rgba(0,0,0,0.75); backdrop-filter:blur(4px); display:none; align-items:center; justify-content:center;">
+  <div class="glass-card" style="max-width:420px; width:90%; padding:2rem; text-align:center; border-color: var(--border-glow);">
+    <i class="fa-solid fa-circle-question" style="font-size: 2.5rem; color: #8b5cf6; margin-bottom: 1rem; display:block;"></i>
+    <h3 style="font-size: 1.2rem; font-weight: 700; margin-bottom: 0.5rem;">Xác Nhận Nộp Bài?</h3>
+    <p id="confirm-msg" style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1.5rem;"></p>
+    <div style="display: flex; gap: 1rem; justify-content: center;">
+      <button onclick="closeConfirm()" class="btn" style="background: rgba(255,255,255,0.05); border: 1px solid var(--border-light); padding: 0.6rem 1.5rem;">Tiếp tục làm</button>
+      <button id="btn-confirm-ok" onclick="doSubmit()" class="btn btn-primary" style="padding: 0.6rem 1.75rem;">
+        <i class="fa-solid fa-paper-plane" style="margin-right: 0.4rem;"></i> Nộp Bài
+      </button>
+    </div>
+  </div>
+</div>
+
+<style>
+.option-label:hover {
+  border-color: rgba(99, 102, 241, 0.45);
+  background: rgba(99, 102, 241, 0.06);
+}
+.option-label.selected {
+  border-color: rgba(139, 92, 246, 0.7) !important;
+  background: rgba(139, 92, 246, 0.1) !important;
+}
+.option-label.selected .opt-badge {
+  background: #8b5cf6;
+  border-color: #8b5cf6;
+  color: white;
+}
+.question-card.answered {
+  border-color: rgba(99, 102, 241, 0.3);
+}
+#timer-box.warning {
+  background: rgba(239, 68, 68, 0.15) !important;
+  border-color: rgba(239, 68, 68, 0.5) !important;
+  animation: pulse-red 1s ease-in-out infinite;
+}
+#timer-box.warning #timer-display {
+  color: #f87171 !important;
+}
+@keyframes pulse-red {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(239,68,68,0.4); }
+  50% { box-shadow: 0 0 0 6px rgba(239,68,68,0); }
+}
+</style>
+
+<script>
+const TOTAL_SECONDS = <%= assessment.duration_minutes %> * 60;
+const ASSESSMENT_ID = <%= assessment.id %>;
+const TOTAL_QUESTIONS = <%= questions.length %>;
+let answeredCount = 0;
+let timeLeft = TOTAL_SECONDS;
+let timerInterval;
+let isSubmitting = false;
+
+// Khởi chạy bộ đếm thời gian
+function startTimer() {
+  updateTimerDisplay();
+  timerInterval = setInterval(() => {
+    timeLeft--;
+    updateTimerDisplay();
+    if (timeLeft <= 300) { // 5 phút cuối: cảnh báo
+      document.getElementById('timer-box').classList.add('warning');
+    }
+    if (timeLeft <= 0) {
+      clearInterval(timerInterval);
+      alert('⏰ Hết giờ! Bài kiểm tra sẽ tự động nộp ngay bây giờ.');
+      doSubmit();
+    }
+  }, 1000);
+}
+
+function updateTimerDisplay() {
+  const m = Math.floor(timeLeft / 60);
+  const s = timeLeft % 60;
+  document.getElementById('timer-display').textContent = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+}
+
+function onAnswerChange(qid) {
+  const card = document.getElementById('q-card-' + qid);
+  const labels = card.querySelectorAll('.option-label');
+  const numBadge = document.getElementById('q-num-' + qid);
+
+  labels.forEach(label => {
+    const radio = label.querySelector('input[type="radio"]');
+    if (radio.checked) {
+      label.classList.add('selected');
+    } else {
+      label.classList.remove('selected');
+    }
+  });
+
+  // Cập nhật số đã trả lời
+  const radios = document.querySelectorAll(`input[name="q_${qid}"]`);
+  const wasAnswered = card.classList.contains('answered');
+  const isNowAnswered = [...radios].some(r => r.checked);
+
+  if (!wasAnswered && isNowAnswered) {
+    card.classList.add('answered');
+    answeredCount++;
+    numBadge.style.background = 'rgba(16,185,129,0.2)';
+    numBadge.style.borderColor = 'rgba(52,211,153,0.5)';
+    numBadge.style.color = '#34d399';
+  }
+
+  document.getElementById('answered-count').textContent = answeredCount;
+  document.getElementById('progress-text').textContent = `${answeredCount} / ${TOTAL_QUESTIONS} câu`;
+  document.getElementById('progress-fill').style.width = `${(answeredCount / TOTAL_QUESTIONS) * 100}%`;
+}
+
+// Gắn event listener cho tất cả option labels
+document.querySelectorAll('.option-label').forEach(label => {
+  label.addEventListener('click', function() {
+    const radio = this.querySelector('input[type="radio"]');
+    radio.checked = true;
+    const event = new Event('change');
+    radio.dispatchEvent(event);
+  });
+});
+
+function confirmSubmit() {
+  const unanswered = TOTAL_QUESTIONS - answeredCount;
+  let msg = `Bạn đã trả lời <strong>${answeredCount}/${TOTAL_QUESTIONS}</strong> câu hỏi.`;
+  if (unanswered > 0) {
+    msg += `<br><span style="color:#fbbf24;">⚠️ Còn <strong>${unanswered}</strong> câu chưa trả lời.</span>`;
+  }
+  msg += '<br><br>Sau khi nộp, bạn <strong>không thể</strong> làm lại. Tiếp tục?';
+  document.getElementById('confirm-msg').innerHTML = msg;
+  document.getElementById('modal-confirm').style.display = 'flex';
+}
+function closeConfirm() {
+  document.getElementById('modal-confirm').style.display = 'none';
+}
+
+async function doSubmit() {
+  if (isSubmitting) return;
+  isSubmitting = true;
+  clearInterval(timerInterval);
+  closeConfirm();
+
+  // Thu thập câu trả lời
+  const answers = {};
+  <% questions.forEach(q => { %>
+    const radios_<%= q.id %> = document.querySelectorAll('input[name="q_<%= q.id %>"]');
+    radios_<%= q.id %>.forEach(r => { if (r.checked) answers[<%= q.id %>] = r.value; });
+  <% }) %>
+
+  document.getElementById('btn-submit-exam').disabled = true;
+  document.getElementById('btn-submit-exam').innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Đang nộp...';
+
+  try {
+    const res = await fetch(`/assessments/${ASSESSMENT_ID}/submit`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ answers: JSON.stringify(answers) })
+    });
+    const data = await res.json();
+    if (data.redirectUrl) {
+      window.location.href = data.redirectUrl;
+    } else if (data.error) {
+      alert('Lỗi: ' + data.error);
+      isSubmitting = false;
+      document.getElementById('btn-submit-exam').disabled = false;
+      document.getElementById('btn-submit-exam').innerHTML = '<i class="fa-solid fa-paper-plane"></i> Nộp Bài';
+      startTimer();
+    }
+  } catch (err) {
+    alert('Lỗi kết nối: ' + err.message);
+    isSubmitting = false;
+    document.getElementById('btn-submit-exam').disabled = false;
+    startTimer();
+  }
+}
+
+// Cảnh báo khi rời trang
+window.addEventListener('beforeunload', (e) => {
+  if (!isSubmitting && answeredCount > 0) {
+    e.preventDefault();
+    e.returnValue = '';
+  }
+});
+
+// Khởi chạy
+startTimer();
+</script>
+
+<%- include('../partials/footer') %>

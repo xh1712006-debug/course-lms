@@ -381,5 +381,84 @@ module.exports = {
       }
       return fallbackQuestions;
     }
+  },
+
+  /**
+   * Sinh ~50 câu hỏi trắc nghiệm cho bài kiểm tra doanh nghiệp
+   * Dựa trên nội dung tổng hợp từ nhiều khóa học được chọn
+   * @param {string} assessmentTitle - Tiêu đề bài kiểm tra
+   * @param {Array} coursesData - Mảng [{courseTitle, lessons: [{title, content}]}]
+   * @param {number} count - Số câu hỏi cần sinh (mặc định 50)
+   * @returns {Promise<Array>} - Mảng câu hỏi JSON
+   */
+  generateAssessment: async (assessmentTitle, coursesData, count = 50) => {
+    if (!genAI) {
+      throw new Error('Gemini API Key chưa được cấu hình. Vui lòng liên hệ Admin hệ thống.');
+    }
+
+    // Tổng hợp nội dung từ tất cả các bài học trong các khóa học được chọn
+    let combinedContent = '';
+    for (const course of coursesData) {
+      combinedContent += `\n\n=== KHÓA HỌC: ${course.courseTitle} ===\n`;
+      for (const lesson of course.lessons) {
+        if (lesson.content && lesson.content.trim()) {
+          combinedContent += `\n--- Bài học: ${lesson.title} ---\n${lesson.content}\n`;
+        }
+      }
+    }
+
+    if (!combinedContent.trim()) {
+      throw new Error('Các khóa học được chọn chưa có nội dung bài học để AI có thể sinh câu hỏi.');
+    }
+
+    try {
+      const prompt = `
+Bạn là một chuyên gia L&D (Learning & Development) thiết kế bài kiểm tra năng lực nhân sự cho doanh nghiệp.
+Dựa vào nội dung tổng hợp các khóa học dưới đây, hãy sinh ra đúng ${count} câu hỏi trắc nghiệm (multiple choice) chất lượng cao để đánh giá năng lực nhân viên.
+
+Tiêu đề bài kiểm tra: "${assessmentTitle}"
+
+NỘI DUNG CÁC KHÓA HỌC:
+${combinedContent}
+
+YÊU CẦU BẮT BUỘC:
+1. Sinh ĐÚNG ${count} câu hỏi, không nhiều hơn, không ít hơn.
+2. Phân bổ câu hỏi đều giữa các khóa học (nếu có nhiều khóa).
+3. Độ khó đa dạng: 40% dễ, 40% trung bình, 20% khó.
+4. Câu hỏi phải bám sát nội dung bài học thực tế, có tính ứng dụng công việc cao.
+5. Mỗi câu có ĐÚNG 4 đáp án (A/B/C/D), chỉ 1 đáp án đúng.
+6. Trả về KẾT QUẢ DUY NHẤT là một mảng JSON (JSON array), KHÔNG có văn bản giải thích trước/sau.
+7. Cấu trúc mỗi phần tử:
+{
+  "question_text": "Nội dung câu hỏi",
+  "options": ["Đáp án A", "Đáp án B", "Đáp án C", "Đáp án D"],
+  "correct_answer": "Phải khớp chính xác với 1 trong 4 options"
+}
+8. QUY TẮC LATEX: Công thức toán viết trong $...$ không có khoảng trắng sau backslash (ví dụ: $\\Delta$ đúng, $\\ Delta$ sai).
+`;
+
+      const result = await generateContentWithFallback(prompt);
+      const rawText = result.response.text();
+      const cleanJson = cleanJsonResponse(rawText);
+      
+      const questions = JSON.parse(cleanJson);
+      if (!Array.isArray(questions)) {
+        throw new Error('Đầu ra của AI không phải là mảng JSON hợp lệ.');
+      }
+      console.log(`[Gemini] Sinh thành công ${questions.length} câu hỏi cho bài kiểm tra "${assessmentTitle}"`);
+      return questions;
+    } catch (err) {
+      console.error('[Gemini Service] Lỗi sinh câu hỏi bài kiểm tra doanh nghiệp:', err);
+      // Fallback: tạo câu hỏi mẫu
+      const fallback = [];
+      for (let i = 1; i <= count; i++) {
+        fallback.push({
+          question_text: `[Câu hỏi ${i}] Nội dung câu hỏi liên quan đến "${assessmentTitle}"`,
+          options: ["Đáp án A (Đúng)", "Đáp án B", "Đáp án C", "Đáp án D"],
+          correct_answer: "Đáp án A (Đúng)"
+        });
+      }
+      return fallback;
+    }
   }
 };

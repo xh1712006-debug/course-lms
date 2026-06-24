@@ -14,6 +14,7 @@ const { initSocket } = require('./config/socket');
 const { loadDynamicPermissions } = require('./middleware/auth');
 
 const app = express();
+app.set('trust proxy', 1); // Tin cậy các header từ reverse proxy (Nginx, Cloudflare...)
 const server = http.createServer(app);
 
 // Khởi tạo Socket.io Server kết nối thời gian thực

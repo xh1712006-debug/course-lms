@@ -881,5 +881,197 @@ module.exports = {
         const res = await db.query(sql, [id]);
         return res.rows[0];
       }
+    },
+
+  // 13. Bài Kiểm Tra Doanh Nghiệp (Company Assessments)
+  Assessment: {
+    create: async (title, description, courseIds, questionCount, durationMinutes, passingScore, createdBy) => {
+      const sql = `
+        INSERT INTO assessments (title, description, course_ids, question_count, duration_minutes, passing_score, created_by)
+        VALUES ($1, $2, $3, $4, $5, $6, $7)
+        RETURNING *
+      `;
+      const res = await db.query(sql, [title, description, JSON.stringify(courseIds), questionCount, durationMinutes, passingScore, createdBy]);
+      return res.rows[0];
+    },
+
+    findAll: async () => {
+      const sql = `
+        SELECT a.*, u.username as creator_name,
+               COUNT(DISTINCT aq.id)::int as question_count_actual,
+               COUNT(DISTINCT aa.id)::int as assignment_count
+        FROM assessments a
+        LEFT JOIN users u ON a.created_by = u.id
+        LEFT JOIN assessment_questions aq ON a.id = aq.assessment_id
+        LEFT JOIN assessment_assignments aa ON a.id = aa.assessment_id
+        GROUP BY a.id, u.username
+        ORDER BY a.created_at DESC
+      `;
+      const res = await db.query(sql);
+      return res.rows;
+    },
+
+    findById: async (id) => {
+      const sql = `
+        SELECT a.*, u.username as creator_name
+        FROM assessments a
+        LEFT JOIN users u ON a.created_by = u.id
+        WHERE a.id = $1
+      `;
+      const res = await db.query(sql, [id]);
+      return res.rows[0];
+    },
+
+    publish: async (id) => {
+      const sql = `UPDATE assessments SET status = 'published' WHERE id = $1 RETURNING *`;
+      const res = await db.query(sql, [id]);
+      return res.rows[0];
+    },
+
+    delete: async (id) => {
+      const sql = `DELETE FROM assessments WHERE id = $1`;
+      await db.query(sql, [id]);
+    },
+
+    // Lấy danh sách bài kiểm tra được giao cho user (qua user hoặc phòng ban)
+    findForUser: async (userId, departmentId) => {
+      const sql = `
+        SELECT DISTINCT a.*, u.username as creator_name,
+               aa.deadline, aa.target_type,
+               asub.id as submission_id, asub.score, asub.is_passed, asub.submitted_at
+        FROM assessments a
+        JOIN assessment_assignments aa ON a.id = aa.assessment_id
+        LEFT JOIN users u ON a.created_by = u.id
+        LEFT JOIN assessment_submissions asub ON a.id = asub.assessment_id AND asub.user_id = $1
+        WHERE a.status = 'published'
+          AND (
+            (aa.target_type = 'user' AND aa.target_id = $1)
+            ${departmentId ? `OR (aa.target_type = 'department' AND aa.target_id = $2)` : ''}
+          )
+        ORDER BY aa.assigned_at DESC
+      `;
+      const params = departmentId ? [userId, departmentId] : [userId];
+      const res = await db.query(sql, params);
+      return res.rows;
     }
-  };
+  },
+
+  AssessmentQuestion: {
+    createBulk: async (assessmentId, questions) => {
+      const client = await db.pool.connect();
+      try {
+        await client.query('BEGIN');
+        // Xóa câu hỏi cũ nếu có
+        await client.query('DELETE FROM assessment_questions WHERE assessment_id = $1', [assessmentId]);
+        const saved = [];
+        for (let i = 0; i < questions.length; i++) {
+          const q = questions[i];
+          const res = await client.query(
+            `INSERT INTO assessment_questions (assessment_id, question_text, options, correct_answer, order_index)
+             VALUES ($1, $2, $3, $4, $5) RETURNING *`,
+            [assessmentId, q.question_text, JSON.stringify(q.options), q.correct_answer, i + 1]
+          );
+          saved.push(res.rows[0]);
+        }
+        await client.query('COMMIT');
+        return saved;
+      } catch (err) {
+        await client.query('ROLLBACK');
+        throw err;
+      } finally {
+        client.release();
+      }
+    },
+
+    findByAssessmentId: async (assessmentId) => {
+      const sql = `SELECT * FROM assessment_questions WHERE assessment_id = $1 ORDER BY order_index ASC`;
+      const res = await db.query(sql, [assessmentId]);
+      return res.rows;
+    },
+
+    deleteOne: async (id) => {
+      const sql = `DELETE FROM assessment_questions WHERE id = $1`;
+      await db.query(sql, [id]);
+    }
+  },
+
+  AssessmentAssignment: {
+    // Phân phối đến user hoặc department
+    assign: async (assessmentId, targetType, targetIds, deadline, assignedBy) => {
+      const client = await db.pool.connect();
+      try {
+        await client.query('BEGIN');
+        for (const targetId of targetIds) {
+          // Kiểm tra đã giao chưa
+          const check = await client.query(
+            `SELECT id FROM assessment_assignments WHERE assessment_id = $1 AND target_type = $2 AND target_id = $3`,
+            [assessmentId, targetType, targetId]
+          );
+          if (check.rows.length === 0) {
+            await client.query(
+              `INSERT INTO assessment_assignments (assessment_id, target_type, target_id, deadline, assigned_by)
+               VALUES ($1, $2, $3, $4, $5)`,
+              [assessmentId, targetType, targetId, deadline || null, assignedBy]
+            );
+          }
+        }
+        await client.query('COMMIT');
+      } catch (err) {
+        await client.query('ROLLBACK');
+        throw err;
+      } finally {
+        client.release();
+      }
+    },
+
+    findByAssessment: async (assessmentId) => {
+      const sql = `
+        SELECT aa.*,
+          CASE
+            WHEN aa.target_type = 'user' THEN u.username
+            WHEN aa.target_type = 'department' THEN d.name
+          END as target_name
+        FROM assessment_assignments aa
+        LEFT JOIN users u ON aa.target_type = 'user' AND aa.target_id = u.id
+        LEFT JOIN departments d ON aa.target_type = 'department' AND aa.target_id = d.id
+        WHERE aa.assessment_id = $1
+        ORDER BY aa.assigned_at DESC
+      `;
+      const res = await db.query(sql, [assessmentId]);
+      return res.rows;
+    }
+  },
+
+  AssessmentSubmission: {
+    create: async (assessmentId, userId, score, totalQuestions, correctCount, isPassed, answers) => {
+      const sql = `
+        INSERT INTO assessment_submissions (assessment_id, user_id, score, total_questions, correct_count, is_passed, answers)
+        VALUES ($1, $2, $3, $4, $5, $6, $7)
+        ON CONFLICT (assessment_id, user_id) DO UPDATE
+          SET score = $3, total_questions = $4, correct_count = $5, is_passed = $6, answers = $7, submitted_at = CURRENT_TIMESTAMP
+        RETURNING *
+      `;
+      const res = await db.query(sql, [assessmentId, userId, score, totalQuestions, correctCount, isPassed, JSON.stringify(answers)]);
+      return res.rows[0];
+    },
+
+    findByUserAndAssessment: async (userId, assessmentId) => {
+      const sql = `SELECT * FROM assessment_submissions WHERE user_id = $1 AND assessment_id = $2`;
+      const res = await db.query(sql, [userId, assessmentId]);
+      return res.rows[0];
+    },
+
+    findByAssessment: async (assessmentId) => {
+      const sql = `
+        SELECT asub.*, u.username, u.email, d.name as department_name
+        FROM assessment_submissions asub
+        JOIN users u ON asub.user_id = u.id
+        LEFT JOIN departments d ON u.department_id = d.id
+        WHERE asub.assessment_id = $1
+        ORDER BY asub.score DESC, asub.submitted_at ASC
+      `;
+      const res = await db.query(sql, [assessmentId]);
+      return res.rows;
+    }
+  }
+};

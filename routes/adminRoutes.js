@@ -79,4 +79,16 @@ router.post('/permissions/:id/delete', requirePermission('ROLE_MANAGE'), adminCo
 router.post('/permissions/toggle', requirePermission('ROLE_MANAGE'), adminController.toggleRolePermission);
 router.get('/audit', requirePermission('AUDIT_LOG_VIEW'), adminController.getAuditLogs);
 
+// ==========================================
+// NHÓM 8: BÀI KIỂM TRA DOANH NGHIỆP (ASSESSMENT)
+// ==========================================
+const assessmentController = require('../controllers/assessmentController');
+router.get('/assessments', requirePermission('QUIZ_BANK_VIEW'), assessmentController.getList);
+router.post('/assessments/create', requirePermission('QUIZ_BANK_MANAGE'), assessmentController.postCreate);
+router.get('/assessments/:id', requirePermission('QUIZ_BANK_VIEW'), assessmentController.getDetail);
+router.post('/assessments/:id/publish', requirePermission('QUIZ_BANK_MANAGE'), assessmentController.postPublish);
+router.post('/assessments/:id/delete', requirePermission('QUIZ_BANK_MANAGE'), assessmentController.postDelete);
+router.post('/assessments/:id/assign', requirePermission('ENROLL_ASSIGN'), assessmentController.postAssign);
+
 module.exports = router;
+

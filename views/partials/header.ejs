@@ -73,6 +73,10 @@
                   <a href="/my-deadlines"><i class="fa-solid fa-calendar-days"></i> Lịch học & Deadline</a>
                 </li>
               <% } %>
+              <!-- Bài kiểm tra doanh nghiệp (hiển thị cho học viên) -->
+              <li class="nav-item">
+                <a href="/assessments"><i class="fa-solid fa-clipboard-list"></i> Bài Kiểm Tra</a>
+              </li>
             <% } %>
 
             <!-- ===== NHÓM: TRƯỞNG PHÒNG ===== -->
@@ -131,6 +135,9 @@
               <% if (perms.includes('QUIZ_BANK_VIEW')) { %>
                 <li class="nav-item">
                   <a href="/quiz-management"><i class="fa-solid fa-circle-question"></i> Đề thi & Câu hỏi</a>
+                </li>
+                <li class="nav-item">
+                  <a href="/admin/assessments"><i class="fa-solid fa-clipboard-check"></i> Kiểm tra Doanh nghiệp</a>
                 </li>
               <% } %>
 

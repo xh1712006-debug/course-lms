@@ -49,7 +49,15 @@ module.exports = {
       await AuditLog.create(user.id, 'USER_LOGIN', { email: user.email }, req.ip);
 
       console.log(`[Auth] Người dùng ${user.username} đăng nhập thành công. Vai trò: ${user.role_name}`);
-      res.redirect('/dashboard');
+      
+      // Đảm bảo session được ghi nhận vào Redis trước khi thực hiện redirect (tránh race condition)
+      req.session.save((err) => {
+        if (err) {
+          console.error('[Session Save Error]', err);
+          return res.render('auth/login', { error: 'Lỗi lưu phiên làm việc. Vui lòng thử lại.' });
+        }
+        res.redirect('/dashboard');
+      });
     } catch (err) {
       console.error('[Auth Controller] Lỗi đăng nhập:', err);
       res.render('auth/login', { error: 'Có lỗi xảy ra, vui lòng thử lại sau.' });
@@ -153,8 +161,11 @@ module.exports = {
       // Xóa mã OTP trong Redis sau khi đã xác thực xong
       await redisClient.del(redisKey);
 
-      // Chuyển hướng đến trang đặt lại mật khẩu
-      res.redirect('/auth/reset-password');
+      // Chuyển hướng đến trang đặt lại mật khẩu và lưu session
+      req.session.save((err) => {
+        if (err) console.error('[Session Save Error]', err);
+        res.redirect('/auth/reset-password');
+      });
     } catch (err) {
       console.error('[Auth Controller] Lỗi xác thực OTP:', err);
       res.render('auth/verify-otp', { email, error: 'Có lỗi xảy ra trong quá trình xác thực. Vui lòng thử lại sau.', success: null });
@@ -205,8 +216,11 @@ module.exports = {
       delete req.session.resetPasswordEmail;
       delete req.session.resetPasswordUserId;
 
-      // Chuyển hướng về đăng nhập kèm theo thông điệp thành công
-      res.redirect('/auth/login?success=' + encodeURIComponent('Đổi mật khẩu thành công! Vui lòng đăng nhập bằng mật khẩu mới.'));
+      // Chuyển hướng về đăng nhập kèm theo thông điệp thành công và lưu session
+      req.session.save((err) => {
+        if (err) console.error('[Session Reset Save Error]', err);
+        res.redirect('/auth/login?success=' + encodeURIComponent('Đổi mật khẩu thành công! Vui lòng đăng nhập bằng mật khẩu mới.'));
+      });
     } catch (err) {
       console.error('[Auth Controller] Lỗi đặt lại mật khẩu:', err);
       res.render('auth/reset-password', { error: 'Có lỗi xảy ra, vui lòng thử lại sau.' });
@@ -282,7 +296,10 @@ module.exports = {
       }, req.ip);
 
       console.log(`[Impersonation] Admin đã đóng vai thành công nhân viên: ${targetUser.username}`);
-      res.redirect('/dashboard');
+      req.session.save((err) => {
+        if (err) console.error('[Session Impersonation Save Error]', err);
+        res.redirect('/dashboard');
+      });
     } catch (err) {
       console.error('[Auth Controller] Lỗi đóng vai:', err);
       res.status(500).send('Lỗi máy chủ khi thực hiện giả lập.');
@@ -320,7 +337,10 @@ module.exports = {
       }, req.ip);
 
       console.log('[Impersonation] Đã thoát khỏi chế độ đóng vai người dùng.');
-      res.redirect('/users');
+      req.session.save((err) => {
+        if (err) console.error('[Session End Impersonation Save Error]', err);
+        res.redirect('/users');
+      });
     } catch (err) {
       console.error('[Auth Controller] Lỗi dừng đóng vai:', err);
       res.status(500).send('Lỗi máy chủ khi dừng giả lập.');

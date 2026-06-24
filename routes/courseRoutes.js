@@ -145,4 +145,10 @@ router.post('/courses/quiz/submit', async (req, res) => {
   }
 });
 
+const assessmentController = require('../controllers/assessmentController');
+router.get('/assessments', assessmentController.getMyAssessments);
+router.get('/assessments/:id/take', assessmentController.getTake);
+router.post('/assessments/:id/submit', assessmentController.postSubmit);
+router.get('/assessments/:id/result', assessmentController.getResult);
+
 module.exports = router;
