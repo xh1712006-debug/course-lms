@@ -4,6 +4,46 @@ const {
   Course, Lesson, Quiz, Question, QuizSubmission, 
   LearningPath, Enrollment, User, Department, Role, AuditLog, Report 
 } = require('../models/schema');
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
+
+// Đảm bảo thư mục upload tồn tại
+const uploadDir = path.join(__dirname, '..', 'public', 'uploads');
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
+}
+
+// Cấu hình storage cho multer
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, uploadDir);
+  },
+  filename: function (req, file, cb) {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+    const ext = path.extname(file.originalname);
+    const basename = path.basename(file.originalname, ext)
+      .toLowerCase()
+      .replace(/[^a-z0-9]/g, '-');
+    cb(null, basename + '-' + uniqueSuffix + ext);
+  }
+});
+
+// Giới hạn dung lượng và định dạng (100MB)
+const upload = multer({
+  storage: storage,
+  limits: { fileSize: 100 * 1024 * 1024 },
+  fileFilter: function (req, file, cb) {
+    const filetypes = /pdf|ppt|pptx|doc|docx|xls|xlsx|zip|rar|png|jpg|jpeg|gif|mp4|webm|ogg|mov|avi|mkv/;
+    const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
+    if (extname) {
+      return cb(null, true);
+    } else {
+      cb(new Error('Chỉ chấp nhận các định dạng tài liệu (PDF, Office, Zip), hình ảnh hoặc video bài giảng.'));
+    }
+  }
+}).single('file');
+
 
 // Hàm Helper xóa Cache danh sách khóa học khi có thay đổi cấu trúc khóa học
 async function invalidateCourseCache() {
@@ -29,70 +69,8 @@ function sanitizeDepartmentName(name) {
 }
 
 module.exports = {
-  // Giao diện chính của Admin Dashboard (Thống kê KPIs)
   getDashboard: async (req, res) => {
-    const permissions = req.session.permissions || [];
-    
-    // Kiểm tra xem người dùng có ít nhất một quyền quản trị/đào tạo không
-    const adminPermissions = [
-      'COURSE_VIEW', 'QUIZ_BANK_VIEW', 'LESSON_CREATE', 'LESSON_MANAGE', 
-      'QUIZ_GRADE', 'PATH_MANAGE', 'ENROLL_APPROVE', 'ENROLL_ASSIGN',
-      'USER_VIEW', 'USER_MANAGE', 'DEPARTMENT_MANAGE',
-      'REPORT_VIEW', 'REPORT_EXPORT',
-      'ROLE_MANAGE', 'AUDIT_LOG_VIEW'
-    ];
-    const hasAdminAccess = permissions.some(p => adminPermissions.includes(p));
-
-    if (!hasAdminAccess) {
-      return res.status(403).render('error', { message: 'Bạn không có quyền truy cập trang quản trị L&D.' });
-    }
-
-    try {
-      const stats = {
-        totalUsers: null,
-        totalCourses: null,
-        pendingApprovals: null,
-        onlineCount: 0
-      };
-      let recentLogs = [];
-
-      // Chỉ truy vấn CSDL nếu người dùng có quyền tương ứng
-      if (permissions.includes('USER_VIEW') || permissions.includes('USER_MANAGE')) {
-        const users = await User.findAll();
-        stats.totalUsers = users.length;
-      }
-
-      if (permissions.includes('COURSE_VIEW')) {
-        const courses = await Course.findAll();
-        stats.totalCourses = courses.length;
-      }
-
-      if (permissions.includes('ENROLL_APPROVE')) {
-        const pendingEnrollments = await Enrollment.findAllPending();
-        stats.pendingApprovals = pendingEnrollments.length;
-      }
-
-      if (permissions.includes('AUDIT_LOG_VIEW')) {
-        const logs = await AuditLog.findAll();
-        recentLogs = logs.slice(0, 10);
-      }
-
-      // Đếm số lượng người học trực tuyến từ Redis Set
-      stats.onlineCount = await redis.scard('online_users');
-
-      res.render('admin/dashboard', {
-        stats,
-        recentLogs,
-        user: {
-          username: req.session.username,
-          permissions: req.session.permissions,
-          isImpersonating: req.session.isImpersonating || false
-        }
-      });
-    } catch (err) {
-      console.error('[Admin Controller] Lỗi tải dashboard quản trị:', err);
-      res.render('error', { message: 'Không thể tải trang quản trị.' });
-    }
+    res.redirect('/dashboard');
   },
 
   // ==========================================
@@ -118,9 +96,9 @@ module.exports = {
     if (!req.session.permissions.includes('COURSE_CREATE')) {
       return res.status(403).json({ error: 'Bạn không có quyền tạo khóa học.' });
     }
-    const { title, description, image_url } = req.body;
+    const { title, description, image_url, enrollment_type } = req.body;
     try {
-      const newCourse = await Course.create(title, description, image_url || '/images/default_course.jpg', 'draft');
+      const newCourse = await Course.create(title, description, image_url || '/images/default_course.jpg', 'draft', enrollment_type || 'open');
       
       // Ghi nhật ký
       await AuditLog.create(req.session.userId, 'COURSE_CREATE', { course_id: newCourse.id, title });
@@ -138,9 +116,9 @@ module.exports = {
       return res.status(403).json({ error: 'Bạn không có quyền sửa khóa học.' });
     }
     const courseId = parseInt(req.params.id);
-    const { title, description, image_url, status } = req.body;
+    const { title, description, image_url, status, enrollment_type } = req.body;
     try {
-      await Course.update(courseId, title, description, image_url, status);
+      await Course.update(courseId, title, description, image_url, status, enrollment_type || 'open');
       
       await AuditLog.create(req.session.userId, 'COURSE_UPDATE', { course_id: courseId, title });
       await invalidateCourseCache();
@@ -246,7 +224,8 @@ module.exports = {
       return res.status(403).json({ error: 'Không có quyền tạo bài học.' });
     }
     const courseId = parseInt(req.params.courseId);
-    const { title, content, video_url, attachment_url, order_index } = req.body;
+    const { title, content, video_url, attachment_url, order_index, is_quiz } = req.body;
+    const isQuiz = is_quiz === 'true' || is_quiz === true;
 
     // Yêu cầu quyền CONTENT_UPLOAD nếu đính kèm video hoặc tài liệu học liệu
     if ((video_url || attachment_url) && !req.session.permissions.includes('CONTENT_UPLOAD')) {
@@ -254,10 +233,11 @@ module.exports = {
     }
 
     try {
-      await Lesson.create(courseId, title, content, video_url, attachment_url, parseInt(order_index));
-      await AuditLog.create(req.session.userId, 'LESSON_CREATE', { course_id: courseId, lesson_title: title });
+      await Lesson.create(courseId, title, content, video_url, attachment_url, parseInt(order_index), isQuiz);
+      await AuditLog.create(req.session.userId, 'LESSON_CREATE', { course_id: courseId, lesson_title: title, is_quiz: isQuiz });
       res.redirect(`/course-management/${courseId}/lessons`);
     } catch (err) {
+      console.error('[Admin Controller] Lỗi thêm bài giảng:', err);
       res.render('error', { message: 'Lỗi thêm bài giảng.' });
     }
   },
@@ -267,7 +247,8 @@ module.exports = {
       return res.status(403).json({ error: 'Không có quyền chỉnh sửa bài học.' });
     }
     const { courseId, id } = req.params;
-    const { title, content, video_url, attachment_url, order_index } = req.body;
+    const { title, content, video_url, attachment_url, order_index, is_quiz } = req.body;
+    const isQuiz = is_quiz === 'true' || is_quiz === true;
 
     // Yêu cầu quyền CONTENT_UPLOAD nếu đính kèm video hoặc tài liệu học liệu
     if ((video_url || attachment_url) && !req.session.permissions.includes('CONTENT_UPLOAD')) {
@@ -275,10 +256,11 @@ module.exports = {
     }
 
     try {
-      await Lesson.update(parseInt(id), title, content, video_url, attachment_url, parseInt(order_index));
-      await AuditLog.create(req.session.userId, 'LESSON_UPDATE', { lesson_id: id, title });
+      await Lesson.update(parseInt(id), title, content, video_url, attachment_url, parseInt(order_index), isQuiz);
+      await AuditLog.create(req.session.userId, 'LESSON_UPDATE', { lesson_id: id, title, is_quiz: isQuiz });
       res.redirect(`/course-management/${courseId}/lessons`);
     } catch (err) {
+      console.error('[Admin Controller] Lỗi cập nhật bài giảng:', err);
       res.render('error', { message: 'Lỗi cập nhật bài giảng.' });
     }
   },
@@ -876,16 +858,79 @@ module.exports = {
     }
   },
 
-  // Cung cấp dữ liệu JSON thô để Web Worker chạy ngầm tải về và xuất Excel
+  // Cung cấp giao diện báo cáo điểm chi tiết trực quan hoặc dữ liệu JSON thô cho Web Worker
   getRawReportData: async (req, res) => {
     if (!req.session.permissions.includes('REPORT_EXPORT')) {
-      return res.status(403).json({ error: 'Không có quyền xuất dữ liệu báo cáo.' });
+      if (req.query.format === 'json') {
+        return res.status(403).json({ error: 'Không có quyền xuất dữ liệu báo cáo.' });
+      }
+      return res.status(403).render('error', { message: 'Không có quyền xuất dữ liệu báo cáo.' });
     }
     try {
       const data = await Report.getUserProgressDetails();
-      res.json(data);
+
+      if (req.query.format === 'json') {
+        return res.json(data);
+      }
+
+      // Lọc dữ liệu phía server (Server-side filtering)
+      const search = (req.query.search || '').trim().toLowerCase();
+      const courseFilter = (req.query.course || '').trim();
+      const deptFilter = (req.query.department || '').trim();
+
+      let filteredData = data;
+
+      if (search) {
+        filteredData = filteredData.filter(row => 
+          (row.username && row.username.toLowerCase().includes(search)) ||
+          (row.email && row.email.toLowerCase().includes(search)) ||
+          (row.department_name && row.department_name.toLowerCase().includes(search)) ||
+          (row.course_title && row.course_title.toLowerCase().includes(search))
+        );
+      }
+
+      if (courseFilter && courseFilter !== 'all' && courseFilter !== '') {
+        filteredData = filteredData.filter(row => row.course_title === courseFilter);
+      }
+
+      if (deptFilter && deptFilter !== 'all' && deptFilter !== '') {
+        filteredData = filteredData.filter(row => row.department_name === deptFilter);
+      }
+
+      // Phân trang
+      const page = parseInt(req.query.page) || 1;
+      const limit = 20;
+      const totalRows = filteredData.length;
+      const totalPages = Math.ceil(totalRows / limit);
+      const offset = (page - 1) * limit;
+      const paginatedData = filteredData.slice(offset, offset + limit);
+
+      // Lấy danh sách duy nhất các khóa học và phòng ban để hiển thị bộ lọc dropdown
+      const uniqueCourses = [...new Set(data.map(row => row.course_title))].filter(Boolean);
+      const uniqueDepts = [...new Set(data.map(row => row.department_name))].filter(Boolean);
+
+      res.render('admin/raw-reports', {
+        reportData: paginatedData,
+        currentPage: page,
+        totalPages,
+        totalRows,
+        search,
+        selectedCourse: courseFilter,
+        selectedDept: deptFilter,
+        coursesList: uniqueCourses,
+        deptsList: uniqueDepts,
+        user: { 
+          username: req.session.username,
+          permissions: req.session.permissions,
+          isImpersonating: req.session.isImpersonating || false
+        } 
+      });
     } catch (err) {
-      res.status(500).json({ error: 'Không thể xuất dữ liệu thô.' });
+      console.error('[Admin Controller] Lỗi xuất dữ liệu báo cáo:', err);
+      if (req.query.format === 'json') {
+        return res.status(500).json({ error: 'Không thể xuất dữ liệu thô.' });
+      }
+      res.render('error', { message: 'Lỗi tải trang báo cáo điểm chi tiết.' });
     }
   },
 
@@ -1044,20 +1089,36 @@ module.exports = {
         { value: 'ROLE_CREATE', label: 'Tạo vai trò' },
         { value: 'ROLE_DELETE', label: 'Xóa vai trò' },
         { value: 'ROLE_PERMISSIONS_UPDATE', label: 'Cập nhật phân quyền vai trò' },
+        { value: 'ROLE_PERMISSION_TOGGLE', label: 'Thay đổi phân quyền nhanh' },
         { value: 'COURSE_CREATE', label: 'Tạo khóa học' },
         { value: 'COURSE_UPDATE', label: 'Cập nhật khóa học' },
         { value: 'COURSE_DELETE', label: 'Xóa khóa học' },
         { value: 'COURSE_PUBLISH', label: 'Thay đổi trạng thái khóa học' },
+        { value: 'COURSE_ASSIGN_USER', label: 'Giao khóa học cho nhân sự' },
+        { value: 'COURSE_ASSIGN_DEPARTMENT', label: 'Giao khóa học cho phòng ban' },
         { value: 'LESSON_CREATE', label: 'Thêm bài giảng' },
         { value: 'LESSON_UPDATE', label: 'Sửa bài giảng' },
         { value: 'LESSON_DELETE', label: 'Xóa bài giảng' },
         { value: 'PATH_CREATE', label: 'Tạo lộ trình đào tạo' },
+        { value: 'PATH_ASSIGN_BULK', label: 'Giao lộ trình học tập hàng loạt' },
         { value: 'DEPARTMENT_CREATE', label: 'Tạo phòng ban' },
         { value: 'DEPARTMENT_DELETE', label: 'Xóa phòng ban' },
+        { value: 'DEPARTMENT_UPDATE', label: 'Cập nhật phòng ban' },
         { value: 'ENROLLMENT_APPROVED', label: 'Phê duyệt đăng ký khóa học' },
         { value: 'ENROLLMENT_REJECTED', label: 'Từ chối đăng ký khóa học' },
+        { value: 'ENROLL_REQUEST', label: 'Yêu cầu đăng ký học tập' },
+        { value: 'ENROLL_DIRECT', label: 'Vào học trực tiếp' },
         { value: 'USER_IMPERSONATE_START', label: 'Bắt đầu đóng vai người dùng' },
-        { value: 'USER_IMPERSONATE_END', label: 'Kết thúc đóng vai người dùng' }
+        { value: 'USER_IMPERSONATE_END', label: 'Kết thúc đóng vai người dùng' },
+        { value: 'RUN_EXPERIMENT_SUCCESS', label: 'Huấn luyện AI thành công' },
+        { value: 'RUN_EXPERIMENT_FAILED', label: 'Huấn luyện AI thất bại' },
+        { value: 'AI_SUMMARIZE_LESSON', label: 'AI tóm tắt bài giảng' },
+        { value: 'AI_CHAT_ASSISTANT', label: 'Trò chuyện với trợ lý AI' },
+        { value: 'AI_GENERATE_QUICK_QUIZ', label: 'AI sinh đề trắc nghiệm nhanh' },
+        { value: 'AI_GENERATE_QUIZ_TO_BANK', label: 'AI lưu trắc nghiệm vào DB' },
+        { value: 'QUIZ_SETTING_UPDATE', label: 'Cập nhật cài đặt đề thi' },
+        { value: 'QUIZ_GRADE', label: 'Chấm điểm đề thi' },
+        { value: 'QUIZ_SUBMIT', label: 'Nộp bài thi trắc nghiệm' }
       ];
 
       res.render('admin/audit', { 
@@ -1080,195 +1141,9 @@ module.exports = {
 
 
 
-  // ==========================================
-  // NHÓM MỚI: QUẢN TRỊ THỰC NGHIỆM KHOA HỌC (SCIENTIFIC RESEARCH)
-  // ==========================================
 
-  getExperimentsDashboard: async (req, res) => {
-    try {
-      const { Experiment } = require('../models/schema');
-      const experiments = await Experiment.findAll();
-      res.render('admin/experiments', { 
-        experiments, 
-        user: { 
-          username: req.session.username,
-          permissions: req.session.permissions,
-          isImpersonating: req.session.isImpersonating || false
-        } 
-      });
-    } catch (err) {
-      console.error('[Admin Controller] Lỗi tải trang thực nghiệm:', err);
-      res.render('error', { message: 'Không thể tải trang quản trị thực nghiệm khoa học.' });
-    }
-  },
 
-  runExperiment: async (req, res) => {
-    const { Worker } = require('worker_threads');
-    const path = require('path');
-    const fs = require('fs');
-    const mockDataService = require('../services/mockDataService');
-    const dataPipelineService = require('../services/dataPipelineService');
-    const { Experiment } = require('../models/schema');
 
-    // 1. Lấy và kiểm chứng các tham số huấn luyện đầu vào
-    const name = req.body.name || `CNN_TimeSeries_${new Date().toISOString().replace(/[:.]/g, '-')}`;
-    const epochs = parseInt(req.body.epochs) || 20;
-    const learningRate = parseFloat(req.body.learningRate) || 0.005;
-    const batchSize = parseInt(req.body.batchSize) || 32;
-
-    try {
-      // 2. Sinh dữ liệu giả lập có chứa PII và dữ liệu khuyết
-      const rawData = mockDataService.generateMockData(600, 50);
-
-      // 3. Đưa qua Data Pipeline tiền xử lý (Khử định danh PII, nội suy, chuẩn hóa, phân tách tập Train/Val/Test)
-      const salt = 'company_lms_secure_salt_key_2026';
-      const processedSet = dataPipelineService.processDataset(rawData, salt);
-
-      // 4. Lưu thực ghi thực nghiệm ban đầu vào database PostgreSQL với trạng thái 'running'
-      const expEntry = await Experiment.create(name, epochs, learningRate, batchSize, 'running');
-
-      // 5. Khởi chạy Worker Thread huấn luyện nền độc lập
-      const workerPath = path.join(__dirname, '../research/trainWorker.js');
-      const startTime = Date.now();
-
-      const worker = new Worker(workerPath, {
-        workerData: {
-          trainData: processedSet.train,
-          valData: processedSet.validation,
-          epochs,
-          learningRate,
-          batchSize,
-          seed: 42
-        }
-      });
-
-      // Lấy thực thể socket.io để phát sự kiện tiến trình real-time
-      const { getIO } = require('../config/socket');
-      const io = getIO();
-
-      worker.on('message', async (message) => {
-        if (message.type === 'progress') {
-          // Gửi tiến độ từng epoch tới client qua WebSocket
-          io.emit('experiment_progress', {
-            experimentId: expEntry.id,
-            epoch: message.epoch,
-            loss: message.loss,
-            accuracy: message.accuracy,
-            val_loss: message.val_loss,
-            val_acc: message.val_acc
-          });
-        } else if (message.type === 'done') {
-          const runtimeSeconds = Math.round((Date.now() - startTime) / 1000);
-          
-          // Cập nhật trạng thái 'success' và lưu các chỉ số cuối cùng vào database
-          await Experiment.update(expEntry.id, 'success', message.accuracy, message.loss);
-          
-          // Gửi tín hiệu hoàn tất cho client
-          io.emit('experiment_done', {
-            experimentId: expEntry.id,
-            status: 'success',
-            accuracy: message.accuracy,
-            loss: message.loss
-          });
-
-          // Ghi nhận vết hoạt động hệ thống
-          await AuditLog.create(req.session.userId, 'RUN_EXPERIMENT_SUCCESS', {
-            experiment_id: expEntry.id,
-            name,
-            accuracy: message.accuracy,
-            loss: message.loss
-          });
-
-          // [Doc-Code Sync] Tự động đồng bộ hóa kết quả thực tế vào tệp đặc tả thực nghiệm khoa học
-          try {
-            const specPath = path.join(__dirname, '../docs/features/01-cnn-time-series.md');
-            const isPassed = message.accuracy >= 85;
-            const conclusionText = isPassed 
-              ? `Đạt mục tiêu (Độ chính xác thực tế đạt ${message.accuracy}% so với mục tiêu >= 85%).`
-              : `Không đạt mục tiêu (Độ chính xác thực tế chỉ đạt ${message.accuracy}% so với mục tiêu >= 85%). Hướng giải quyết: Cải tiến kiến trúc hoặc bổ sung dữ liệu.`;
-            const specContent = `# Đặc tả Thực nghiệm: Phân loại chuỗi thời gian bằng CNN 1D
-
-> [!NOTE]
-> Được cập nhật tự động bởi AI Agent sau khi huấn luyện thành công.
-
----
-
-## 1. Mục tiêu & Giả thuyết Khoa học (Goal & Hypothesis)
-
-- **Mục đích**: Triển khai và kiểm tra hiệu năng phân loại chuỗi thời gian của mô hình mạng CNN 1D với lớp Batch Normalization nhằm giải quyết hiện tượng quá khớp (overfitting) và tăng tốc hội tụ.
-- **Giả thuyết khoa học**: Việc chèn các lớp Batch Normalization ngay sau Convolution 1D giúp mô hình hội tụ nhanh hơn (loss giảm đều) và bộ tối ưu hóa Adam tự động điều chỉnh tham số hiệu quả để đạt độ chính xác kiểm thử >= 85%.
-
-## 2. Thiết lập Thực nghiệm (Experiment Setup)
-
-- **Bộ dữ liệu đầu vào (Dataset)**: Mock Time-Series Customer Dataset v1.0 (600 mẫu, 50 bước thời gian, tỷ lệ khuyết 12%)
-- **Thuật toán / Kiến trúc mô hình**: CNN 1D (2x Conv1d + BatchNorm + ReLU + MaxPool1d -> Flatten -> Dense 32 -> Softmax 2)
-- **Siêu tham số thực tế tối ưu**:
-  - \`learning_rate\`: ${learningRate}
-  - \`batch_size\`: ${batchSize}
-  - \`epochs\`: ${epochs}
-- **Chỉ số Hiệu năng Mục tiêu (Target Metrics)**:
-  - Accuracy >= 85%
-  - Loss <= 0.35
-
----
-
-## 3. Nhật ký Kết quả Thực nghiệm (Experiment Logs - AI Auto-filled)
-
-- **Trạng thái thực thi**: Thành công
-- **Thời gian chạy (Runtime)**: ${runtimeSeconds} giây
-- **Chỉ số hiệu năng đạt được (Actual Metrics)**:
-  - **Loss**: ${message.loss}
-  - **Accuracy**: ${message.accuracy}%
-- **Nhận xét của AI về sự hội tụ**: Mô hình CNN 1D hoạt động ổn định. Nhờ lớp Batch Normalization và chuẩn hóa L2 (Weight Decay = 0.001), hiện tượng overfitting được kiểm soát tốt, biểu đồ loss của tập kiểm định giảm dần và hội tụ đồng đều với tập huấn luyện.
-
----
-
-## 4. Kết luận & Khuyến nghị (Conclusion & Recommendations)
-
-- **Kết luận giả thuyết**: ${conclusionText}
-- **Hướng phát triển tiếp theo**: Thử nghiệm thêm với kiến trúc ResNet hoặc bổ sung Dropout để tăng độ chính xác trên tập dữ liệu lớn hơn.
-`;
-            fs.writeFileSync(specPath, specContent, 'utf8');
-            console.log(`[Doc-Code Sync] Đã cập nhật thành công kết quả thực nghiệm vào ${specPath}`);
-          } catch (docErr) {
-            console.error('[Doc-Code Sync Error]', docErr.message);
-          }
-        }
-      });
-
-      worker.on('error', async (error) => {
-        console.error('[Worker Error]', error);
-        await Experiment.update(expEntry.id, 'failed', null, null);
-        io.emit('experiment_done', {
-          experimentId: expEntry.id,
-          status: 'failed',
-          error: error.message
-        });
-        await AuditLog.create(req.session.userId, 'RUN_EXPERIMENT_FAILED', {
-          experiment_id: expEntry.id,
-          name,
-          error: error.message
-        });
-      });
-
-      worker.on('exit', (code) => {
-        if (code !== 0) {
-          console.log(`[Worker Exit] Worker dừng với mã lỗi: ${code}`);
-        }
-      });
-
-      // Trả phản hồi ngay lập tức cho client biết thực nghiệm đã được khởi chạy dưới nền
-      res.json({
-        success: true,
-        message: 'Thực nghiệm đã được khởi động thành công dưới luồng nền.',
-        experimentId: expEntry.id
-      });
-
-    } catch (err) {
-      console.error('[Admin Controller] Lỗi khởi chạy thực nghiệm:', err);
-      res.status(500).json({ error: 'Không thể khởi động thực nghiệm khoa học.' });
-    }
-  },
 
   toggleRolePermission: async (req, res) => {
     if (!req.session.permissions.includes('ROLE_MANAGE')) {
@@ -1345,5 +1220,31 @@ module.exports = {
       console.error('[Admin Controller] Lỗi cập nhật quyền vai trò:', err);
       res.status(500).json({ error: 'Có lỗi xảy ra khi cập nhật quyền hạn vai trò.' });
     }
+  },
+
+  uploadAttachment: (req, res) => {
+    if (!req.session.permissions.includes('CONTENT_UPLOAD')) {
+      return res.status(403).json({ error: 'Bạn không có quyền tải lên học liệu.' });
+    }
+
+    upload(req, res, function (err) {
+      if (err instanceof multer.MulterError) {
+        return res.status(400).json({ error: `Lỗi tải lên: ${err.message}` });
+      } else if (err) {
+        return res.status(400).json({ error: err.message });
+      }
+
+      if (!req.file) {
+        return res.status(400).json({ error: 'Vui lòng chọn tệp tin để tải lên.' });
+      }
+
+      const filePath = `/uploads/${req.file.filename}`;
+      res.json({
+        success: true,
+        filePath: filePath,
+        fileName: req.file.originalname
+      });
+    });
   }
 };
+

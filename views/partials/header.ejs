@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>LMS Nội Bộ Doanh Nghiệp</title>
-  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="/css/style.css?v=1.1">
   <!-- Thêm font awesome để dùng icon đơn giản -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
@@ -31,55 +31,48 @@
         <span class="logo-text">CompanyLMS</span>
       </div>
 
-      <% if (user) { %>
-        <!-- Card thông tin cá nhân ở đầu Sidebar giống mockup -->
-        <div class="user-profile-card" style="padding: 0.85rem 1rem; margin: 0 1rem 1rem 1rem; background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-light); border-radius: 12px; display: flex; flex-direction: column; gap: 0.4rem;">
-          <div style="font-weight: 700; color: #f1f5f9; display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem;">
-            <i class="fa-solid fa-user-astronaut" style="color: #818cf8; font-size: 0.95rem;"></i>
-            <span><%= user.username %></span>
-          </div>
-          <div style="font-size: 0.75rem; color: var(--text-muted); display: flex; align-items: center; gap: 0.5rem;">
-            <i class="fa-solid fa-tag" style="color: #fb7185; font-size: 0.8rem;"></i>
-            <span><%= user.roleName %></span>
-          </div>
-        </div>
-      <% } %>
+
 
       <nav style="flex-grow: 1;">
         <ul class="nav-list">
           <% if (user) { %>
             <%
             const perms = user.permissions || [];
+            const studentPermissions = ['PATH_VIEW', 'COURSE_ENROLL_REQUEST', 'HISTORY_VIEW', 'PROGRESS_TRACK'];
+            const hasStudentAccess = perms.some(p => studentPermissions.includes(p));
             %>
 
-            <!-- ===== NHÓM: HỌC VIÊN ===== -->
-            <li class="nav-section-label">
-              <span>Học tập</span>
-            </li>
-
+            <!-- ===== TRANG CHỦ TỔNG QUAN ===== -->
             <li class="nav-item">
-              <a href="/dashboard"><i class="fa-solid fa-chart-simple"></i> Trang chủ (Dashboard)</a>
+              <a href="/dashboard"><i class="fa-solid fa-chart-simple"></i> Trang chủ</a>
             </li>
 
-            <% if (perms.includes('PATH_VIEW')) { %>
-              <li class="nav-item">
-                <a href="/my-paths"><i class="fa-solid fa-route"></i> Lộ trình của tôi</a>
+            <!-- ===== NHÓM: HỌC VIÊN ===== -->
+            <% if (hasStudentAccess) { %>
+              <li class="nav-section-label">
+                <span>Học tập</span>
               </li>
-            <% } %>
-            <% if (perms.includes('COURSE_ENROLL_REQUEST')) { %>
-              <li class="nav-item">
-                <a href="/courses"><i class="fa-solid fa-book"></i> Kho khóa học</a>
-              </li>
-            <% } %>
-            <% if (perms.includes('HISTORY_VIEW')) { %>
-              <li class="nav-item">
-                <a href="/my-history"><i class="fa-solid fa-award"></i> Lịch sử & Thành tựu</a>
-              </li>
-            <% } %>
-            <% if (perms.includes('PROGRESS_TRACK')) { %>
-              <li class="nav-item">
-                <a href="/my-deadlines"><i class="fa-solid fa-calendar-days"></i> Lịch học & Deadline</a>
-              </li>
+
+              <% if (perms.includes('PATH_VIEW')) { %>
+                <li class="nav-item">
+                  <a href="/my-paths"><i class="fa-solid fa-route"></i> Lộ trình của tôi</a>
+                </li>
+              <% } %>
+              <% if (perms.includes('COURSE_ENROLL_REQUEST')) { %>
+                <li class="nav-item">
+                  <a href="/courses"><i class="fa-solid fa-book"></i> Kho khóa học</a>
+                </li>
+              <% } %>
+              <% if (perms.includes('HISTORY_VIEW')) { %>
+                <li class="nav-item">
+                  <a href="/my-history"><i class="fa-solid fa-award"></i> Lịch sử & Thành tựu</a>
+                </li>
+              <% } %>
+              <% if (perms.includes('PROGRESS_TRACK')) { %>
+                <li class="nav-item">
+                  <a href="/my-deadlines"><i class="fa-solid fa-calendar-days"></i> Lịch học & Deadline</a>
+                </li>
+              <% } %>
             <% } %>
 
             <%
@@ -105,12 +98,6 @@
             <% if (hasGeneralAdminAccess) { %>
               <!-- ===== DASHBOARD QUẢN TRỊ ===== -->
               <li class="nav-divider"></li>
-              <li class="nav-section-label">
-                <span>Quản trị L&D</span>
-              </li>
-              <li class="nav-item">
-                <a href="/management"><i class="fa-solid fa-gauge-high"></i> Bảng điều khiển</a>
-              </li>
             <% } %>
 
             <!-- ===== NHÓM: NỘI DUNG & ĐÀO TẠO ===== -->
@@ -189,7 +176,7 @@
 
               <% if (perms.includes('REPORT_EXPORT')) { %>
                 <li class="nav-item">
-                  <a href="/reports/raw"><i class="fa-solid fa-file-export"></i> Xuất dữ liệu thô</a>
+                  <a href="/reports/raw"><i class="fa-solid fa-file-csv"></i> Báo cáo điểm chi tiết</a>
                 </li>
               <% } %>
             <% } %>
@@ -212,20 +199,13 @@
                 </li>
               <% } %>
 
-              <% if (perms.includes('ROLE_MANAGE')) { %>
-                <li class="nav-item">
-                  <a href="/experiments"><i class="fa-solid fa-flask"></i> Thực nghiệm AI</a>
-                </li>
-              <% } %>
+
             <% } %>
 
-            <!-- ===== FOOTER: CÀI ĐẶT & ĐĂNG XUẤT ===== -->
+            <!-- ===== FOOTER: CÀI ĐẶT ===== -->
             <li class="nav-divider" style="margin-top: 1rem;"></li>
             <li class="nav-item">
               <a href="/settings"><i class="fa-solid fa-gear"></i> Cài đặt tài khoản</a>
-            </li>
-            <li class="nav-item">
-              <a href="/auth/logout" class="nav-logout"><i class="fa-solid fa-arrow-right-from-bracket"></i> Đăng xuất</a>
             </li>
 
           <% } else { %>
@@ -238,6 +218,27 @@
           <% } %>
         </ul>
       </nav>
+
+      <% if (user) { %>
+        <!-- Card thông tin cá nhân tích hợp Đăng xuất ở dưới cùng Sidebar -->
+        <div class="user-profile-card" style="padding: 0.85rem 1rem; margin-top: auto; margin-bottom: 0.5rem; background: #f8fafc; border: 1px solid var(--border-light); border-radius: 12px; display: flex; flex-direction: column; gap: 0.4rem;">
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 0.5rem;">
+            <div style="display: flex; flex-direction: column; gap: 0.2rem; min-width: 0;">
+              <div style="font-weight: 700; color: var(--text-main); display: flex; align-items: center; gap: 0.4rem; font-size: 0.88rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                <i class="fa-solid fa-user-astronaut" style="color: #4f46e5; font-size: 0.95rem; flex-shrink: 0;"></i>
+                <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"><%= user.username %></span>
+              </div>
+              <div style="font-size: 0.72rem; color: var(--text-muted); display: flex; align-items: center; gap: 0.4rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                <i class="fa-solid fa-tag" style="color: #fb7185; font-size: 0.78rem; flex-shrink: 0;"></i>
+                <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"><%= user.roleName %></span>
+              </div>
+            </div>
+            <a href="/auth/logout" class="nav-logout" title="Đăng xuất" style="width: 32px; height: 32px; background: rgba(220, 38, 38, 0.08); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #dc2626; transition: all 0.2s; flex-shrink: 0;" onmouseover="this.style.background='rgba(220, 38, 38, 0.15)'" onmouseout="this.style.background='rgba(220, 38, 38, 0.08)'">
+              <i class="fa-solid fa-arrow-right-from-bracket" style="font-size: 0.9rem;"></i>
+            </a>
+          </div>
+        </div>
+      <% } %>
 
       <script>
         document.addEventListener('DOMContentLoaded', () => {
@@ -291,28 +292,4 @@
 
     <!-- Thẻ bắt đầu của nội dung chính -->
     <main class="main-content">
-      <!-- Universal Topbar -->
-      <div class="top-bar" style="display: flex; justify-content: flex-end; align-items: center; padding: 0.75rem 1.5rem; margin-bottom: 2rem; border-bottom: 1px solid var(--border-light); background: rgba(30, 41, 59, 0.4); backdrop-filter: blur(12px); border-radius: 12px; gap: 1rem;">
-        <div style="flex-grow: 1; display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; color: var(--text-muted);">
-          <i class="fa-solid fa-clock"></i> <span>Hệ thống LMS Nội bộ Doanh nghiệp</span>
-        </div>
-        
-        <% if (user) { %>
-          <!-- Bell Notification Center -->
-          <div class="notification-bell-container" style="position: relative;">
-            <button id="notification-bell-btn" class="btn btn-secondary" style="padding: 0; border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; position: relative; background: rgba(255,255,255,0.03); border: 1px solid var(--border-light); cursor: pointer; transition: all 0.3s;">
-              <i class="fa-solid fa-bell" style="font-size: 1.1rem; color: var(--text-accent);"></i>
-              <span id="notification-badge" style="display: none; position: absolute; top: -2px; right: -2px; background: #ef4444; color: white; border-radius: 50%; font-size: 0.65rem; width: 18px; height: 18px; display: flex; align-items: center; justify-content: center; font-weight: 700; border: 2px solid var(--navy-dark);">0</span>
-            </button>
-            <div id="notification-dropdown" class="glass-card" style="display: none; position: absolute; top: 48px; right: 0; width: 320px; z-index: 2100; box-shadow: 0 10px 40px rgba(0,0,0,0.6); padding: 1rem; border-color: var(--border-glow); background: #0f172a;">
-              <h4 style="font-size: 0.9rem; margin-top: 0; margin-bottom: 0.75rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-light); padding-bottom: 0.5rem; font-weight: 700;">
-                <span>Thông báo mới nhất</span>
-                <span onclick="clearNotifications(event)" style="color: var(--text-muted); font-size: 0.75rem; cursor: pointer; font-weight: 600;">Xóa tất cả</span>
-              </h4>
-              <div id="notification-list" style="display: flex; flex-direction: column; gap: 0.6rem; max-height: 280px; overflow-y: auto;">
-                <p style="color: var(--text-muted); font-size: 0.8rem; text-align: center; padding: 1rem 0; margin: 0;">Không có thông báo mới</p>
-              </div>
-            </div>
-          </div>
-        <% } %>
-      </div>
+      

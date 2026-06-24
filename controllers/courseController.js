@@ -1,8 +1,8 @@
 const redis = require('../config/redis');
-const { Course, Lesson, Enrollment, Comment, Quiz, QuizSubmission, LearningPath, User } = require('../models/schema');
+const { Course, Lesson, Enrollment, Comment, Quiz, Question, QuizSubmission, LearningPath, User, AuditLog } = require('../models/schema');
 
 module.exports = {
-  // Trang tổng quan của học viên (Dashboard)
+  // Trang tổng quan tích hợp (Unified Dashboard)
   getDashboard: async (req, res) => {
     const userId = req.session.userId;
     const permissions = req.session.permissions || [];
@@ -20,41 +20,69 @@ module.exports = {
     ];
     const hasAdminAccess = permissions.some(p => adminPermissions.includes(p));
 
-    // Nếu không có bất kỳ quyền học tập nào nhưng có quyền quản lý thì redirect sang Admin Dashboard
-    if (!hasStudentAccess && hasAdminAccess) {
-      return res.redirect('/management');
-    }
-
     try {
       let enrollments = [];
       let pendingEnrollments = [];
       let rejectedEnrollments = [];
       let submissions = [];
       let pathsWithCourses = [];
+      
+      const stats = {
+        totalUsers: null,
+        totalCourses: null,
+        pendingApprovals: null,
+        onlineCount: 0
+      };
+      let recentLogs = [];
 
-      // 1. Lấy thông tin các khóa học nhân viên đăng ký (chỉ khi có quyền truy cập khóa học / tiến độ)
-      if (permissions.includes('COURSE_ENROLL_REQUEST') || permissions.includes('PROGRESS_TRACK')) {
-        const allEnrollments = await Enrollment.findUserAllEnrollments(userId);
-        enrollments = allEnrollments.filter(e => e.status === 'approved');
-        pendingEnrollments = allEnrollments.filter(e => e.status === 'pending');
-        rejectedEnrollments = allEnrollments.filter(e => e.status === 'rejected');
-      }
-
-      // 2. Lấy kết quả thi trắc nghiệm đã thực hiện (chỉ khi có quyền xem lịch sử thi)
-      if (permissions.includes('HISTORY_VIEW')) {
-        submissions = await QuizSubmission.findByUser(userId);
-      }
-
-      // 3. Lấy tất cả lộ trình học tập để hiển thị gợi ý (chỉ khi có quyền xem lộ trình)
-      if (permissions.includes('PATH_VIEW')) {
-        const learningPaths = await LearningPath.findAll();
-        for (let path of learningPaths) {
-          const pathCourses = await LearningPath.getCourses(path.id);
-          pathsWithCourses.push({
-            ...path,
-            courses: pathCourses
-          });
+      // 1. Lấy thông tin học tập nếu người dùng có quyền
+      if (hasStudentAccess) {
+        if (permissions.includes('COURSE_ENROLL_REQUEST') || permissions.includes('PROGRESS_TRACK')) {
+          const allEnrollments = await Enrollment.findUserAllEnrollments(userId);
+          enrollments = allEnrollments.filter(e => e.status === 'approved');
+          pendingEnrollments = allEnrollments.filter(e => e.status === 'pending');
+          rejectedEnrollments = allEnrollments.filter(e => e.status === 'rejected');
         }
+
+        if (permissions.includes('HISTORY_VIEW')) {
+          submissions = await QuizSubmission.findByUser(userId);
+        }
+
+        if (permissions.includes('PATH_VIEW')) {
+          const learningPaths = await LearningPath.findAll();
+          for (let path of learningPaths) {
+            const pathCourses = await LearningPath.getCourses(path.id);
+            pathsWithCourses.push({
+              ...path,
+              courses: pathCourses
+            });
+          }
+        }
+      }
+
+      // 2. Lấy thông tin thống kê quản trị nếu người dùng có quyền quản lý
+      if (hasAdminAccess) {
+        if (permissions.includes('USER_VIEW') || permissions.includes('USER_MANAGE')) {
+          const users = await User.findAll();
+          stats.totalUsers = users.length;
+        }
+
+        if (permissions.includes('COURSE_VIEW')) {
+          const courses = await Course.findAll();
+          stats.totalCourses = courses.length;
+        }
+
+        if (permissions.includes('ENROLL_APPROVE')) {
+          const pendingEnrollmentsData = await Enrollment.findAllPending();
+          stats.pendingApprovals = pendingEnrollmentsData.length;
+        }
+
+        if (permissions.includes('AUDIT_LOG_VIEW')) {
+          const logs = await AuditLog.findAll();
+          recentLogs = logs.slice(0, 10);
+        }
+
+        stats.onlineCount = await redis.scard('online_users');
       }
 
       res.render('dashboard', {
@@ -64,6 +92,10 @@ module.exports = {
           permissions: req.session.permissions,
           isImpersonating: req.session.isImpersonating || false
         },
+        hasStudentAccess,
+        hasAdminAccess,
+        stats,
+        recentLogs,
         enrollments,
         pendingEnrollments,
         rejectedEnrollments,
@@ -71,14 +103,15 @@ module.exports = {
         pathsWithCourses
       });
     } catch (err) {
-      console.error('[Course Controller] Lỗi tải dashboard:', err);
-      res.render('error', { message: 'Không thể tải bảng điều khiển học tập cá nhân.' });
+      console.error('[Course Controller] Lỗi tải dashboard tích hợp:', err);
+      res.render('error', { message: 'Không thể tải bảng điều khiển hệ thống.' });
     }
   },
 
   // Danh sách khóa học công khai (Tích hợp Redis Cache)
   getCourses: async (req, res) => {
     const cacheKey = 'courses:published';
+    const userId = req.session.userId;
 
     try {
       // Sử dụng helper getOrSet để tối ưu hóa code và tăng khả năng chịu lỗi (fault-tolerance)
@@ -86,8 +119,25 @@ module.exports = {
         return await Course.findAllPublished();
       }, 3600);
 
+      const userEnrollments = await Enrollment.findUserAllEnrollments(userId);
+      const enrollMap = {};
+      userEnrollments.forEach(e => {
+        enrollMap[e.course_id] = e;
+      });
+
+      const coursesWithEnrollment = courses.map(c => {
+        const enrollment = enrollMap[c.id];
+        return {
+          ...c,
+          isEnrolled: enrollment && enrollment.status === 'approved',
+          isPending: enrollment && enrollment.status === 'pending',
+          isRejected: enrollment && enrollment.status === 'rejected',
+          progress: enrollment ? enrollment.progress : 0
+        };
+      });
+
       res.render('courses/index', { 
-        courses,
+        courses: coursesWithEnrollment,
         user: {
           permissions: req.session.permissions,
           isImpersonating: req.session.isImpersonating || false
@@ -98,7 +148,30 @@ module.exports = {
       // Fallback: Đọc trực tiếp DB nếu Redis bị lỗi
       try {
         const courses = await Course.findAllPublished();
-        return res.render('courses/index', { courses, user: { permissions: req.session.permissions } });
+        const userEnrollments = await Enrollment.findUserAllEnrollments(userId);
+        const enrollMap = {};
+        userEnrollments.forEach(e => {
+          enrollMap[e.course_id] = e;
+        });
+
+        const coursesWithEnrollment = courses.map(c => {
+          const enrollment = enrollMap[c.id];
+          return {
+            ...c,
+            isEnrolled: enrollment && enrollment.status === 'approved',
+            isPending: enrollment && enrollment.status === 'pending',
+            isRejected: enrollment && enrollment.status === 'rejected',
+            progress: enrollment ? enrollment.progress : 0
+          };
+        });
+
+        return res.render('courses/index', { 
+          courses: coursesWithEnrollment, 
+          user: { 
+            permissions: req.session.permissions,
+            isImpersonating: req.session.isImpersonating || false
+          } 
+        });
       } catch (dbErr) {
         res.render('error', { message: 'Không thể lấy danh sách khóa học.' });
       }
@@ -147,9 +220,13 @@ module.exports = {
         return res.status(404).render('error', { message: 'Khóa học không hợp lệ.' });
       }
 
-      // Đăng ký khóa học:
-      // Khóa Bảo mật thông tin (ID 2) yêu cầu duyệt, các khóa khác duyệt tự động
-      const status = (courseId === 2) ? 'pending' : 'approved';
+      // Kiểm soát hình thức tham gia học tập
+      if (course.enrollment_type === 'only_assigned') {
+        return res.status(403).render('error', { message: 'Khóa học này chỉ dành cho nhân sự được chỉ định học tập bắt buộc, bạn không thể tự đăng ký.' });
+      }
+
+      // Nếu hình thức là 'restricted' thì cần phê duyệt (status = pending), ngược lại thì tự duyệt ngay (approved)
+      const status = (course.enrollment_type === 'restricted') ? 'pending' : 'approved';
       await Enrollment.create(userId, courseId, false, status);
 
       // Thêm log đăng ký
@@ -187,18 +264,36 @@ module.exports = {
         return res.redirect(`/courses/${courseId}`);
       }
 
-      // 2. Lấy thông tin bài học và tất cả bài học trong khóa
-      const lesson = await Lesson.findById(lessonId);
-      if (!lesson || lesson.course_id !== courseId) {
-        return res.status(404).render('error', { message: 'Bài học không tìm thấy.' });
+      // 2. Lấy danh sách tất cả bài học trong khóa
+      const lessons = await Lesson.findByCourseId(courseId);
+      if (lessons.length === 0) {
+        return res.status(404).render('error', { message: 'Khóa học này chưa có bài học nào.' });
       }
 
-      const lessons = await Lesson.findByCourseId(courseId);
+      // 3. Kiểm tra thông tin bài học hiện tại
+      let lesson = await Lesson.findById(lessonId);
+
+      // Nếu bài học không tồn tại, hoặc không thuộc về khóa học này, chuyển hướng đến bài học thích hợp dựa trên tiến trình hoặc bài đầu tiên
+      if (!lesson || lesson.course_id !== courseId) {
+        let redirectLessonId;
+        if (enrollment.progress === 100) {
+          // Đã hoàn thành khóa học, quay lại bài 1 để ôn tập
+          redirectLessonId = lessons[0].id;
+        } else {
+          // Đang học dở, tìm bài học chưa học tiếp theo dựa trên tiến độ
+          const lastUnlockedIdx = Math.max(0, Math.min(
+            lessons.length - 1,
+            Math.floor((enrollment.progress / 100) * lessons.length)
+          ));
+          redirectLessonId = lessons[lastUnlockedIdx].id;
+        }
+        return res.redirect(`/courses/${courseId}/lessons/${redirectLessonId}`);
+      }
 
       const currentIdx = lessons.findIndex(l => l.id === lessonId);
       const totalLessons = lessons.length;
 
-      // 3. Kiểm tra xem bài học hiện tại có bị khóa không dựa trên tiến độ trước đó
+      // 4. Kiểm tra xem bài học hiện tại có bị khóa không dựa trên tiến độ trước đó
       const requiredProgressForThisLesson = Math.round((currentIdx / totalLessons) * 100);
       if (currentIdx > 0 && enrollment.progress < requiredProgressForThisLesson) {
         // Tìm bài học hợp lệ gần nhất chưa bị khóa để chuyển hướng học viên về đó
@@ -210,19 +305,71 @@ module.exports = {
         return res.redirect(`/courses/${courseId}/lessons/${redirectLessonId}`);
       }
 
-      // Tính toán và cập nhật tiến độ học tập (Progress)
-      const calculatedProgress = Math.max(
-        enrollment.progress, 
-        Math.round(((currentIdx + 1) / totalLessons) * 100)
-      );
+      // Xử lý tiến độ và bài kiểm tra tự sinh
+      let calculatedProgress = enrollment.progress;
+      let lessonQuiz = null;
+      let lessonQuestions = [];
+      let isQuizPassed = false;
 
-      // Lưu tiến độ học mới vào PostgreSQL CSDL
-      await Enrollment.updateProgress(userId, courseId, calculatedProgress);
+      if (lesson.is_quiz) {
+        // 1. Tìm hoặc tự động tạo đề thi cho bài kiểm tra này
+        lessonQuiz = await Quiz.findByLessonId(lessonId);
+        if (!lessonQuiz) {
+          lessonQuiz = await Quiz.createLessonQuiz(courseId, lessonId, `Bài kiểm tra: ${lesson.title}`, 15, 100);
+        }
+
+        // 2. Lấy danh sách câu hỏi
+        lessonQuestions = await Question.findByQuizId(lessonQuiz.id);
+
+        // 3. Nếu chưa có câu hỏi nào, tự động gọi AI sinh ra 10 câu hỏi
+        if (lessonQuestions.length === 0) {
+          // Lấy nội dung các bài học trước đó (ngược từ currentIdx - 1 đến khi gặp bài kiểm tra khác hoặc đầu khóa)
+          let combinedContent = '';
+          for (let i = currentIdx - 1; i >= 0; i--) {
+            if (lessons[i].is_quiz) break;
+            combinedContent += `Tiêu đề: ${lessons[i].title}\nNội dung: ${lessons[i].content || ''}\n\n`;
+          }
+
+          if (combinedContent.trim() === '') {
+            combinedContent = `Nội dung tổng quát của khóa học: ${lesson.title}`;
+          }
+
+          const geminiService = require('../services/geminiService');
+          const generated = await geminiService.generateLessonQuiz(lesson.title, combinedContent, 10);
+          
+          // Lưu câu hỏi vào CSDL
+          for (const q of generated) {
+            await Question.create(lessonQuiz.id, q.question_text, 'multiple_choice', q.options, q.correct_answer);
+          }
+
+          // Lấy lại danh sách câu hỏi đã lưu
+          lessonQuestions = await Question.findByQuizId(lessonQuiz.id);
+        }
+
+        // 4. Kiểm tra xem học viên đã vượt qua bài kiểm tra này chưa (đạt 100%)
+        const passedSubmission = await QuizSubmission.findUserPassedSubmission(userId, lessonQuiz.id);
+        if (passedSubmission) {
+          isQuizPassed = true;
+          // Nếu đã qua bài kiểm tra, đảm bảo tiến độ tối thiểu đã cập nhật cho bài này
+          calculatedProgress = Math.max(
+            enrollment.progress,
+            Math.round(((currentIdx + 1) / totalLessons) * 100)
+          );
+          await Enrollment.updateProgress(userId, courseId, calculatedProgress);
+        }
+      } else {
+        // Bài lý thuyết/Video: tự động cập nhật tiến độ khi xem
+        calculatedProgress = Math.max(
+          enrollment.progress, 
+          Math.round(((currentIdx + 1) / totalLessons) * 100)
+        );
+        await Enrollment.updateProgress(userId, courseId, calculatedProgress);
+      }
 
       // 4. Lấy lịch sử bình luận / thảo luận bài học
       const comments = await Comment.findByLessonId(lessonId);
 
-      // 5. Kiểm tra xem khóa học có bài kiểm tra trắc nghiệm không
+      // 5. Kiểm tra xem khóa học có bài kiểm tra trắc nghiệm cuối khóa không (lesson_id IS NULL)
       const quiz = await Quiz.findByCourseId(courseId);
 
       res.render('courses/lesson', {
@@ -233,6 +380,9 @@ module.exports = {
         enrollment: { ...enrollment, progress: calculatedProgress },
         comments,
         quiz,
+        lessonQuiz,
+        lessonQuestions,
+        isQuizPassed,
         user: {
           id: userId,
           username: req.session.username,
@@ -288,19 +438,25 @@ module.exports = {
         let totalProgress = 0;
         let enrolledCount = 0;
         const coursesWithProgress = [];
+        let isMandatory = false;
         
         for (let c of pathCourses) {
           const enrollment = await Enrollment.findByUserAndCourse(userId, c.id);
           const progress = (enrollment && enrollment.status === 'approved') ? enrollment.progress : 0;
-          if (enrollment && enrollment.status === 'approved') {
+          const isEnrolled = !!enrollment && enrollment.status === 'approved';
+          if (isEnrolled) {
             enrolledCount++;
             totalProgress += progress;
+            if (enrollment.is_assigned) {
+              isMandatory = true;
+            }
           }
           coursesWithProgress.push({
             ...c,
             progress,
-            isEnrolled: !!enrollment && enrollment.status === 'approved',
-            isPending: !!enrollment && enrollment.status === 'pending'
+            isEnrolled,
+            isPending: !!enrollment && enrollment.status === 'pending',
+            isAssigned: !!enrollment && !!enrollment.is_assigned
           });
         }
         
@@ -311,12 +467,22 @@ module.exports = {
           courses: coursesWithProgress,
           progress: averageProgress,
           enrolledCount,
-          totalCourses: pathCourses.length
+          totalCourses: pathCourses.length,
+          isMandatory
         });
       }
       
+      const mandatoryPaths = pathsWithCourses.filter(p => p.isMandatory);
+      const electivePaths = pathsWithCourses.filter(p => !p.isMandatory);
+      
+      const myCourses = await Enrollment.findUserEnrollments(userId);
+      myCourses.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+      
       res.render('courses/my-paths', {
         paths: pathsWithCourses,
+        mandatoryPaths,
+        electivePaths,
+        myCourses,
         user: {
           permissions: req.session.permissions,
           isImpersonating: req.session.isImpersonating || false

@@ -1,253 +1,546 @@
 <%- include('partials/header') %>
 
-<div style="margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: center;">
+<div style="margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
   <div>
-    <h1 style="font-size: 2.2rem; font-weight: 800; background: var(--primary-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+    <h1 style="font-size: 2.2rem; font-weight: 800; background: var(--primary-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin: 0;">
       Chào <%= user.username %>!
     </h1>
-    <p style="color: var(--text-muted); margin-top: 0.25rem;">Chào mừng bạn trở lại không gian học tập nội bộ doanh nghiệp.</p>
+    <p style="color: var(--text-muted); margin-top: 0.25rem; margin-bottom: 0;">Chào mừng bạn trở lại không gian học tập và quản lý của doanh nghiệp.</p>
   </div>
   
   <div class="glass-card" style="padding: 0.75rem 1.25rem; display: flex; align-items: center; gap: 0.75rem;">
-    <i class="fa-solid fa-circle-nodes" style="color: #10b981; animation: pulse 2s infinite;"></i>
-    <span style="font-size: 0.9rem; font-weight: 600;">Đang trực tuyến: <strong id="online-counter" style="color: #10b981;">1</strong> nhân sự</span>
+    <i class="fa-solid fa-circle-nodes" style="color: #0d9488; animation: pulse 2s infinite;"></i>
+    <span style="font-size: 0.9rem; font-weight: 600;">Đang trực tuyến: <strong id="online-counter" style="color: #0d9488;"><%= stats.onlineCount || 1 %></strong> nhân sự</span>
   </div>
 </div>
 
-<% 
-  const hasCourseAccess = user.permissions.includes('COURSE_ENROLL_REQUEST') || user.permissions.includes('PROGRESS_TRACK');
-  const hasPathAccess = user.permissions.includes('PATH_VIEW');
-  const hasHistoryAccess = user.permissions.includes('HISTORY_VIEW');
-%>
-
-<% if (hasCourseAccess) { %>
-  <!-- Grid các chỉ số thống kê (KPIs) -->
-  <div class="kpi-grid" style="margin-bottom: 2rem;">
-    <div class="glass-card kpi-card">
-      <div class="kpi-title">Khóa đang học</div>
-      <div class="kpi-value"><%= enrollments.filter(e => e.progress < 100).length %></div>
-    </div>
-    
-    <div class="glass-card kpi-card">
-      <div class="kpi-title">Đã hoàn thành</div>
-      <div class="kpi-value secondary">
-        <%= enrollments.filter(e => e.progress === 100).length %>
-      </div>
-    </div>
-    
-    <div class="glass-card kpi-card">
-      <div class="kpi-title">Chứng chỉ đạt được</div>
-      <div class="kpi-value" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
-        <%= enrollments.filter(e => e.progress === 100).length %>
-      </div>
-    </div>
+<% if (hasStudentAccess && hasAdminAccess) { %>
+  <!-- Bộ chọn Tab cho người dùng có cả quyền Học tập & Quản trị L&D -->
+  <div class="glass-card" style="padding: 0.4rem; display: inline-flex; gap: 0.4rem; margin-bottom: 2rem; border-radius: 12px; background: #e2e8f0; border: 1px solid var(--border-light);">
+    <button class="btn" id="tab-btn-student" onclick="switchDashboardTab('student')" style="padding: 0.5rem 1.25rem; border-radius: 8px; font-size: 0.9rem; font-weight: 600; background: #ffffff; color: var(--text-accent); box-shadow: 0 2px 4px rgba(0,0,0,0.05); border: none;">
+      <i class="fa-solid fa-graduation-cap"></i> Học tập cá nhân
+    </button>
+    <button class="btn" id="tab-btn-admin" onclick="switchDashboardTab('admin')" style="padding: 0.5rem 1.25rem; border-radius: 8px; font-size: 0.9rem; font-weight: 600; background: transparent; color: var(--text-muted); border: none;">
+      <i class="fa-solid fa-gauge-high"></i> Quản trị hệ thống
+    </button>
   </div>
 <% } %>
 
-<%
-  let layoutStyle = "display: grid; gap: 2rem;";
-  if (hasCourseAccess && (hasPathAccess || hasHistoryAccess)) {
-    layoutStyle += " grid-template-columns: 2fr 1fr;";
-  } else {
-    layoutStyle += " grid-template-columns: 1fr;";
-  }
-%>
-
-<% if (hasCourseAccess || hasPathAccess || hasHistoryAccess) { %>
-<div style="<%= layoutStyle %>">
+<!-- ==========================================================================
+     PHÂN KHU 1: GIAO DIỆN HỌC TẬP (STUDENT DASHBOARD)
+     ========================================================================== -->
+<% if (hasStudentAccess) { %>
+<div id="dashboard-student-section" style="display: <%= (hasStudentAccess) ? 'block' : 'none' %>;">
   
-  <!-- Cột bên trái: Khóa học của tôi -->
-  <% if (hasCourseAccess) { %>
-    <div style="display: flex; flex-direction: column; gap: 1.5rem;">
-      <h2 style="font-size: 1.5rem; display: flex; align-items: center; gap: 0.5rem;">
-        <i class="fa-solid fa-graduation-cap" style="color: #6366f1;"></i> Khóa học đang tham gia
-      </h2>
-
-      <% if (enrollments.length === 0) { %>
-        <div class="glass-card" style="text-align: center; padding: 3rem 2rem; border-style: dashed; border-width: 2px;">
-          <i class="fa-solid fa-book-open-reader fa-3x" style="color: var(--text-muted); margin-bottom: 1rem;"></i>
-          <h3>Bạn chưa đăng ký khóa học nào</h3>
-          <p style="color: var(--text-muted); margin-top: 0.5rem; margin-bottom: 1.5rem;">Hãy khám phá các khóa học công khai của công ty để bắt đầu lộ trình phát triển.</p>
-          <% if (user.permissions.includes('COURSE_ENROLL_REQUEST')) { %>
-            <a href="/courses" class="btn btn-primary">Tìm kiếm khóa học</a>
-          <% } %>
+  <!-- Grid KPI Học viên -->
+  <% if (user.permissions.includes('COURSE_ENROLL_REQUEST') || user.permissions.includes('PROGRESS_TRACK')) { %>
+    <div class="kpi-grid" style="margin-bottom: 2rem;">
+      <div class="glass-card kpi-card">
+        <div class="kpi-title">Khóa đang học</div>
+        <div class="kpi-value"><%= enrollments.filter(e => e.progress < 100).length %></div>
+      </div>
+      
+      <div class="glass-card kpi-card">
+        <div class="kpi-title">Đã hoàn thành</div>
+        <div class="kpi-value secondary">
+          <%= enrollments.filter(e => e.progress === 100).length %>
         </div>
-      <% } else { %>
-        <div class="course-grid">
-          <% enrollments.forEach(enroll => { %>
-            <div class="glass-card course-card">
-              <img src="<%= enroll.image_url %>" alt="<%= enroll.title %>">
-              <div class="course-title"><%= enroll.title %></div>
-              <p class="course-desc"><%= enroll.description %></p>
-              
-              <div style="margin-top: auto; padding-top: 1rem;">
-                <div style="display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 0.5rem;">
-                  <span style="color: var(--text-muted);">Tiến độ học</span>
-                  <span style="font-weight: 600; color: #10b981;"><%= enroll.progress %>%</span>
-                </div>
-                <div class="progress-container" style="margin-bottom: 1.25rem;">
-                  <div class="progress-bar" style="width: <%= enroll.progress %>%;"></div>
-                </div>
-                
-                <div style="display: flex; gap: 0.5rem;">
-                  <% if (enroll.progress === 100) { %>
-                    <a href="/courses/<%= enroll.course_id %>/certificate" class="btn btn-secondary" style="flex: 1; padding: 0.5rem 1rem; font-size: 0.85rem; border-color: #f59e0b; color: #f59e0b;" title="Tải chứng nhận hoàn thành khóa học">
-                      <i class="fa-solid fa-award"></i> Chứng chỉ
-                    </a>
-                    <a href="/courses/<%= enroll.course_id %>/lessons/1" class="btn btn-primary" style="flex: 1; padding: 0.5rem 1rem; font-size: 0.85rem; background: var(--secondary-gradient); color: #fff;">
-                      <i class="fa-solid fa-rotate-left"></i> Ôn tập
-                    </a>
-                  <% } else { %>
-                    <a href="/courses/<%= enroll.course_id %>" class="btn btn-secondary" style="flex: 1; padding: 0.5rem 1rem; font-size: 0.85rem;">
-                      Chi tiết
-                    </a>
-                    <a href="/courses/<%= enroll.course_id %>/lessons/1" class="btn btn-primary" style="flex: 2; padding: 0.5rem 1rem; font-size: 0.85rem;">
-                      <i class="fa-solid fa-circle-play"></i> Học tiếp
-                    </a>
-                  <% } %>
-                </div>
-              </div>
-            </div>
-          <% }) %>
+      </div>
+      
+      <div class="glass-card kpi-card">
+        <div class="kpi-title">Chứng chỉ đạt được</div>
+        <div class="kpi-value" style="background: linear-gradient(135deg, #ea580c 0%, #f43f5e 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+          <%= enrollments.filter(e => e.progress === 100).length %>
         </div>
-      <% } %>
-
-      <% if (typeof pendingEnrollments !== 'undefined' && pendingEnrollments.length > 0) { %>
-        <h3 style="font-size: 1.2rem; margin-top: 2rem; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem; color: #f59e0b;">
-          <i class="fa-solid fa-clock-rotate-left"></i> Đang chờ phê duyệt từ HR
-        </h3>
-        <div style="display: flex; flex-direction: column; gap: 0.75rem; margin-bottom: 2rem;">
-          <% pendingEnrollments.forEach(enroll => { %>
-            <div class="glass-card" style="padding: 1rem 1.5rem; display: flex; justify-content: space-between; align-items: center; border-left: 4px solid #f59e0b;">
-              <div style="display: flex; align-items: center; gap: 1rem;">
-                <img src="<%= enroll.image_url %>" alt="<%= enroll.title %>" style="width: 50px; height: 35px; object-fit: cover; border-radius: 4px; border: 1px solid var(--border-light);">
-                <div>
-                  <h4 style="font-size: 0.95rem; font-weight: 600; margin: 0;"><%= enroll.title %></h4>
-                  <p style="font-size: 0.8rem; color: var(--text-muted); margin: 0.25rem 0 0 0;">Yêu cầu đăng ký đã gửi đi và đang đợi phê duyệt</p>
-                </div>
-              </div>
-              <span style="font-size: 0.8rem; background: rgba(245, 158, 11, 0.1); color: #f59e0b; padding: 0.25rem 0.75rem; border-radius: 12px; border: 1px solid rgba(245, 158, 11, 0.3);">
-                Chờ duyệt
-              </span>
-            </div>
-          <% }) %>
-        </div>
-      <% } %>
-
-      <% if (typeof rejectedEnrollments !== 'undefined' && rejectedEnrollments.length > 0) { %>
-        <h3 style="font-size: 1.2rem; margin-top: 2rem; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem; color: #ef4444;">
-          <i class="fa-solid fa-circle-xmark"></i> Yêu cầu bị từ chối
-        </h3>
-        <div style="display: flex; flex-direction: column; gap: 0.75rem;">
-          <% rejectedEnrollments.forEach(enroll => { %>
-            <div class="glass-card" style="padding: 1rem 1.5rem; display: flex; justify-content: space-between; align-items: center; border-left: 4px solid #ef4444;">
-              <div style="display: flex; align-items: center; gap: 1rem;">
-                <img src="<%= enroll.image_url %>" alt="<%= enroll.title %>" style="width: 50px; height: 35px; object-fit: cover; border-radius: 4px; border: 1px solid var(--border-light);">
-                <div>
-                  <h4 style="font-size: 0.95rem; font-weight: 600; margin: 0;"><%= enroll.title %></h4>
-                  <p style="font-size: 0.8rem; color: var(--text-muted); margin: 0.25rem 0 0 0;">HR đã từ chối yêu cầu đăng ký khóa học này</p>
-                </div>
-              </div>
-              <a href="/courses/<%= enroll.course_id %>" class="btn btn-secondary" style="padding: 0.3rem 0.75rem; font-size: 0.75rem;">
-                Chi tiết
-              </a>
-            </div>
-          <% }) %>
-        </div>
-      <% } %>
+      </div>
     </div>
   <% } %>
 
-  <!-- Cột bên phải: Lộ trình và Lịch sử thi -->
-  <% if (hasPathAccess || hasHistoryAccess) { %>
-    <div style="display: flex; flex-direction: column; gap: 2rem;">
-      
-      <!-- Lộ trình học gợi ý -->
-      <% if (hasPathAccess) { %>
-        <div>
-          <h2 style="font-size: 1.3rem; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
-            <i class="fa-solid fa-route" style="color: #06b6d4;"></i> Lộ trình gợi ý
-          </h2>
-          <div class="glass-card" style="display: flex; flex-direction: column; gap: 1rem; padding: 1.5rem;">
-            <% if (pathsWithCourses.length === 0) { %>
-              <p style="color: var(--text-muted); font-size: 0.85rem; text-align: center;">Chưa cấu hình lộ trình học gợi ý.</p>
-            <% } else { %>
-              <% pathsWithCourses.forEach(path => { %>
-                <div style="border-bottom: 1px solid var(--border-light); padding-bottom: 0.75rem; &:last-child { border-bottom: none; padding-bottom: 0; }">
-                  <h4 style="color: var(--text-accent); font-size: 0.95rem; margin: 0;"><%= path.name %></h4>
-                  <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.25rem; margin-bottom: 0.5rem;"><%= path.description %></p>
-                  <div style="display: flex; flex-wrap: wrap; gap: 0.25rem;">
-                    <% path.courses.forEach(c => { %>
-                      <span style="font-size: 0.7rem; background: rgba(255,255,255,0.05); padding: 0.2rem 0.5rem; border-radius: 4px; border: 1px solid var(--border-light);">
-                        <%= c.title %>
-                      </span>
-                    <% }) %>
-                  </div>
-                </div>
-              <% }) %>
+  <%
+    let layoutStyle = "display: grid; gap: 2rem;";
+    if ((user.permissions.includes('COURSE_ENROLL_REQUEST') || user.permissions.includes('PROGRESS_TRACK')) && (user.permissions.includes('PATH_VIEW') || user.permissions.includes('HISTORY_VIEW'))) {
+      layoutStyle += " grid-template-columns: 2fr 1fr;";
+    } else {
+      layoutStyle += " grid-template-columns: 1fr;";
+    }
+  %>
+
+  <div style="<%= layoutStyle %>" class="dashboard-main-grid-override">
+    
+    <!-- Cột bên trái: Khóa học của tôi -->
+    <% if (user.permissions.includes('COURSE_ENROLL_REQUEST') || user.permissions.includes('PROGRESS_TRACK')) { %>
+      <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+        <h2 style="font-size: 1.4rem; display: flex; align-items: center; gap: 0.5rem; color: var(--text-main);">
+          <i class="fa-solid fa-graduation-cap" style="color: var(--text-accent);"></i> Khóa học đang tham gia
+        </h2>
+
+        <% if (enrollments.length === 0) { %>
+          <div class="glass-card" style="text-align: center; padding: 3rem 2rem; border-style: dashed; border-width: 2px;">
+            <i class="fa-solid fa-book-open-reader fa-3x" style="color: var(--text-muted); margin-bottom: 1rem; opacity: 0.6;"></i>
+            <h3>Bạn chưa đăng ký khóa học nào</h3>
+            <p style="color: var(--text-muted); margin-top: 0.5rem; margin-bottom: 1.5rem;">Hãy khám phá các khóa học công khai của công ty để bắt đầu lộ trình phát triển.</p>
+            <% if (user.permissions.includes('COURSE_ENROLL_REQUEST')) { %>
+              <a href="/courses" class="btn btn-primary">Tìm kiếm khóa học</a>
             <% } %>
           </div>
-        </div>
-      <% } %>
-
-      <!-- Kết quả thi trắc nghiệm gần nhất -->
-      <% if (hasHistoryAccess) { %>
-        <div>
-          <h2 style="font-size: 1.3rem; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
-            <i class="fa-solid fa-square-poll-vertical" style="color: #8b5cf6;"></i> Điểm số bài thi
-          </h2>
-          <div class="glass-card" style="padding: 1.5rem;">
-            <% if (submissions.length === 0) { %>
-              <p style="color: var(--text-muted); font-size: 0.85rem; text-align: center;">Bạn chưa thực hiện bài kiểm tra nào.</p>
-            <% } else { %>
-              <div style="display: flex; flex-direction: column; gap: 0.75rem;">
-                <% submissions.forEach(sub => { %>
-                  <div style="display: flex; flex-direction: column; background: rgba(255,255,255,0.02); padding: 1rem; border-radius: 8px; border: 1px solid var(--border-light); gap: 0.5rem;">
-                    <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 0.5rem;">
-                      <div>
-                        <h4 style="font-size: 0.85rem; font-weight: 600; margin: 0;"><%= sub.quiz_title %></h4>
-                        <span style="font-size: 0.75rem; color: var(--text-muted);"><%= sub.course_title %></span>
-                      </div>
-                      <div style="text-align: right; flex-shrink: 0;">
-                        <% if (sub.score === null || typeof sub.score === 'undefined') { %>
-                          <span class="btn" style="padding: 0.2rem 0.5rem; font-size: 0.7rem; cursor: default; background: rgba(245,158,11,0.1); color: #f59e0b; border: 1px solid #f59e0b;">
-                            <i class="fa-solid fa-spinner fa-spin" style="margin-right: 0.25rem;"></i> Chờ chấm
-                          </span>
-                        <% } else { %>
-                          <span class="btn" style="padding: 0.2rem 0.5rem; font-size: 0.75rem; cursor: default; <%= sub.is_passed ? 'background: rgba(16,185,129,0.1); color: #10b981; border: 1px solid #10b981;' : 'background: rgba(239,68,68,0.1); color: #f87171; border: 1px solid #ef4444;' %>">
-                            <%= sub.score %>/100
-                          </span>
-                        <% } %>
-                      </div>
-                    </div>
-                    <% if (sub.grade_feedback) { %>
-                      <div style="margin-top: 0.25rem; padding: 0.5rem 0.75rem; background: rgba(139, 92, 246, 0.05); border-left: 3px solid #8b5cf6; border-radius: 4px; font-size: 0.8rem; color: #cbd5e1;">
-                        <i class="fa-solid fa-comment-dots" style="color: #8b5cf6; margin-right: 0.25rem;"></i>
-                        <strong>Nhận xét:</strong> 
-                        <span style="font-style: italic;">"<%= sub.grade_feedback %>"</span>
-                      </div>
+        <% } else { %>
+          <div class="course-grid">
+            <% enrollments.forEach(enroll => { %>
+              <div class="glass-card course-card">
+                <img src="<%= enroll.image_url %>" alt="<%= enroll.title %>">
+                <div class="course-title"><%= enroll.title %></div>
+                <p class="course-desc"><%= enroll.description %></p>
+                
+                <div style="margin-top: auto; padding-top: 1rem;">
+                  <div style="display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 0.5rem;">
+                    <span style="color: var(--text-muted);">Tiến độ học</span>
+                    <span style="font-weight: 600; color: #0d9488;"><%= enroll.progress %>%</span>
+                  </div>
+                  <div class="progress-container" style="margin-bottom: 1.25rem;">
+                    <div class="progress-bar" style="width: <%= enroll.progress %>%;"></div>
+                  </div>
+                  
+                  <div style="display: flex; gap: 0.5rem;">
+                    <% if (enroll.progress === 100) { %>
+                      <a href="/courses/<%= enroll.course_id %>/certificate" class="btn btn-secondary" style="flex: 1; padding: 0.5rem 1rem; font-size: 0.85rem; border-color: #ea580c; color: #ea580c;" title="Tải chứng nhận hoàn thành khóa học">
+                        <i class="fa-solid fa-award"></i> Chứng chỉ
+                      </a>
+                      <a href="/courses/<%= enroll.course_id %>/lessons/1" class="btn btn-primary" style="flex: 1; padding: 0.5rem 1rem; font-size: 0.85rem; background: var(--secondary-gradient); color: #fff;">
+                        <i class="fa-solid fa-rotate-left"></i> Ôn tập
+                      </a>
+                    <% } else { %>
+                      <a href="/courses/<%= enroll.course_id %>" class="btn btn-secondary" style="flex: 1; padding: 0.5rem 1rem; font-size: 0.85rem;">
+                        Chi tiết
+                      </a>
+                      <a href="/courses/<%= enroll.course_id %>/lessons/1" class="btn btn-primary" style="flex: 2; padding: 0.5rem 1rem; font-size: 0.85rem;">
+                        <i class="fa-solid fa-circle-play"></i> Học tiếp
+                      </a>
                     <% } %>
                   </div>
+                </div>
+              </div>
+            <% }) %>
+          </div>
+        <% } %>
+
+        <% if (typeof pendingEnrollments !== 'undefined' && pendingEnrollments.length > 0) { %>
+          <h3 style="font-size: 1.2rem; margin-top: 2rem; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem; color: #ea580c;">
+            <i class="fa-solid fa-clock-rotate-left"></i> Đang chờ phê duyệt từ HR
+          </h3>
+          <div style="display: flex; flex-direction: column; gap: 0.75rem; margin-bottom: 2rem;">
+            <% pendingEnrollments.forEach(enroll => { %>
+              <div class="glass-card" style="padding: 1rem 1.5rem; display: flex; justify-content: space-between; align-items: center; border-left: 4px solid #ea580c;">
+                <div style="display: flex; align-items: center; gap: 1rem;">
+                  <img src="<%= enroll.image_url %>" alt="<%= enroll.title %>" style="width: 50px; height: 35px; object-fit: cover; border-radius: 4px; border: 1px solid var(--border-light);">
+                  <div>
+                    <h4 style="font-size: 0.95rem; font-weight: 600; margin: 0; color: var(--text-main);"><%= enroll.title %></h4>
+                    <p style="font-size: 0.8rem; color: var(--text-muted); margin: 0.25rem 0 0 0;">Yêu cầu đăng ký đã gửi đi và đang đợi phê duyệt</p>
+                  </div>
+                </div>
+                <span style="font-size: 0.8rem; background: rgba(234, 88, 12, 0.1); color: #ea580c; padding: 0.25rem 0.75rem; border-radius: 12px; border: 1px solid rgba(234, 88, 12, 0.3);">
+                  Chờ duyệt
+                </span>
+              </div>
+            <% }) %>
+          </div>
+        <% } %>
+
+        <% if (typeof rejectedEnrollments !== 'undefined' && rejectedEnrollments.length > 0) { %>
+          <h3 style="font-size: 1.2rem; margin-top: 2rem; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem; color: #ef4444;">
+            <i class="fa-solid fa-circle-xmark"></i> Yêu cầu bị từ chối
+          </h3>
+          <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+            <% rejectedEnrollments.forEach(enroll => { %>
+              <div class="glass-card" style="padding: 1rem 1.5rem; display: flex; justify-content: space-between; align-items: center; border-left: 4px solid #ef4444;">
+                <div style="display: flex; align-items: center; gap: 1rem;">
+                  <img src="<%= enroll.image_url %>" alt="<%= enroll.title %>" style="width: 50px; height: 35px; object-fit: cover; border-radius: 4px; border: 1px solid var(--border-light);">
+                  <div>
+                    <h4 style="font-size: 0.95rem; font-weight: 600; margin: 0; color: var(--text-main);"><%= enroll.title %></h4>
+                    <p style="font-size: 0.8rem; color: var(--text-muted); margin: 0.25rem 0 0 0;">HR đã từ chối yêu cầu đăng ký khóa học này</p>
+                  </div>
+                </div>
+                <a href="/courses/<%= enroll.course_id %>" class="btn btn-secondary" style="padding: 0.3rem 0.75rem; font-size: 0.75rem;">
+                  Chi tiết
+                </a>
+              </div>
+            <% }) %>
+          </div>
+        <% } %>
+      </div>
+    <% } %>
+
+    <!-- Cột bên phải: Lộ trình và Lịch sử thi -->
+    <% if (user.permissions.includes('PATH_VIEW') || user.permissions.includes('HISTORY_VIEW')) { %>
+      <div style="display: flex; flex-direction: column; gap: 2rem;">
+        
+        <!-- Lộ trình học gợi ý -->
+        <% if (user.permissions.includes('PATH_VIEW')) { %>
+          <div>
+            <h2 style="font-size: 1.3rem; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem; color: var(--text-main);">
+              <i class="fa-solid fa-route" style="color: #06b6d4;"></i> Lộ trình gợi ý
+            </h2>
+            <div class="glass-card" style="display: flex; flex-direction: column; gap: 1rem; padding: 1.5rem;">
+              <% if (pathsWithCourses.length === 0) { %>
+                <p style="color: var(--text-muted); font-size: 0.85rem; text-align: center;">Chưa cấu hình lộ trình học gợi ý.</p>
+              <% } else { %>
+                <% pathsWithCourses.forEach(path => { %>
+                  <div style="border-bottom: 1px solid var(--border-light); padding-bottom: 0.75rem; &:last-child { border-bottom: none; padding-bottom: 0; }">
+                    <h4 style="color: var(--text-accent); font-size: 0.95rem; margin: 0;"><%= path.name %></h4>
+                    <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.25rem; margin-bottom: 0.5rem;"><%= path.description %></p>
+                    <div style="display: flex; flex-wrap: wrap; gap: 0.25rem;">
+                      <% path.courses.forEach(c => { %>
+                        <span style="font-size: 0.7rem; background: #f1f5f9; padding: 0.2rem 0.5rem; border-radius: 4px; border: 1px solid var(--border-light); color: var(--text-muted);">
+                          <%= c.title %>
+                        </span>
+                      <% }) %>
+                    </div>
+                  </div>
+                <% }) %>
+              <% } %>
+            </div>
+          </div>
+        <% } %>
+
+        <!-- Kết quả thi trắc nghiệm gần nhất -->
+        <% if (user.permissions.includes('HISTORY_VIEW')) { %>
+          <div>
+            <h2 style="font-size: 1.3rem; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem; color: var(--text-main);">
+              <i class="fa-solid fa-square-poll-vertical" style="color: #8b5cf6;"></i> Điểm số bài thi
+            </h2>
+            <div class="glass-card" style="padding: 1.5rem;">
+              <% if (submissions.length === 0) { %>
+                <p style="color: var(--text-muted); font-size: 0.85rem; text-align: center;">Bạn chưa thực hiện bài kiểm tra nào.</p>
+              <% } else { %>
+                <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                  <% submissions.forEach(sub => { %>
+                    <div style="display: flex; flex-direction: column; background: #f8fafc; padding: 1rem; border-radius: 8px; border: 1px solid var(--border-light); gap: 0.5rem;">
+                      <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 0.5rem;">
+                        <div>
+                          <h4 style="font-size: 0.85rem; font-weight: 600; margin: 0; color: var(--text-main);"><%= sub.quiz_title %></h4>
+                          <span style="font-size: 0.75rem; color: var(--text-muted);"><%= sub.course_title %></span>
+                        </div>
+                        <div style="text-align: right; flex-shrink: 0;">
+                          <% if (sub.score === null || typeof sub.score === 'undefined') { %>
+                            <span class="btn" style="padding: 0.2rem 0.5rem; font-size: 0.7rem; cursor: default; background: rgba(234,88,12,0.1); color: #ea580c; border: 1px solid #ea580c;">
+                              <i class="fa-solid fa-spinner fa-spin" style="margin-right: 0.25rem;"></i> Chờ chấm
+                            </span>
+                          <% } else { %>
+                            <span class="btn" style="padding: 0.2rem 0.5rem; font-size: 0.75rem; cursor: default; <%= sub.is_passed ? 'background: rgba(16,185,129,0.1); color: #0d9488; border: 1px solid #10b981;' : 'background: rgba(244,63,94,0.1); color: #f43f5e; border: 1px solid #f43f5e;' %>">
+                              <%= sub.score %>/100
+                            </span>
+                          <% } %>
+                        </div>
+                      </div>
+                      <% if (sub.grade_feedback) { %>
+                        <div style="margin-top: 0.25rem; padding: 0.5rem 0.75rem; background: rgba(79, 70, 229, 0.05); border-left: 3px solid #4f46e5; border-radius: 4px; font-size: 0.8rem; color: var(--text-main);">
+                          <i class="fa-solid fa-comment-dots" style="color: #4f46e5; margin-right: 0.25rem;"></i>
+                          <strong>Nhận xét:</strong> 
+                          <span style="font-style: italic;">"<%= sub.grade_feedback %>"</span>
+                        </div>
+                      <% } %>
+                    </div>
+                  <% }) %>
+                </div>
+              <% } %>
+            </div>
+          </div>
+        <% } %>
+
+      </div>
+    <% } %>
+
+  </div>
+</div>
+<% } %>
+
+<!-- ==========================================================================
+     PHÂN KHU 2: BẢNG QUẢN TRỊ (ADMIN DASHBOARD)
+     ========================================================================== -->
+<% if (hasAdminAccess) { %>
+<div id="dashboard-admin-section" style="display: <%= (hasStudentAccess) ? 'none' : 'block' %>;">
+  
+  <!-- Grid KPI Quản trị -->
+  <div class="kpi-grid">
+    <% if (stats.totalUsers !== null) { %>
+      <div class="glass-card kpi-card">
+        <div class="kpi-title">Tổng nhân sự</div>
+        <div class="kpi-value"><%= stats.totalUsers %></div>
+      </div>
+    <% } %>
+    
+    <div class="glass-card kpi-card">
+      <div class="kpi-title">Đang online (Socket)</div>
+      <div class="kpi-value" style="background: var(--secondary-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+        <%= stats.onlineCount %>
+      </div>
+    </div>
+
+    <% if (stats.totalCourses !== null) { %>
+      <div class="glass-card kpi-card">
+        <div class="kpi-title">Tổng khóa học</div>
+        <div class="kpi-value"><%= stats.totalCourses %></div>
+      </div>
+    <% } %>
+
+    <% if (stats.pendingApprovals !== null) { %>
+      <div class="glass-card kpi-card">
+        <div class="kpi-title">Chờ HR duyệt đăng ký</div>
+        <div class="kpi-value" style="background: var(--alert-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+          <%= stats.pendingApprovals %>
+        </div>
+      </div>
+    <% } %>
+  </div>
+
+  <% 
+    const hasQuickAction = user.permissions.includes('COURSE_CREATE') || 
+                          user.permissions.includes('USER_MANAGE') || 
+                          user.permissions.includes('ROLE_MANAGE') || 
+                          user.permissions.includes('REPORT_VIEW');
+    const hasAuditLog = user.permissions.includes('AUDIT_LOG_VIEW');
+
+    let gridAdminStyle = "display: grid; gap: 2rem; margin-top: 1rem;";
+    if (hasQuickAction && hasAuditLog) {
+      gridAdminStyle += " grid-template-columns: 1.2fr 2fr;";
+    } else {
+      gridAdminStyle += " grid-template-columns: 1fr;";
+    }
+  %>
+
+  <% if (hasQuickAction || hasAuditLog) { %>
+  <div style="<%= gridAdminStyle %>" class="dashboard-main-grid-override">
+    
+    <!-- Phao tác nhanh -->
+    <% if (hasQuickAction) { %>
+      <div>
+        <h2 style="font-size: 1.4rem; margin-bottom: 1.25rem; color: var(--text-main);"><i class="fa-solid fa-bolt" style="color: #ea580c;"></i> Thao tác nhanh</h2>
+        <div class="glass-card" style="display: flex; flex-direction: column; gap: 1rem; padding: 1.5rem;">
+          <% if (user.permissions.includes('COURSE_CREATE')) { %>
+            <a href="/course-management" class="btn btn-primary" style="justify-content: flex-start; padding: 0.85rem 1rem;">
+              <i class="fa-solid fa-plus"></i> Tạo khóa học mới
+            </a>
+          <% } %>
+          
+          <% if (user.permissions.includes('USER_MANAGE')) { %>
+            <a href="/users" class="btn btn-secondary" style="justify-content: flex-start; padding: 0.85rem 1rem;">
+              <i class="fa-solid fa-user-plus"></i> Quản lý & giao khóa học
+            </a>
+          <% } %>
+
+          <% if (user.permissions.includes('ROLE_MANAGE')) { %>
+            <a href="/permissions" class="btn btn-secondary" style="justify-content: flex-start; padding: 0.85rem 1rem;">
+              <i class="fa-solid fa-shield-halved"></i> Cấu hình Phân quyền & Matrix
+            </a>
+          <% } %>
+
+          <% if (user.permissions.includes('REPORT_VIEW')) { %>
+            <a href="/reports" class="btn btn-secondary" style="justify-content: flex-start; padding: 0.85rem 1rem;">
+              <i class="fa-solid fa-chart-pie"></i> Xem báo cáo thống kê Excel
+            </a>
+          <% } %>
+        </div>
+      </div>
+    <% } %>
+
+    <!-- Xem nhật ký vết (Audit Logs) gần đây -->
+    <% if (hasAuditLog) { %>
+      <div>
+        <h2 style="font-size: 1.4rem; margin-bottom: 1.25rem; display: flex; align-items: center; justify-content: space-between; color: var(--text-main);">
+          <span><i class="fa-solid fa-clock-rotate-left" style="color: #4f46e5;"></i> Nhật ký hoạt động gần đây</span>
+          <a href="/audit" style="font-size: 0.8rem; color: var(--text-accent);">Xem tất cả <i class="fa-solid fa-arrow-right"></i></a>
+        </h2>
+
+        <div class="glass-card" style="padding: 1.5rem; overflow-x: auto;">
+          <% if (recentLogs.length === 0) { %>
+            <div style="text-align: center; color: var(--text-muted); padding: 2rem;">Chưa có lịch sử hoạt động ghi nhận.</div>
+          <% } else { %>
+            <table class="custom-table" style="margin-top: 0; font-size: 0.85rem;">
+              <thead>
+                <tr>
+                  <th>Thời gian</th>
+                  <th>Nhân sự</th>
+                  <th>Hành động</th>
+                  <th>Chi tiết</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% recentLogs.forEach(log => { %>
+                  <tr>
+                    <td style="color: var(--text-muted);"><%= new Date(log.created_at).toLocaleTimeString() %></td>
+                    <td><strong><%= log.username || 'Hệ thống' %></strong></td>
+                    <td>
+                      <% 
+                        let badgeStyle = "background: rgba(79, 70, 229, 0.08); color: var(--text-accent); border: 1px solid rgba(79, 70, 229, 0.2);";
+                        if (log.action.includes('SUCCESS') || log.action === 'USER_LOGIN') {
+                          badgeStyle = "background: rgba(13, 148, 136, 0.08); color: #0d9488; border: 1px solid rgba(13, 148, 136, 0.2);";
+                        } else if (log.action.includes('REQUESTED') || log.action.includes('FAIL')) {
+                          badgeStyle = "background: rgba(234, 88, 12, 0.08); color: #ea580c; border: 1px solid rgba(234, 88, 12, 0.2);";
+                        } else if (log.action === 'USER_LOGOUT') {
+                          badgeStyle = "background: rgba(100, 116, 139, 0.08); color: #64748b; border: 1px solid rgba(100, 116, 139, 0.2);";
+                        }
+                      %>
+                      <span style="<%= badgeStyle %> padding: 0.2rem 0.5rem; border-radius: 4px; font-family: monospace; font-size: 0.75rem;">
+                        <%= log.action %>
+                      </span>
+                    </td>
+                    <td style="color: var(--text-muted); font-size: 0.8rem; font-family: monospace; max-width: 300px; overflow-x: auto; white-space: nowrap;"><%= JSON.stringify(log.details) %></td>
+                  </tr>
+                <% }) %>
+              </tbody>
+            </table>
+          <% } %>
+        </div>
+      </div>
+    <% } %>
+  </div>
+  <% } %>
+</div>
+<% } %>
+
+<% if (!hasStudentAccess && !hasAdminAccess) { %>
+  <!-- Giao diện trống thân thiện nếu không được phân quyền -->
+  <div style="display: grid; grid-template-columns: 1.5fr 1fr; gap: 2rem; margin-top: 2rem;" class="dashboard-main-grid-override">
+    
+    <!-- Cột trái: Thông báo và chi tiết trạng thái tài khoản -->
+    <div class="glass-card" style="padding: 3rem 2.5rem; display: flex; flex-direction: column; justify-content: center; align-items: flex-start; gap: 1.5rem; border-left: 5px solid var(--text-accent);">
+      <div style="background: rgba(13, 148, 136, 0.08); padding: 1rem; border-radius: 12px; display: inline-flex; align-items: center; justify-content: center;">
+        <i class="fa-solid fa-user-shield fa-3x" style="color: var(--text-accent);"></i>
+      </div>
+      
+      <div>
+        <h3 style="font-size: 1.8rem; font-weight: 800; color: var(--text-main); margin: 0;">Trang chủ chưa được thiết lập</h3>
+        <p style="color: var(--text-muted); margin-top: 0.5rem; font-size: 1rem; line-height: 1.6; max-width: 600px;">
+          Tài khoản của bạn đã đăng nhập thành công vào hệ thống. Tuy nhiên, vai trò hiện tại chưa được gán quyền hạn hiển thị bất kỳ phân hệ nào trên Dashboard.
+        </p>
+      </div>
+
+      <div style="width: 100%; border-top: 1px solid var(--border-light); padding-top: 1.5rem;">
+        <div style="display: grid; grid-template-columns: auto 1fr; gap: 1rem 2rem; font-size: 0.95rem;">
+          <span style="color: var(--text-muted); font-weight: 600;">Vai trò của bạn:</span>
+          <span style="font-weight: 700; color: var(--text-main);"><%= user.roleName %></span>
+          
+          <span style="color: var(--text-muted); font-weight: 600;">Danh sách quyền:</span>
+          <div>
+            <% if (user.permissions && user.permissions.length > 0) { %>
+              <div style="display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.2rem;">
+                <% user.permissions.forEach(perm => { %>
+                  <span style="background: rgba(100, 116, 139, 0.08); color: var(--text-muted); border: 1px solid var(--border-light); padding: 0.2rem 0.5rem; border-radius: 6px; font-family: monospace; font-size: 0.75rem;">
+                    <%= perm %>
+                  </span>
                 <% }) %>
               </div>
+            <% } else { %>
+              <span style="color: #ea580c; font-style: italic; font-weight: 500;">
+                <i class="fa-solid fa-triangle-exclamation" style="margin-right: 0.25rem;"></i> Chưa được gán quyền hạn nào
+              </span>
             <% } %>
           </div>
         </div>
+      </div>
+
+      <% if (user.permissions && user.permissions.includes('ROLE_MANAGE')) { %>
+        <div style="margin-top: 1rem; background: rgba(99, 102, 241, 0.05); border: 1px dashed rgba(99, 102, 241, 0.3); padding: 1.25rem; border-radius: 12px; width: 100%;">
+          <h4 style="margin: 0 0 0.5rem 0; color: #4f46e5; font-size: 0.95rem; font-weight: 700;">
+            <i class="fa-solid fa-lock-open" style="margin-right: 0.4rem;"></i> Hướng dẫn dành cho Quản trị viên
+          </h4>
+          <p style="margin: 0 0 1rem 0; font-size: 0.85rem; color: var(--text-muted); line-height: 1.5;">
+            Vì bạn có quyền <strong>ROLE_MANAGE</strong>, bạn có thể truy cập trực tiếp vào ma trận phân quyền để gán các đặc quyền phù hợp cho vai trò <strong><%= user.roleName %></strong>.
+          </p>
+          <a href="/permissions" class="btn btn-primary" style="display: inline-flex; align-items: center; gap: 0.5rem; font-size: 0.9rem; padding: 0.6rem 1.2rem;">
+            <i class="fa-solid fa-shield-halved"></i> Cấu hình quyền RBAC ngay
+          </a>
+        </div>
       <% } %>
-
     </div>
-  <% } %>
 
-</div>
-<% } else { %>
-  <!-- Giao diện trống thân thiện nếu không được phân quyền học tập -->
-  <div class="glass-card" style="text-align: center; padding: 5rem 2rem; border-style: dashed; border-width: 2px; margin-top: 2rem;">
-    <i class="fa-solid fa-user-lock fa-4x" style="color: var(--text-muted); margin-bottom: 1.5rem; opacity: 0.5;"></i>
-    <h3 style="font-size: 1.5rem; color: #f1f5f9;">Tài khoản chưa có quyền học tập</h3>
-    <p style="color: var(--text-muted); margin-top: 0.75rem; max-width: 500px; margin-left: auto; margin-right: auto; line-height: 1.6;">
-      Vai trò hiện tại của bạn chưa được cấp các quyền học tập (đăng ký khóa học, xem lộ trình, xem điểm thi). Vui lòng liên hệ với Quản trị viên để cấu hình lại quyền hạn cho vai trò này.
-    </p>
+    <!-- Cột phải: Giải thích cơ chế Dashboard thích ứng động -->
+    <div class="glass-card" style="padding: 2rem; display: flex; flex-direction: column; gap: 1.5rem;">
+      <h4 style="font-size: 1.1rem; font-weight: 700; color: var(--text-main); margin: 0; display: flex; align-items: center; gap: 0.5rem;">
+        <i class="fa-solid fa-circle-info" style="color: #6366f1;"></i> Hướng dẫn kích hoạt
+      </h4>
+      
+      <div style="display: flex; flex-direction: column; gap: 1rem; font-size: 0.88rem; line-height: 1.6; color: var(--text-muted);">
+        <p style="margin: 0;">
+          Hệ thống LMS của chúng tôi sử dụng **Cơ chế hiển thị Dashboard thích ứng động (Dynamic Responsive Dashboard)** dựa trên quyền hạn được phân cấu trúc như sau:
+        </p>
+
+        <div style="background: var(--bg-deep); padding: 1rem; border-radius: 8px; border: 1px solid var(--border-light);">
+          <strong style="color: var(--text-main); display: block; margin-bottom: 0.25rem;">💻 Giao diện Học tập (Học viên)</strong>
+          <span>Yêu cầu có ít nhất 1 trong các quyền: `PATH_VIEW`, `COURSE_ENROLL_REQUEST`, `HISTORY_VIEW`, `PROGRESS_TRACK`.</span>
+        </div>
+
+        <div style="background: var(--bg-deep); padding: 1rem; border-radius: 8px; border: 1px solid var(--border-light);">
+          <strong style="color: var(--text-main); display: block; margin-bottom: 0.25rem;">📊 Giao diện Quản trị (Admin / HR)</strong>
+          <span>Yêu cầu có ít nhất 1 quyền thuộc quản lý khóa học, nhân sự, phòng ban, hoặc đặc quyền hệ thống (ví dụ: `COURSE_VIEW`, `USER_VIEW`, `REPORT_VIEW`).</span>
+        </div>
+
+        <p style="margin: 0; font-size: 0.82rem; font-style: italic;">
+          *Lưu ý: Nếu một vai trò được gán cả hai nhóm quyền này, Dashboard sẽ tự động tích hợp bộ chuyển đổi Tab mượt mà để dễ dàng thao tác giữa hai không gian.*
+        </p>
+      </div>
+    </div>
+
   </div>
 <% } %>
+
+<% if (hasStudentAccess && hasAdminAccess) { %>
+  <!-- Script chuyển đổi tab cực mượt -->
+  <script>
+    function switchDashboardTab(tabName) {
+      const studentSection = document.getElementById('dashboard-student-section');
+      const adminSection = document.getElementById('dashboard-admin-section');
+      const studentBtn = document.getElementById('tab-btn-student');
+      const adminBtn = document.getElementById('tab-btn-admin');
+
+      if (tabName === 'student') {
+        studentSection.style.display = 'block';
+        adminSection.style.display = 'none';
+        
+        studentBtn.style.background = '#ffffff';
+        studentBtn.style.color = 'var(--text-accent)';
+        studentBtn.style.boxShadow = '0 2px 4px rgba(0,0,0,0.05)';
+        
+        adminBtn.style.background = 'transparent';
+        adminBtn.style.color = 'var(--text-muted)';
+        adminBtn.style.boxShadow = 'none';
+        
+        localStorage.setItem('active_dashboard_tab', 'student');
+      } else {
+        studentSection.style.display = 'none';
+        adminSection.style.display = 'block';
+        
+        adminBtn.style.background = '#ffffff';
+        adminBtn.style.color = 'var(--text-accent)';
+        adminBtn.style.boxShadow = '0 2px 4px rgba(0,0,0,0.05)';
+        
+        studentBtn.style.background = 'transparent';
+        studentBtn.style.color = 'var(--text-muted)';
+        studentBtn.style.boxShadow = 'none';
+        
+        localStorage.setItem('active_dashboard_tab', 'admin');
+      }
+    }
+
+    // Tự động khôi phục tab đã mở trước khi reload trang
+    document.addEventListener('DOMContentLoaded', () => {
+      const savedTab = localStorage.getItem('active_dashboard_tab');
+      if (savedTab === 'admin') {
+        switchDashboardTab('admin');
+      } else {
+        switchDashboardTab('student');
+      }
+    });
+  </script>
+<% } %>
+
+<!-- Thêm Media Query tinh chỉnh responsive cho Grid -->
+<style>
+  @media (max-width: 1024px) {
+    .dashboard-main-grid-override {
+      grid-template-columns: 1fr !important;
+      gap: 1.5rem !important;
+    }
+  }
+</style>
 
 <%- include('partials/footer') %>

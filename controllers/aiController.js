@@ -1,84 +1,97 @@
-const { Lesson, Quiz, Question, AuditLog } = require('../models/schema');
-const geminiService = require('../services/geminiService');
+const SummarizeLessonUseCase = require('../domain/usecases/summarizeLessonUseCase');
+const ChatWithAiUseCase = require('../domain/usecases/chatWithAiUseCase');
+const GenerateQuickQuizUseCase = require('../domain/usecases/generateQuickQuizUseCase');
+const AddGeneratedQuizToBankUseCase = require('../domain/usecases/addGeneratedQuizToBankUseCase');
+
+const PgLessonRepository = require('../infrastructure/repositories/lessonRepository');
+const PgQuizRepository = require('../infrastructure/repositories/quizRepository');
+const PgQuestionRepository = require('../infrastructure/repositories/questionRepository');
+const PgAuditLogRepository = require('../infrastructure/repositories/auditLogRepository');
+const GeminiAiService = require('../infrastructure/gateways/aiServiceGateway');
 
 module.exports = {
   // Trả về tóm tắt bài giảng bằng AI (Markdown format)
   summarizeLesson: async (req, res) => {
     const lessonId = parseInt(req.body.lessonId);
+    const userId = req.session.userId;
 
     try {
-      const lesson = await Lesson.findById(lessonId);
-      if (!lesson) {
-        return res.status(404).json({ error: 'Không tìm thấy bài giảng.' });
-      }
+      const lessonRepository = new PgLessonRepository();
+      const auditLogRepository = new PgAuditLogRepository();
+      const aiService = new GeminiAiService();
 
-      // Gọi Gemini API để sinh nội dung tóm tắt
-      const summaryMarkdown = await geminiService.summarizeLesson(lesson.title, lesson.content);
+      const useCase = new SummarizeLessonUseCase({
+        lessonRepository,
+        auditLogRepository,
+        aiService
+      });
 
-      // Ghi audit log hoạt động AI
-      await AuditLog.create(req.session.userId, 'AI_SUMMARIZE_LESSON', { lesson_id: lessonId });
-
+      const summaryMarkdown = await useCase.execute(lessonId, userId);
       res.json({ summary: summaryMarkdown });
     } catch (err) {
-      console.error('[AI Controller] Lỗi tóm tắt bài học:', err);
-      res.status(500).json({ error: 'Không thể tạo tóm tắt từ AI.' });
+      console.error('[AI Clean Architecture] Lỗi tóm tắt bài học:', err);
+      res.status(500).json({ error: err.message || 'Không thể tạo tóm tắt từ AI.' });
     }
   },
 
   // Hỏi đáp với trợ lý AI dựa trên bài học
   chatWithAI: async (req, res) => {
     const { lessonId, message, history } = req.body;
+    const userId = req.session.userId;
 
     try {
-      const lesson = await Lesson.findById(parseInt(lessonId));
-      if (!lesson) {
-        return res.status(404).json({ error: 'Không tìm thấy bài giảng làm ngữ cảnh.' });
-      }
+      const lessonRepository = new PgLessonRepository();
+      const auditLogRepository = new PgAuditLogRepository();
+      const aiService = new GeminiAiService();
 
-      // Gọi Gemini API trả lời câu hỏi dựa trên nội dung bài học
-      const aiResponse = await geminiService.answerQuestion(
-        lesson.title,
-        lesson.content,
+      const useCase = new ChatWithAiUseCase({
+        lessonRepository,
+        auditLogRepository,
+        aiService
+      });
+
+      const aiResponse = await useCase.execute({
+        lessonId: parseInt(lessonId),
+        userId,
         message,
-        history || []
-      );
-
-      // Ghi nhật ký hoạt động
-      await AuditLog.create(req.session.userId, 'AI_CHAT_ASSISTANT', { lesson_id: lessonId, message_length: message.length });
+        history: history || []
+      });
 
       res.json({ answer: aiResponse });
     } catch (err) {
-      console.error('[AI Controller] Lỗi hỏi đáp AI:', err);
-      res.status(500).json({ error: 'Gặp sự cố khi kết nối với máy chủ AI.' });
+      console.error('[AI Clean Architecture] Lỗi hỏi đáp AI:', err);
+      res.status(500).json({ error: err.message || 'Gặp sự cố khi kết nối với máy chủ AI.' });
     }
   },
 
   // Tự sinh trắc nghiệm nhanh cho học viên ôn luyện trực tiếp
   generateLessonQuiz: async (req, res) => {
     const lessonId = parseInt(req.body.lessonId);
+    const userId = req.session.userId;
 
     try {
-      const lesson = await Lesson.findById(lessonId);
-      if (!lesson) {
-        return res.status(404).json({ error: 'Không tìm thấy bài giảng.' });
-      }
+      const lessonRepository = new PgLessonRepository();
+      const auditLogRepository = new PgAuditLogRepository();
+      const aiService = new GeminiAiService();
 
-      // Gọi AI sinh 3 câu hỏi dưới dạng JSON Array
-      const quizQuestions = await geminiService.generateQuiz(lesson.title, lesson.content);
+      const useCase = new GenerateQuickQuizUseCase({
+        lessonRepository,
+        auditLogRepository,
+        aiService
+      });
 
-      // Ghi nhật ký hoạt động
-      await AuditLog.create(req.session.userId, 'AI_GENERATE_QUICK_QUIZ', { lesson_id: lessonId });
-
+      const quizQuestions = await useCase.execute(lessonId, userId);
       res.json({ questions: quizQuestions });
     } catch (err) {
-      console.error('[AI Controller] Lỗi sinh câu hỏi trắc nghiệm ôn tập:', err);
-      res.status(500).json({ error: 'Không thể tự động sinh câu hỏi kiểm tra bằng AI.' });
+      console.error('[AI Clean Architecture] Lỗi sinh câu hỏi trắc nghiệm ôn tập:', err);
+      res.status(500).json({ error: err.message || 'Không thể tự động sinh câu hỏi kiểm tra bằng AI.' });
     }
   },
 
   // Admin dùng AI để sinh câu hỏi trực tiếp vào Ngân hàng câu hỏi
   generateQuizToBank: async (req, res) => {
     const { lessonId, quizId } = req.body;
+    const userId = req.session.userId;
 
     // Yêu cầu quyền sửa ngân hàng câu hỏi
     if (!req.session.permissions.includes('QUIZ_BANK_MANAGE')) {
@@ -86,43 +99,30 @@ module.exports = {
     }
 
     try {
-      const lesson = await Lesson.findById(parseInt(lessonId));
-      const quiz = await Quiz.findById(parseInt(quizId));
+      const lessonRepository = new PgLessonRepository();
+      const quizRepository = new PgQuizRepository();
+      const questionRepository = new PgQuestionRepository();
+      const auditLogRepository = new PgAuditLogRepository();
+      const aiService = new GeminiAiService();
 
-      if (!lesson || !quiz) {
-        return res.status(404).json({ error: 'Không tìm thấy bài học hoặc đề thi chỉ định.' });
-      }
-
-      // Gọi AI sinh câu hỏi trắc nghiệm
-      const generatedQuestions = await geminiService.generateQuiz(lesson.title, lesson.content);
-
-      // Lưu các câu hỏi được sinh vào PostgreSQL CSDL
-      const savedQuestions = [];
-      for (let q of generatedQuestions) {
-        const newQ = await Question.create(
-          quiz.id,
-          q.question_text,
-          'multiple_choice',
-          q.options,
-          q.correct_answer
-        );
-        savedQuestions.push(newQ);
-      }
-
-      // Ghi nhật ký hoạt động
-      await AuditLog.create(req.session.userId, 'AI_GENERATE_QUIZ_TO_BANK', { 
-        lesson_id: lessonId, 
-        quiz_id: quizId,
-        questions_count: savedQuestions.length 
+      const useCase = new AddGeneratedQuizToBankUseCase({
+        lessonRepository,
+        quizRepository,
+        questionRepository,
+        auditLogRepository,
+        aiService
       });
 
-      res.json({ 
-        success: `Đã sinh thành công ${savedQuestions.length} câu hỏi từ bài giảng "${lesson.title}" và thêm vào đề thi "${quiz.title}".`,
-        questions: savedQuestions 
+      const result = await useCase.execute({
+        lessonId: parseInt(lessonId),
+        quizId: parseInt(quizId),
+        userId
       });
+
+      res.json(result);
     } catch (err) {
-      console.error('[AI Controller] Lỗi sinh câu hỏi đưa vào ngân hàng:', err);
-      res.status(500).json({ error: 'Có lỗi xảy ra khi tự sinh câu hỏi đưa vào CSDL.' });
+      console.error('[AI Clean Architecture] Lỗi sinh câu hỏi đưa vào ngân hàng:', err);
+      res.status(500).json({ error: err.message || 'Có lỗi xảy ra khi tự sinh câu hỏi đưa vào CSDL.' });
     }
   }
 };

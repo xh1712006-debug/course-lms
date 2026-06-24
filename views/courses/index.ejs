@@ -1,19 +1,248 @@
 <%- include('../partials/header') %>
 
-<div style="margin-bottom: 2.5rem;">
-  <h1 style="font-size: 2.2rem; font-weight: 800; background: var(--primary-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
-    Kho Khóa Học Doanh Nghiệp
-  </h1>
-  <p style="color: var(--text-muted); margin-top: 0.25rem;">Nâng cao năng lực chuyên môn, kỹ năng làm việc và bảo mật thông tin.</p>
+<style>
+  /* ========================================== */
+  /* BANNER GRADIENTS & HERO SECTIONS */
+  /* ========================================== */
+  
+  .course-bank-hero {
+    background: linear-gradient(135deg, #1e1b4b 0%, #0f766e 100%);
+    border-radius: 20px;
+    padding: 2.5rem;
+    color: #ffffff;
+    position: relative;
+    overflow: hidden;
+    margin-bottom: 2.5rem;
+    box-shadow: 0 10px 30px rgba(15, 118, 110, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+  }
+  .course-bank-hero::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -20%;
+    width: 300px;
+    height: 300px;
+    background: radial-gradient(circle, rgba(20, 184, 166, 0.25) 0%, transparent 70%);
+    filter: blur(40px);
+    pointer-events: none;
+  }
+  .course-bank-hero::after {
+    content: '';
+    position: absolute;
+    bottom: -40%;
+    left: -10%;
+    width: 250px;
+    height: 250px;
+    background: radial-gradient(circle, rgba(99, 102, 241, 0.2) 0%, transparent 70%);
+    filter: blur(30px);
+    pointer-events: none;
+  }
+
+  /* Stats Container */
+  .hero-stats {
+    display: flex;
+    gap: 1.5rem;
+    margin-top: 1.5rem;
+    flex-wrap: wrap;
+  }
+  .hero-stat-card {
+    background: rgba(255, 255, 255, 0.07);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 0.75rem 1.5rem;
+    min-width: 140px;
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+  }
+  .hero-stat-label {
+    font-size: 0.72rem;
+    color: rgba(255, 255, 255, 0.7);
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .hero-stat-val {
+    font-size: 1.5rem;
+    font-weight: 800;
+    font-family: var(--font-title);
+    color: #ffffff;
+  }
+
+  /* Course Card Grid (Thu nhỏ lại minmax để xếp được nhiều thẻ hơn) */
+  .course-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+    gap: 1.5rem;
+  }
+
+  /* Course Card (Giảm padding từ 1.25rem xuống 1rem) */
+  .course-card-custom {
+    background: #ffffff;
+    border: 1px solid var(--border-light);
+    border-radius: 16px;
+    padding: 1rem;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.03), 0 2px 4px -1px rgba(0, 0, 0, 0.02);
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+  }
+  .course-card-custom:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 12px 25px -5px rgba(0, 0, 0, 0.08), 0 8px 16px -8px rgba(0, 0, 0, 0.05);
+    border-color: #cbd5e1;
+  }
+
+  /* Image block */
+  .course-img-wrapper {
+    position: relative;
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 1rem;
+    aspect-ratio: 16/10;
+    background: #f1f5f9;
+  }
+  .course-img-wrapper img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.5s ease;
+  }
+  .course-card-custom:hover .course-img-wrapper img {
+    transform: scale(1.05);
+  }
+
+  /* Floating badge on image */
+  .floating-status-badge {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    padding: 0.3rem 0.6rem;
+    border-radius: 20px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    z-index: 5;
+  }
+  .status-badge-enrolled {
+    background: rgba(16, 185, 129, 0.9);
+    color: #ffffff;
+  }
+  .status-badge-pending {
+    background: rgba(245, 158, 11, 0.9);
+    color: #ffffff;
+  }
+
+  /* Type Capsules */
+  .badge-capsule {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    font-size: 0.68rem;
+    font-weight: 600;
+    padding: 0.2rem 0.5rem;
+    border-radius: 6px;
+    margin-bottom: 0.6rem;
+    width: fit-content;
+  }
+  .type-assigned {
+    background: #fee2e2;
+    color: #ef4444;
+    border: 1px solid #fecaca;
+  }
+  .type-restricted {
+    background: #fef3c7;
+    color: #d97706;
+    border: 1px solid #fde68a;
+  }
+  .type-open {
+    background: #ccfbf1;
+    color: #0d9488;
+    border: 1px solid #99f6e4;
+  }
+
+  /* Typography alignments (Thu nhỏ lại font-size) */
+  .course-title-custom {
+    font-size: 0.98rem;
+    font-weight: 700;
+    line-height: 1.4;
+    color: var(--text-main);
+    margin-bottom: 0.4rem;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    height: 2.7rem; /* Giới hạn độ cao hoàn hảo */
+  }
+  .course-desc-custom {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    line-height: 1.5;
+    margin-bottom: 1rem;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    flex-grow: 1;
+    height: 2.4rem; /* Giới hạn độ cao hoàn hảo */
+  }
+  
+  .card-footer-custom {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-top: 1px solid var(--border-light);
+    padding-top: 0.75rem;
+    margin-top: auto;
+  }
+</style>
+
+<!-- Hero Banner Kho Khóa Học -->
+<div class="course-bank-hero">
+  <div style="max-width: 650px; relative; z-index: 2;">
+    <h1 style="font-size: 2.2rem; font-weight: 800; font-family: var(--font-title); margin: 0; color: #ffffff;">
+      Kho Khóa Học Doanh Nghiệp
+    </h1>
+    <p style="color: rgba(255, 255, 255, 0.8); margin-top: 0.5rem; font-size: 0.95rem; line-height: 1.5;">
+      Nâng cao năng lực chuyên môn, mở rộng kỹ năng làm việc thực chiến và cập nhật kiến thức bảo mật thông tin nội bộ.
+    </p>
+    
+    <!-- Bộ đếm thống kê động -->
+    <div class="hero-stats">
+      <div class="hero-stat-card">
+        <span class="hero-stat-label">Tổng khóa học</span>
+        <span class="hero-stat-val"><%= courses.length %></span>
+      </div>
+      <div class="hero-stat-card">
+        <span class="hero-stat-label">Đã đăng ký</span>
+        <span class="hero-stat-val"><%= courses.filter(c => c.isEnrolled).length %></span>
+      </div>
+      <div class="hero-stat-card">
+        <span class="hero-stat-label">Chờ duyệt</span>
+        <span class="hero-stat-val"><%= courses.filter(c => c.isPending).length %></span>
+      </div>
+    </div>
+  </div>
 </div>
 
-<!-- Thanh tìm kiếm khóa học mờ kính -->
-<div class="glass-card" style="padding: 1rem; margin-bottom: 2.5rem; display: flex; gap: 1rem; align-items: center;">
+<!-- Thanh tìm kiếm & lọc mờ kính -->
+<div class="glass-card" style="padding: 1rem; margin-bottom: 2.5rem; display: flex; gap: 1rem; align-items: center; border-radius: 14px;">
   <div style="flex: 1; position: relative;">
     <i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 1rem; top: 1rem; color: var(--text-muted);"></i>
-    <input type="text" id="search-input" placeholder="Tìm kiếm tên khóa học hoặc nội dung..." style="padding-left: 2.75rem;">
+    <input type="text" id="search-input" placeholder="Tìm kiếm tên khóa học hoặc nội dung..." style="padding-left: 2.75rem; border-radius: 8px;">
   </div>
-  <select id="category-filter" style="width: 200px;">
+  <select id="category-filter" style="width: 200px; border-radius: 8px; cursor: pointer;">
     <option value="all">Tất cả danh mục</option>
     <option value="tech">Công nghệ & lập trình</option>
     <option value="security">An toàn bảo mật</option>
@@ -21,49 +250,178 @@
   </select>
 </div>
 
-<div class="course-grid">
+<!-- Grid chứa danh sách khóa học -->
+<div class="course-grid" id="course-grid">
   <% if (courses.length === 0) { %>
-    <div class="glass-card" style="grid-column: 1 / -1; text-align: center; padding: 4rem 2rem;">
+    <div class="glass-card" style="grid-column: 1 / -1; text-align: center; padding: 4rem 2rem; border-radius: 16px;">
       <i class="fa-solid fa-graduation-cap fa-3x" style="color: var(--text-muted); margin-bottom: 1rem;"></i>
       <h3>Không tìm thấy khóa học nào</h3>
       <p style="color: var(--text-muted); margin-top: 0.5rem;">Vui lòng quay lại sau hoặc liên hệ bộ phận L&D.</p>
     </div>
   <% } else { %>
     <% courses.forEach(course => { %>
-      <div class="glass-card course-card search-target">
-        <img src="<%= course.image_url %>" alt="<%= course.title %>">
-        <div class="course-title"><%= course.title %></div>
-        <p class="course-desc"><%= course.description %></p>
+      <div class="course-card-custom search-target">
+        <!-- Ảnh đại diện với fallback onerror -->
+        <div class="course-img-wrapper">
+          <% if (course.isEnrolled) { %>
+            <div class="floating-status-badge status-badge-enrolled">
+              <i class="fa-solid fa-circle-check"></i> Đã đăng ký
+            </div>
+          <% } else if (course.isPending) { %>
+            <div class="floating-status-badge status-badge-pending">
+              <i class="fa-solid fa-clock"></i> Chờ duyệt
+            </div>
+          <% } %>
+          <img src="<%= course.image_url %>" onerror="this.onerror=null; this.src='/images/default_course.svg';" alt="<%= course.title %>">
+        </div>
         
-        <div style="margin-top: auto; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border-light); padding-top: 1rem;">
-          <span style="font-size: 0.8rem; color: var(--text-muted);">
-            <i class="fa-solid fa-clock"></i> Học tự do
+        <!-- Nhãn kiểu đăng ký khóa học -->
+        <% if (course.isEnrolled) { %>
+          <span class="badge-capsule type-open"><i class="fa-solid fa-circle-check"></i> Đã đăng ký</span>
+        <% } else if (course.isPending) { %>
+          <span class="badge-capsule type-restricted"><i class="fa-solid fa-clock"></i> Đang chờ duyệt</span>
+        <% } else { %>
+          <% if (course.enrollment_type === 'only_assigned') { %>
+            <span class="badge-capsule type-assigned"><i class="fa-solid fa-lock"></i> Chỉ gán học</span>
+          <% } else if (course.enrollment_type === 'restricted') { %>
+            <span class="badge-capsule type-restricted"><i class="fa-solid fa-user-shield"></i> Cần phê duyệt</span>
+          <% } else { %>
+            <span class="badge-capsule type-open"><i class="fa-solid fa-globe"></i> Học tự do</span>
+          <% } %>
+        <% } %>
+
+        <div class="course-title-custom"><%= course.title %></div>
+        <p class="course-desc-custom"><%= course.description %></p>
+        
+        <div class="card-footer-custom">
+          <span style="font-size: 0.75rem; font-weight: 500; color: var(--text-muted); display: inline-flex; align-items: center; gap: 0.25rem;">
+            <% if (course.isEnrolled) { %>
+              <span style="color: #10b981; font-weight: 600;"><i class="fa-solid fa-graduation-cap"></i> Đang học</span>
+            <% } else if (course.isPending) { %>
+              <span style="color: #f59e0b; font-weight: 600;"><i class="fa-solid fa-hourglass-half"></i> Chờ duyệt</span>
+            <% } else { %>
+              <span style="color: var(--text-muted);"><i class="fa-solid fa-circle-info"></i> Chưa gán</span>
+            <% } %>
           </span>
-          <a href="/courses/<%= course.id %>" class="btn btn-primary" style="padding: 0.5rem 1.25rem; font-size: 0.85rem;">
-            Chi tiết học <i class="fa-solid fa-arrow-right" style="font-size: 0.75rem;"></i>
-          </a>
+          
+          <% if (course.isEnrolled) { %>
+            <a href="/courses/<%= course.id %>" class="btn btn-primary" style="padding: 0.4rem 0.9rem; font-size: 0.8rem; background: var(--secondary-gradient); border: none; display: inline-flex; align-items: center; gap: 0.3rem; border-radius: 8px;">
+              Vào học <i class="fa-solid fa-circle-play" style="font-size: 0.7rem;"></i>
+            </a>
+          <% } else if (course.isPending) { %>
+            <a href="/courses/<%= course.id %>" class="btn btn-secondary" style="padding: 0.4rem 0.9rem; font-size: 0.8rem; pointer-events: none; opacity: 0.6; display: inline-flex; align-items: center; gap: 0.3rem; border-radius: 8px;">
+              Chờ duyệt <i class="fa-solid fa-hourglass" style="font-size: 0.7rem;"></i>
+            </a>
+          <% } else { %>
+            <a href="/courses/<%= course.id %>" class="btn btn-primary" style="padding: 0.4rem 0.9rem; font-size: 0.8rem; border-radius: 8px; display: inline-flex; align-items: center; gap: 0.3rem;">
+              Chi tiết <i class="fa-solid fa-arrow-right" style="font-size: 0.7rem;"></i>
+            </a>
+          <% } %>
         </div>
       </div>
     <% }) %>
   <% } %>
 </div>
 
+<!-- Nút xem thêm mờ kính và thông báo không có kết quả -->
+<div id="no-results-msg" class="glass-card" style="display: none; text-align: center; padding: 4rem 2rem; border-radius: 16px; margin-top: 1rem;">
+  <i class="fa-solid fa-magnifying-glass fa-2x" style="color: var(--text-muted); margin-bottom: 1rem; opacity: 0.5;"></i>
+  <h3>Không tìm thấy kết quả phù hợp</h3>
+  <p style="color: var(--text-muted); margin-top: 0.5rem;">Thử nhập từ khóa khác hoặc chuyển danh mục lọc.</p>
+</div>
+
+<div id="load-more-container" style="display: flex; justify-content: center; margin-top: 3rem;">
+  <button id="load-more-btn" class="btn btn-secondary" style="padding: 0.6rem 2.5rem; font-size: 0.88rem; border-radius: 10px; display: inline-flex; align-items: center; gap: 0.5rem; cursor: pointer; border: 1px solid var(--border-light); font-weight: 600; transition: all 0.3s;" onmouseover="this.style.background='var(--border-light)'" onmouseout="this.style.background='transparent'">
+    <i class="fa-solid fa-chevron-down"></i> Xem thêm khóa học
+  </button>
+</div>
+
 <script>
-  // Logic tìm kiếm thời gian thực tại Client
-  const searchInput = document.getElementById('search-input');
-  searchInput.addEventListener('input', function(e) {
-    const text = e.target.value.toLowerCase();
-    const cards = document.querySelectorAll('.search-target');
-    
-    cards.forEach(card => {
-      const title = card.querySelector('.course-title').textContent.toLowerCase();
-      const desc = card.querySelector('.course-desc').textContent.toLowerCase();
-      if (title.includes(text) || desc.includes(text)) {
-        card.style.display = 'flex';
-      } else {
-        card.style.display = 'none';
+  document.addEventListener('DOMContentLoaded', () => {
+    const ITEMS_PER_PAGE = 8;
+    let visibleCards = []; 
+    let currentIndex = ITEMS_PER_PAGE;
+
+    const searchInput = document.getElementById('search-input');
+    const categoryFilter = document.getElementById('category-filter');
+    const cards = Array.from(document.querySelectorAll('.search-target'));
+    const loadMoreBtn = document.getElementById('load-more-btn');
+    const loadMoreContainer = document.getElementById('load-more-container');
+    const noResultsMsg = document.getElementById('no-results-msg');
+    const courseGrid = document.getElementById('course-grid');
+
+    function updateVisibility() {
+      const searchText = searchInput.value.toLowerCase();
+      const category = categoryFilter.value;
+
+      // 1. Lọc danh sách thẻ dựa trên Tìm kiếm & Bộ lọc danh mục thông minh
+      visibleCards = cards.filter(card => {
+        const title = card.querySelector('.course-title-custom').textContent.toLowerCase();
+        const desc = card.querySelector('.course-desc-custom').textContent.toLowerCase();
+        
+        const matchesSearch = title.includes(searchText) || desc.includes(searchText);
+        
+        let matchesCategory = true;
+        if (category === 'tech') {
+          matchesCategory = title.includes('lập trình') || title.includes('nodejs') || title.includes('git') || title.includes('docker') || title.includes('github') || 
+                            desc.includes('lập trình') || desc.includes('nodejs') || desc.includes('git') || desc.includes('docker') || desc.includes('github');
+        } else if (category === 'security') {
+          matchesCategory = title.includes('bảo mật') || title.includes('an toàn') || title.includes('kiểm định') || 
+                            desc.includes('bảo mật') || desc.includes('an toàn') || desc.includes('kiểm định');
+        } else if (category === 'soft-skills') {
+          matchesCategory = title.includes('đàm phán') || title.includes('giao tiếp') || title.includes('quản lý') || title.includes('scrum') || title.includes('hợp đồng') || 
+                            desc.includes('đàm phán') || desc.includes('giao tiếp') || desc.includes('quản lý') || desc.includes('scrum') || desc.includes('hợp đồng');
+        }
+        
+        return matchesSearch && matchesCategory;
+      });
+
+      // 2. Ẩn tất cả thẻ trước
+      cards.forEach(card => card.style.display = 'none');
+
+      // 3. Hiển thị thông báo khi không tìm thấy kết quả nào trùng khớp
+      if (visibleCards.length === 0) {
+        if (courseGrid) courseGrid.style.display = 'none';
+        if (noResultsMsg) noResultsMsg.style.display = 'block';
+        if (loadMoreContainer) loadMoreContainer.style.display = 'none';
+        return;
       }
+
+      if (courseGrid) courseGrid.style.display = 'grid';
+      if (noResultsMsg) noResultsMsg.style.display = 'none';
+
+      // 4. Hiển thị các thẻ khớp tối đa tới currentIndex
+      const cardsToShow = visibleCards.slice(0, currentIndex);
+      cardsToShow.forEach(card => card.style.display = 'flex');
+
+      // 5. Cập nhật trạng thái hiển thị của nút "Xem thêm"
+      if (visibleCards.length > currentIndex) {
+        if (loadMoreContainer) loadMoreContainer.style.display = 'flex';
+      } else {
+        if (loadMoreContainer) loadMoreContainer.style.display = 'none';
+      }
+    }
+
+    // Sự kiện nhập ô tìm kiếm
+    searchInput.addEventListener('input', () => {
+      currentIndex = ITEMS_PER_PAGE;
+      updateVisibility();
     });
+
+    // Sự kiện đổi danh mục lọc
+    categoryFilter.addEventListener('change', () => {
+      currentIndex = ITEMS_PER_PAGE;
+      updateVisibility();
+    });
+
+    // Sự kiện click nút "Tải thêm"
+    loadMoreBtn.addEventListener('click', () => {
+      currentIndex += ITEMS_PER_PAGE;
+      updateVisibility();
+    });
+
+    // Chạy lần đầu tiên khi tải trang
+    updateVisibility();
   });
 </script>
 

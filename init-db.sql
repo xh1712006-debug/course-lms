@@ -55,6 +55,7 @@ CREATE TABLE courses (
     description TEXT,
     image_url VARCHAR(255),
     status VARCHAR(20) DEFAULT 'draft', -- 'draft', 'published'
+    enrollment_type VARCHAR(20) DEFAULT 'open', -- 'open', 'restricted', 'only_assigned'
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -67,6 +68,7 @@ CREATE TABLE lessons (
     video_url VARCHAR(255),
     attachment_url VARCHAR(255),
     order_index INTEGER NOT NULL,
+    is_quiz BOOLEAN DEFAULT false,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -114,6 +116,7 @@ CREATE TABLE quizzes (
     title VARCHAR(150) NOT NULL,
     duration_minutes INTEGER DEFAULT 15,
     passing_score INTEGER DEFAULT 80, -- Thang điểm 100, đạt từ 80
+    lesson_id INTEGER REFERENCES lessons(id) ON DELETE CASCADE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -209,7 +212,8 @@ INSERT INTO role_permissions (role_id, permission_name) VALUES
 (3, 'REPORT_VIEW');
 
 -- Vai trò 4 (Employee): Quyền cơ bản để học tập (Không có quyền quản trị/L&D)
--- (Không có bản ghi trong role_permissions)
+INSERT INTO role_permissions (role_id, permission_name) VALUES
+(4, 'PATH_VIEW'), (4, 'COURSE_ENROLL_REQUEST'), (4, 'HISTORY_VIEW'), (4, 'PROGRESS_TRACK');
 
 -- Gieo mầm tài khoản (Sử dụng mật khẩu dạng văn bản rõ 'password123' để dễ kiểm tra theo dõi)
 INSERT INTO users (username, email, password, role_id, department_id, status) VALUES

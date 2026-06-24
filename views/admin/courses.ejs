@@ -34,6 +34,15 @@
       <input type="text" name="image_url" placeholder="/images/default_course.svg">
     </div>
 
+    <div class="form-group">
+      <label class="form-label">Hình thức đăng ký học</label>
+      <select name="enrollment_type" style="width: 100%; padding: 0.65rem 1rem; background: rgba(15, 23, 42, 0.5); border: 1px solid var(--border-light); border-radius: 8px; color: var(--text-main); font-size: 0.9rem; outline: none;">
+        <option value="open">Tự học (Vào học ngay tự do)</option>
+        <option value="restricted">Cần duyệt (Gửi yêu cầu và đợi duyệt)</option>
+        <option value="only_assigned">Bắt buộc (Chỉ nhân sự được gán mới được học)</option>
+      </select>
+    </div>
+
     <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
       <button type="submit" class="btn btn-primary">Lưu khóa học</button>
       <button type="button" class="btn btn-secondary" onclick="toggleCreateForm()">Hủy</button>
@@ -49,6 +58,7 @@
         <th>Ảnh</th>
         <th>Tên khóa học</th>
         <th>Mô tả</th>
+        <th>Hình thức học</th>
         <th>Trạng thái</th>
         <th style="text-align: center;">Hành động</th>
       </tr>
@@ -66,6 +76,15 @@
             <%= course.description %>
           </td>
           <td>
+            <% if (course.enrollment_type === 'only_assigned') { %>
+              <span style="color: #f87171; font-weight: 600;"><i class="fa-solid fa-lock"></i> Chỉ gán học</span>
+            <% } else if (course.enrollment_type === 'restricted') { %>
+              <span style="color: #fbbf24; font-weight: 600;"><i class="fa-solid fa-clock"></i> Cần phê duyệt</span>
+            <% } else { %>
+              <span style="color: #34d399; font-weight: 600;"><i class="fa-solid fa-globe"></i> Tự học tự do</span>
+            <% } %>
+          </td>
+          <td>
             <span class="btn" style="padding: 0.2rem 0.5rem; font-size: 0.75rem; cursor: default; <%= course.status === 'published' ? 'background: rgba(16,185,129,0.1); color: #10b981; border: 1px solid #10b981;' : 'background: rgba(255,255,255,0.05); color: var(--text-muted); border: 1px solid var(--border-light);' %>">
               <%= course.status === 'published' ? 'Công khai' : 'Bản nháp' %>
             </span>
@@ -74,10 +93,10 @@
             <div style="display: flex; justify-content: center; gap: 0.5rem;">
               
               <!-- Xem/quản lý bài học -->
-              <a href="/course-management/<%= course.id %>/lessons" class="btn btn-secondary" style="padding: 0.35rem 0.75rem; font-size: 0.8rem;" title="Quản lý bài giảng">
+              <a href="/course-management/<%= course.id %>/lessons" class="btn btn-secondary" style="padding: 0.35rem 0.75rem; font-size: 0.80rem;" title="Quản lý bài giảng">
                 <i class="fa-solid fa-list"></i> Bài học
               </a>
-
+ 
               <% if (user.permissions.includes('COURSE_PUBLISH')) { %>
                 <!-- Form bật/tắt xuất bản -->
                 <form action="/course-management/<%= course.id %>/publish" method="POST" style="display: inline;">
@@ -87,14 +106,14 @@
                   </button>
                 </form>
               <% } %>
-
+ 
               <% if (user.permissions.includes('COURSE_UPDATE')) { %>
-                <!-- Nút sửa mở rộng (được chỉnh sửa inline hoặc có thể mở form sửa) -->
-                <button class="btn btn-secondary" onclick="openEditForm('<%= course.id %>', '<%= course.title %>', `<%= course.description %>`, '<%= course.image_url %>', '<%= course.status %>')" style="padding: 0.35rem 0.75rem; font-size: 0.8rem;" title="Sửa khóa học">
+                <!-- Nút sửa mở rộng -->
+                <button class="btn btn-secondary" onclick="openEditForm('<%= course.id %>', '<%= course.title %>', `<%= course.description %>`, '<%= course.image_url %>', '<%= course.status %>', '<%= course.enrollment_type %>')" style="padding: 0.35rem 0.75rem; font-size: 0.8rem;" title="Sửa khóa học">
                   <i class="fa-solid fa-pen"></i>
                 </button>
               <% } %>
-
+ 
               <% if (user.permissions.includes('COURSE_DELETE')) { %>
                 <!-- Xóa khóa học -->
                 <form action="/course-management/<%= course.id %>/delete" method="POST" style="display: inline;" onsubmit="return confirm('Bạn có chắc chắn muốn xóa khóa học này cùng toàn bộ bài học kèm theo?')">
@@ -110,7 +129,7 @@
     </tbody>
   </table>
 </div>
-
+ 
 <!-- Modal Sửa Khóa Học Mờ Kính -->
 <div id="edit-course-modal" class="glass-card" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 500px; max-width: 90%; z-index: 1000; box-shadow: 0 10px 50px rgba(0,0,0,0.8); border-color: var(--border-glow);">
   <h3 style="font-size: 1.3rem; margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center;">
@@ -127,10 +146,19 @@
       <label class="form-label">Mô tả tóm tắt</label>
       <textarea id="edit-description" name="description" rows="3" required></textarea>
     </div>
-
+ 
     <div class="form-group">
       <label class="form-label">Đường dẫn ảnh đại diện (Ảnh URL)</label>
       <input type="text" id="edit-image-url" name="image_url">
+    </div>
+ 
+    <div class="form-group">
+      <label class="form-label">Hình thức đăng ký học</label>
+      <select id="edit-enrollment-type" name="enrollment_type" style="width: 100%; padding: 0.65rem 1rem; background: rgba(15, 23, 42, 0.5); border: 1px solid var(--border-light); border-radius: 8px; color: var(--text-main); font-size: 0.9rem; outline: none;">
+        <option value="open">Tự học (Vào học ngay tự do)</option>
+        <option value="restricted">Cần duyệt (Gửi yêu cầu và đợi HR duyệt)</option>
+        <option value="only_assigned">Bắt buộc (Chỉ nhân viên được gán mới được học)</option>
+      </select>
     </div>
 
     <div class="form-group">
@@ -140,7 +168,7 @@
         <option value="published">Công khai (Published)</option>
       </select>
     </div>
-
+ 
     <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
       <button type="submit" class="btn btn-primary">Cập nhật</button>
       <button type="button" class="btn btn-secondary" onclick="closeEditForm()">Hủy</button>
@@ -149,19 +177,20 @@
 </div>
 <!-- Lớp phủ modal -->
 <div id="modal-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); z-index: 999;" onclick="closeEditForm()"></div>
-
+ 
 <script>
   function toggleCreateForm() {
     const form = document.getElementById('create-course-form');
     form.style.display = form.style.display === 'none' ? 'block' : 'none';
   }
-
-  function openEditForm(id, title, desc, imageUrl, status) {
+ 
+  function openEditForm(id, title, desc, imageUrl, status, enrollmentType) {
     document.getElementById('edit-course-form-element').action = `/course-management/${id}/update`;
     document.getElementById('edit-title').value = title;
     document.getElementById('edit-description').value = desc;
     document.getElementById('edit-image-url').value = imageUrl;
     document.getElementById('edit-status').value = status;
+    document.getElementById('edit-enrollment-type').value = enrollmentType || 'open';
     
     document.getElementById('edit-course-modal').style.display = 'block';
     document.getElementById('modal-overlay').style.display = 'block';

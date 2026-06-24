@@ -32,7 +32,7 @@ async function runTests() {
   } else {
     try {
       const genAI = new GoogleGenerativeAI(apiKey);
-      const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+      const model = genAI.getGenerativeModel({ model: 'gemini-3.5-flash' });
       const response = await model.generateContent('Hãy trả lời "Hello Connection Test"');
       const text = response.response.text();
       console.log('[OK] Google Gemini API kết nối thành công! Phản hồi kiểm thử:', text.trim());

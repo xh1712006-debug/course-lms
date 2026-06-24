@@ -7,7 +7,7 @@
     "start": "node app.js",
     "dev": "node --watch app.js",
     "test-conn": "node config/test-conn.js",
-    "test": "node research/testMath.js && node research/testRoleMatrix.js && node research/testLearnerSuite.js"
+    "test": "node research/testRoleMatrix.js && node research/testLearnerSuite.js"
   },
   "dependencies": {
     "@google/generative-ai": "^0.11.0",
@@ -19,6 +19,7 @@
     "express": "^4.19.2",
     "express-session": "^1.18.0",
     "ioredis": "^5.4.1",
+    "multer": "^2.2.0",
     "nodemailer": "^9.0.1",
     "pg": "^8.12.0",
     "socket.io": "^4.7.5"

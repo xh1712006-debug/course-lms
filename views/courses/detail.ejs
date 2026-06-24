@@ -1,94 +1,310 @@
 <%- include('../partials/header') %>
 
-<div class="glass-card" style="margin-bottom: 2rem; display: flex; gap: 2rem; align-items: center; flex-wrap: wrap;">
-  <img src="<%= course.image_url %>" alt="<%= course.title %>" style="width: 280px; height: 180px; object-fit: cover; border-radius: 12px; border: 1px solid var(--border-light);">
+<style>
+  /* ========================================== */
+  /* GIAO DIỆN CHI TIẾT KHÓA HỌC CAO CẤP */
+  /* ========================================== */
   
-  <div style="flex: 1; min-width: 300px;">
-    <span style="font-size: 0.75rem; background: rgba(99, 102, 241, 0.1); border: 1px solid rgba(99, 102, 241, 0.3); padding: 0.25rem 0.75rem; border-radius: 20px; color: var(--text-accent); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600;">
-      <%= course.status === 'published' ? 'Đã xuất bản' : 'Bản nháp' %>
-    </span>
+  .detail-hero-card {
+    background: #ffffff;
+    border: 1px solid var(--border-light);
+    border-radius: 20px;
+    padding: 2rem;
+    box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.02);
+    display: grid;
+    grid-template-columns: 320px 1fr;
+    gap: 2.5rem;
+    align-items: center;
+    margin-bottom: 2.5rem;
+  }
+  
+  @media (max-width: 768px) {
+    .detail-hero-card {
+      grid-template-columns: 1fr;
+      gap: 1.5rem;
+      padding: 1.5rem;
+    }
+  }
+
+  /* Ảnh đại diện */
+  .detail-img-wrapper {
+    position: relative;
+    border-radius: 14px;
+    overflow: hidden;
+    aspect-ratio: 16/10;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.04);
+    border: 1px solid var(--border-light);
+    background: #f1f5f9;
+  }
+  .detail-img-wrapper img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  /* Nhãn badge */
+  .detail-badge-row {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-bottom: 0.75rem;
+  }
+  .detail-badge {
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+  }
+  .badge-published {
+    background: rgba(79, 70, 229, 0.08);
+    color: var(--text-accent);
+    border: 1px solid rgba(79, 70, 229, 0.18);
+  }
+  .badge-draft {
+    background: rgba(100, 116, 139, 0.08);
+    color: var(--text-muted);
+    border: 1px solid rgba(100, 116, 139, 0.18);
+  }
+  
+  /* Capsules loại tuyển sinh */
+  .badge-type-detail {
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .type-detail-assigned {
+    background: #fee2e2;
+    color: #ef4444;
+    border: 1px solid #fecaca;
+  }
+  .type-detail-restricted {
+    background: #fef3c7;
+    color: #d97706;
+    border: 1px solid #fde68a;
+  }
+  .type-detail-open {
+    background: #ccfbf1;
+    color: #0d9488;
+    border: 1px solid #99f6e4;
+  }
+
+  /* Trạng thái đăng ký */
+  .enrollment-status-card {
+    background: #f8fafc;
+    border: 1px solid var(--border-light);
+    border-radius: 14px;
+    padding: 1.25rem 1.5rem;
+    margin-top: 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+  }
+
+  /* Grid bài học */
+  .lesson-card-item {
+    background: #ffffff;
+    border: 1px solid var(--border-light);
+    border-radius: 14px;
+    padding: 1.25rem 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: all 0.25s ease;
+  }
+  .lesson-card-item:hover {
+    border-color: #cbd5e1;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.04);
+    transform: translateX(4px);
+  }
+  .lesson-number {
+    font-size: 1.2rem;
+    font-weight: 800;
+    font-family: var(--font-title);
+    color: var(--text-accent);
+    background: rgba(79, 70, 229, 0.06);
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+</style>
+
+<!-- Hero Section Giới thiệu Khóa Học -->
+<div class="detail-hero-card">
+  <!-- Ảnh đại diện khóa học -->
+  <div class="detail-img-wrapper">
+    <img src="<%= course.image_url %>" onerror="this.onerror=null; this.src='/images/default_course.svg';" alt="<%= course.title %>">
+  </div>
+  
+  <!-- Thông tin khóa học -->
+  <div style="min-width: 0;">
+    <div class="detail-badge-row">
+      <span class="detail-badge <%= course.status === 'published' ? 'badge-published' : 'badge-draft' %>">
+        <i class="fa-solid <%= course.status === 'published' ? 'fa-circle-check' : 'fa-pen-to-square' %>"></i>
+        <%= course.status === 'published' ? 'Đã xuất bản' : 'Bản nháp' %>
+      </span>
+      
+      <% if (course.enrollment_type === 'only_assigned') { %>
+        <span class="badge-type-detail type-detail-assigned"><i class="fa-solid fa-lock"></i> Chỉ gán học</span>
+      <% } else if (course.enrollment_type === 'restricted') { %>
+        <span class="badge-type-detail type-detail-restricted"><i class="fa-solid fa-user-shield"></i> Cần phê duyệt</span>
+      <% } else { %>
+        <span class="badge-type-detail type-detail-open"><i class="fa-solid fa-globe"></i> Học tự do</span>
+      <% } %>
+    </div>
     
-    <h1 style="font-size: 2rem; font-weight: 800; margin-top: 0.5rem; margin-bottom: 0.75rem;"><%= course.title %></h1>
-    <p style="color: var(--text-muted); margin-bottom: 1.5rem;"><%= course.description %></p>
+    <h1 style="font-size: 2rem; font-weight: 800; font-family: var(--font-title); margin-top: 0.25rem; margin-bottom: 0.75rem; line-height: 1.3;">
+      <%= course.title %>
+    </h1>
+    <p style="color: var(--text-muted); font-size: 0.95rem; line-height: 1.6; margin-bottom: 0;"><%= course.description %></p>
     
-    <% if (enrollment) { %>
-      <div style="display: flex; align-items: center; gap: 1.5rem;">
+    <!-- Thanh trạng thái đăng ký học & các nút tương ứng -->
+    <div class="enrollment-status-card">
+      <% if (enrollment) { %>
         <% if (enrollment.status === 'pending') { %>
-          <span style="color: #f59e0b; font-weight: 700; font-size: 1.05rem;">
-            <i class="fa-solid fa-clock-rotate-left"></i> Yêu cầu đăng ký đang chờ phê duyệt
-          </span>
-          <a href="/dashboard" class="btn btn-secondary" style="padding: 0.85rem 2rem;">
-            <i class="fa-solid fa-house"></i> Quay lại Dashboard
-          </a>
-        <% } else if (enrollment.status === 'rejected') { %>
-          <span style="color: #ef4444; font-weight: 700; font-size: 1.05rem;">
-            <i class="fa-solid fa-circle-xmark"></i> Đăng ký bị từ chối
-          </span>
-          <a href="/courses/<%= course.id %>/enroll" class="btn btn-primary" style="padding: 0.85rem 2rem;">
-            <i class="fa-solid fa-user-plus"></i> Đăng ký lại
-          </a>
-        <% } else { %>
-          <span style="color: #10b981; font-weight: 700; font-size: 1.05rem;">
-            <i class="fa-solid fa-circle-check"></i> Đã đăng ký học
-          </span>
-          <div style="flex-grow: 0; width: 200px;">
-            <div style="display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 0.25rem;">
-              <span style="color: var(--text-muted);">Tiến độ</span>
-              <span><%= enrollment.progress %>%</span>
-            </div>
-            <div class="progress-container">
-              <div class="progress-bar" style="width: <%= enrollment.progress %>%;"></div>
+          <div style="display: flex; align-items: center; gap: 0.75rem;">
+            <i class="fa-solid fa-circle-notch fa-spin" style="color: #f59e0b; font-size: 1.25rem;"></i>
+            <div>
+              <div style="font-weight: 700; color: #d97706; font-size: 0.95rem;">Đang chờ duyệt</div>
+              <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.1rem;">Bộ phận HR/Admin đang phê duyệt yêu cầu của bạn.</div>
             </div>
           </div>
-          
-          <a href="/courses/<%= course.id %>/lessons/<%= lessons.length > 0 ? lessons[0].id : 1 %>" class="btn btn-primary">
-            <i class="fa-solid fa-circle-play"></i> Vào học ngay
+          <a href="/dashboard" class="btn btn-secondary" style="padding: 0.6rem 1.5rem; font-size: 0.88rem; border-radius: 8px; display: inline-flex; align-items: center; gap: 0.4rem;">
+            <i class="fa-solid fa-house"></i> Dashboard
+          </a>
+        <% } else if (enrollment.status === 'rejected') { %>
+          <div style="display: flex; align-items: center; gap: 0.75rem;">
+            <i class="fa-solid fa-circle-xmark" style="color: #ef4444; font-size: 1.25rem;"></i>
+            <div>
+              <div style="font-weight: 700; color: #dc2626; font-size: 0.95rem;">Yêu cầu bị từ chối</div>
+              <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.1rem;">Vui lòng liên hệ Admin hoặc HR để biết thêm chi tiết.</div>
+            </div>
+          </div>
+          <a href="/courses/<%= course.id %>/enroll" class="btn btn-primary" style="padding: 0.6rem 1.5rem; font-size: 0.88rem; border-radius: 8px; display: inline-flex; align-items: center; gap: 0.4rem;">
+            <i class="fa-solid fa-arrow-rotate-right"></i> Đăng ký lại
+          </a>
+        <% } else { %>
+          <div style="display: flex; align-items: center; gap: 1.5rem; flex-grow: 1; flex-wrap: wrap;">
+            <div style="display: flex; align-items: center; gap: 0.75rem;">
+              <i class="fa-solid fa-circle-check" style="color: #10b981; font-size: 1.25rem;"></i>
+              <div>
+                <div style="font-weight: 700; color: #0d9488; font-size: 0.95rem;">Đã đăng ký</div>
+                <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.1rem;">Chào mừng bạn quay lại học tập!</div>
+              </div>
+            </div>
+            
+            <div style="flex-grow: 1; min-width: 150px; max-width: 250px; margin-left: auto; margin-right: 1.5rem;">
+              <div style="display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 0.35rem; font-weight: 600;">
+                <span style="color: var(--text-muted);">Tiến trình học tập</span>
+                <span style="color: var(--text-accent);"><%= enrollment.progress %>%</span>
+              </div>
+              <div class="progress-container" style="background: #e2e8f0; height: 6px; border-radius: 10px;">
+                <div class="progress-bar" style="width: <%= enrollment.progress %>%; height: 100%; border-radius: 10px; background: var(--secondary-gradient);"></div>
+              </div>
+            </div>
+            
+            <a href="/courses/<%= course.id %>/lessons/<%= lessons.length > 0 ? lessons[0].id : 1 %>" class="btn btn-primary" style="padding: 0.6rem 1.5rem; font-size: 0.88rem; border-radius: 8px; background: var(--secondary-gradient); border: none; display: inline-flex; align-items: center; gap: 0.4rem;">
+              <i class="fa-solid fa-circle-play"></i> Vào học ngay
+            </a>
+          </div>
+        <% } %>
+      <% } else { %>
+        <% if (course.enrollment_type === 'only_assigned') { %>
+          <div style="display: flex; align-items: center; gap: 0.75rem;">
+            <i class="fa-solid fa-lock" style="color: #ef4444; font-size: 1.25rem;"></i>
+            <div>
+              <div style="font-weight: 700; color: #b91c1c; font-size: 0.95rem;">Khóa học bắt buộc chỉ định</div>
+              <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.1rem;">Khóa học này chỉ dành cho các học viên được Admin hoặc HR gán học trực tiếp.</div>
+            </div>
+          </div>
+          <button class="btn btn-secondary" style="padding: 0.6rem 1.5rem; font-size: 0.88rem; border-radius: 8px; opacity: 0.6; cursor: not-allowed; display: inline-flex; align-items: center; gap: 0.4rem;" disabled>
+            <i class="fa-solid fa-lock"></i> Bị khóa
+          </button>
+        <% } else if (course.enrollment_type === 'restricted') { %>
+          <div style="display: flex; align-items: center; gap: 0.75rem;">
+            <i class="fa-solid fa-shield-halved" style="color: #f59e0b; font-size: 1.25rem;"></i>
+            <div>
+              <div style="font-weight: 700; color: #d97706; font-size: 0.95rem;">Đăng ký cần phê duyệt</div>
+              <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.1rem;">Yêu cầu đăng ký sẽ được phê duyệt bởi bộ phận HR hoặc Quản trị viên trước khi vào học.</div>
+            </div>
+          </div>
+          <a href="/courses/<%= course.id %>/enroll" class="btn btn-primary" style="padding: 0.6rem 1.5rem; font-size: 0.88rem; border-radius: 8px; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); border: none; display: inline-flex; align-items: center; gap: 0.4rem;">
+            <i class="fa-solid fa-paper-plane"></i> Gửi yêu cầu duyệt
+          </a>
+        <% } else { %>
+          <div style="display: flex; align-items: center; gap: 0.75rem;">
+            <i class="fa-solid fa-globe" style="color: #10b981; font-size: 1.25rem;"></i>
+            <div>
+              <div style="font-weight: 700; color: #0f766e; font-size: 0.95rem;">Học tập tự do</div>
+              <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.1rem;">Khóa học mở rộng kiến thức, bạn có thể tự do đăng ký tham gia học ngay lập tức.</div>
+            </div>
+          </div>
+          <a href="/courses/<%= course.id %>/enroll" class="btn btn-primary" style="padding: 0.6rem 1.5rem; font-size: 0.88rem; border-radius: 8px; display: inline-flex; align-items: center; gap: 0.4rem;">
+            <i class="fa-solid fa-user-plus"></i> Đăng ký học ngay
           </a>
         <% } %>
-      </div>
-    <% } else { %>
-      <a href="/courses/<%= course.id %>/enroll" class="btn btn-primary" style="padding: 0.85rem 2rem;">
-        <i class="fa-solid fa-user-plus"></i> Đăng ký tham gia học
-      </a>
-    <% } %>
+      <% } %>
+    </div>
   </div>
 </div>
 
-<div style="display: grid; grid-template-columns: 2fr 1.2fr; gap: 2rem;">
+<div style="display: grid; grid-template-columns: 2fr 1.2fr; gap: 2.5rem; align-items: start;">
   
   <!-- Cột bên trái: Danh sách các bài giảng -->
   <div>
-    <h2 style="font-size: 1.4rem; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 0.5rem;">
-      <i class="fa-solid fa-list-ol" style="color: #6366f1;"></i> Nội dung khóa học (Bài giảng)
+    <h2 style="font-size: 1.35rem; font-weight: 700; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 0.5rem; font-family: var(--font-title); color: var(--text-main);">
+      <i class="fa-solid fa-list-check" style="color: #6366f1;"></i> Nội dung chi tiết bài học
     </h2>
     
-    <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+    <div style="display: flex; flex-direction: column; gap: 1rem;">
       <% if (lessons.length === 0) { %>
-        <p style="color: var(--text-muted); font-size: 0.9rem; padding: 1.5rem; text-align: center; background: rgba(0,0,0,0.1); border-radius: 12px;">
-          Chưa có bài học nào được tải lên cho khóa học này.
-        </p>
+        <div class="glass-card" style="padding: 2rem; text-align: center; border-style: dashed; border-width: 2px;">
+          <i class="fa-solid fa-folder-open fa-2x" style="color: var(--text-muted); margin-bottom: 0.75rem; opacity: 0.5;"></i>
+          <p style="color: var(--text-muted); font-size: 0.9rem; margin: 0;">
+            Chưa có bài học nào được đăng tải cho khóa học này.
+          </p>
+        </div>
       <% } else { %>
         <% lessons.forEach((lesson, index) => { %>
-          <div class="glass-card" style="padding: 1.25rem 1.5rem; display: flex; justify-content: space-between; align-items: center;">
-            <div style="display: flex; align-items: center; gap: 1rem;">
-              <span style="font-size: 1.25rem; font-weight: 800; font-family: var(--font-title); color: var(--text-accent);">
-                #<%= index + 1 %>
-              </span>
-              <div>
-                <h4 style="font-size: 1.05rem; font-weight: 600;"><%= lesson.title %></h4>
-                <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.25rem; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden;">
-                  <%= lesson.content %>
+          <div class="lesson-card-item">
+            <div style="display: flex; align-items: center; gap: 1.25rem; min-width: 0;">
+              <!-- Số thứ tự bài học -->
+              <span class="lesson-number">#<%= index + 1 %></span>
+              <div style="min-width: 0;">
+                <h4 style="font-size: 1rem; font-weight: 700; color: var(--text-main); margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                  <%= lesson.title %>
+                </h4>
+                <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.25rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                  <% if (lesson.is_quiz) { %>
+                    <span style="color: #eab308; font-weight: 600;"><i class="fa-solid fa-circle-question"></i> Bài kiểm tra AI tự sinh</span>
+                  <% } else { %>
+                    <%= lesson.content || 'Không có mô tả chi tiết cho bài học này.' %>
+                  <% } %>
                 </p>
               </div>
             </div>
             
-            <div>
+            <div style="flex-shrink: 0; margin-left: 1rem;">
               <% if (enrollment && enrollment.status === 'approved') { %>
-                <a href="/courses/<%= course.id %>/lessons/<%= lesson.id %>" class="btn btn-secondary" style="padding: 0.4rem 1rem; font-size: 0.8rem;">
-                  <i class="fa-solid fa-arrow-right-to-bracket"></i> Xem bài
+                <a href="/courses/<%= course.id %>/lessons/<%= lesson.id %>" class="btn btn-secondary" style="padding: 0.45rem 1rem; font-size: 0.8rem; border-radius: 8px; display: inline-flex; align-items: center; gap: 0.3rem;">
+                  Vào xem <i class="fa-solid fa-chevron-right" style="font-size: 0.7rem;"></i>
                 </a>
               <% } else { %>
-                <i class="fa-solid fa-lock" style="color: var(--text-muted); margin-right: 1rem;" title="Hãy đăng ký khóa học và được phê duyệt để mở khóa"></i>
+                <i class="fa-solid fa-lock" style="color: var(--text-muted); font-size: 0.95rem; margin-right: 0.5rem;" title="Vui lòng đăng ký khóa học để mở khóa bài giảng"></i>
               <% } %>
             </div>
           </div>
@@ -99,29 +315,41 @@
 
   <!-- Cột bên phải: Đề kiểm tra đánh giá -->
   <div>
-    <h2 style="font-size: 1.4rem; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 0.5rem;">
-      <i class="fa-solid fa-award" style="color: #06b6d4;"></i> Đánh giá & Chứng chỉ
+    <h2 style="font-size: 1.35rem; font-weight: 700; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 0.5rem; font-family: var(--font-title); color: var(--text-main);">
+      <i class="fa-solid fa-award" style="color: #0d9488;"></i> Đánh giá & Điều kiện đạt
     </h2>
     
-    <div class="glass-card" style="padding: 1.5rem;">
+    <div class="glass-card" style="padding: 1.5rem; border-radius: 16px;">
       <% if (!quiz) { %>
-        <p style="color: var(--text-muted); font-size: 0.85rem; text-align: center;">Khóa học này chưa được thiết lập bài thi cuối khóa.</p>
+        <div style="text-align: center; padding: 1rem 0;">
+          <i class="fa-solid fa-circle-info fa-2x" style="color: var(--text-muted); margin-bottom: 0.5rem; opacity: 0.5;"></i>
+          <p style="color: var(--text-muted); font-size: 0.85rem; margin: 0; line-height: 1.5;">Khóa học này chưa được thiết lập bài kiểm tra trắc nghiệm cuối khóa.</p>
+        </div>
       <% } else { %>
-        <h4 style="font-weight: 700; margin-bottom: 0.5rem;"><%= quiz.title %></h4>
-        <ul style="list-style: none; font-size: 0.85rem; color: var(--text-muted); display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 1.5rem;">
-          <li><i class="fa-solid fa-clock" style="margin-right: 0.5rem;"></i> Thời gian làm bài: <strong><%= quiz.duration_minutes %> phút</strong></li>
-          <li><i class="fa-solid fa-circle-question" style="margin-right: 0.5rem;"></i> Đề kiểm tra tự động</li>
-          <li><i class="fa-solid fa-circle-info" style="margin-right: 0.5rem;"></i> Điểm số đạt tối thiểu: <strong><%= quiz.passing_score %>/100</strong></li>
+        <h4 style="font-weight: 700; font-size: 1.05rem; margin-bottom: 0.75rem; color: var(--text-main); font-family: var(--font-title);"><%= quiz.title %></h4>
+        
+        <ul style="list-style: none; font-size: 0.85rem; color: var(--text-muted); display: flex; flex-direction: column; gap: 0.75rem; margin-bottom: 1.5rem; padding: 0;">
+          <li style="display: flex; align-items: center; gap: 0.5rem;">
+            <i class="fa-solid fa-clock" style="color: var(--text-accent); width: 16px;"></i>
+            <span>Thời gian làm bài: <strong><%= quiz.duration_minutes %> phút</strong></span>
+          </li>
+          <li style="display: flex; align-items: center; gap: 0.5rem;">
+            <i class="fa-solid fa-circle-question" style="color: var(--text-accent); width: 16px;"></i>
+            <span>Thể loại đề: <strong>Trắc nghiệm tự động</strong></span>
+          </li>
+          <li style="display: flex; align-items: center; gap: 0.5rem;">
+            <i class="fa-solid fa-circle-info" style="color: var(--text-accent); width: 16px;"></i>
+            <span>Điểm đạt tối thiểu: <strong><%= quiz.passing_score %>/100</strong></span>
+          </li>
         </ul>
         
-        <% if (enrollment) { %>
-          <!-- Mở học viên làm bài trắc nghiệm tại màn hình bài học cuối cùng -->
-          <a href="/courses/<%= course.id %>/lessons/<%= lessons.length > 0 ? lessons[0].id : 1 %>" class="btn btn-primary" style="width: 100%; font-size: 0.85rem;">
-            Vào học bài để làm bài kiểm tra
+        <% if (enrollment && enrollment.status === 'approved') { %>
+          <a href="/courses/<%= course.id %>/lessons/<%= lessons.length > 0 ? lessons[0].id : 1 %>" class="btn btn-primary" style="width: 100%; font-size: 0.85rem; padding: 0.6rem; border-radius: 8px; text-align: center; display: block; font-weight: 600;">
+            <i class="fa-solid fa-graduation-cap"></i> Vào học để mở thi
           </a>
         <% } else { %>
-          <button class="btn btn-secondary" style="width: 100%; font-size: 0.85rem; cursor: not-allowed;" disabled>
-            Yêu cầu Đăng ký học để mở thi
+          <button class="btn btn-secondary" style="width: 100%; font-size: 0.85rem; padding: 0.6rem; border-radius: 8px; cursor: not-allowed; font-weight: 600; display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem;" disabled>
+            <i class="fa-solid fa-lock"></i> Đăng ký học để mở thi
           </button>
         <% } %>
       <% } %>

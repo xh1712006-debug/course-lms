@@ -226,24 +226,24 @@ module.exports = {
       return res.rows[0];
     },
 
-    create: async (title, description, imageUrl, status = 'draft') => {
+    create: async (title, description, imageUrl, status = 'draft', enrollmentType = 'open') => {
       const sql = `
-        INSERT INTO courses (title, description, image_url, status)
-        VALUES ($1, $2, $3, $4)
+        INSERT INTO courses (title, description, image_url, status, enrollment_type)
+        VALUES ($1, $2, $3, $4, $5)
         RETURNING *
       `;
-      const res = await db.query(sql, [title, description, imageUrl, status]);
+      const res = await db.query(sql, [title, description, imageUrl, status, enrollmentType]);
       return res.rows[0];
     },
 
-    update: async (id, title, description, imageUrl, status) => {
+    update: async (id, title, description, imageUrl, status, enrollmentType) => {
       const sql = `
         UPDATE courses 
-        SET title = $1, description = $2, image_url = $3, status = $4
-        WHERE id = $5
+        SET title = $1, description = $2, image_url = $3, status = $4, enrollment_type = $5
+        WHERE id = $6
         RETURNING *
       `;
-      const res = await db.query(sql, [title, description, imageUrl, status, id]);
+      const res = await db.query(sql, [title, description, imageUrl, status, enrollmentType, id]);
       return res.rows[0];
     },
 
@@ -278,24 +278,24 @@ module.exports = {
       return res.rows[0];
     },
 
-    create: async (courseId, title, content, videoUrl, attachmentUrl, orderIndex) => {
+    create: async (courseId, title, content, videoUrl, attachmentUrl, orderIndex, isQuiz = false) => {
       const sql = `
-        INSERT INTO lessons (course_id, title, content, video_url, attachment_url, order_index)
-        VALUES ($1, $2, $3, $4, $5, $6)
+        INSERT INTO lessons (course_id, title, content, video_url, attachment_url, order_index, is_quiz)
+        VALUES ($1, $2, $3, $4, $5, $6, $7)
         RETURNING *
       `;
-      const res = await db.query(sql, [courseId, title, content, videoUrl, attachmentUrl, orderIndex]);
+      const res = await db.query(sql, [courseId, title, content, videoUrl, attachmentUrl, orderIndex, isQuiz]);
       return res.rows[0];
     },
 
-    update: async (id, title, content, videoUrl, attachmentUrl, orderIndex) => {
+    update: async (id, title, content, videoUrl, attachmentUrl, orderIndex, isQuiz = false) => {
       const sql = `
         UPDATE lessons 
-        SET title = $1, content = $2, video_url = $3, attachment_url = $4, order_index = $5
-        WHERE id = $6
+        SET title = $1, content = $2, video_url = $3, attachment_url = $4, order_index = $5, is_quiz = $6
+        WHERE id = $7
         RETURNING *
       `;
-      const res = await db.query(sql, [title, content, videoUrl, attachmentUrl, orderIndex, id]);
+      const res = await db.query(sql, [title, content, videoUrl, attachmentUrl, orderIndex, isQuiz, id]);
       return res.rows[0];
     },
 
@@ -410,8 +410,25 @@ module.exports = {
   // 8. Đề thi & Câu hỏi (Quizzes & Questions)
   Quiz: {
     findByCourseId: async (courseId) => {
-      const sql = `SELECT * FROM quizzes WHERE course_id = $1`;
+      // Chỉ tìm các đề thi cuối khóa của course (ở đó lesson_id IS NULL)
+      const sql = `SELECT * FROM quizzes WHERE course_id = $1 AND lesson_id IS NULL`;
       const res = await db.query(sql, [courseId]);
+      return res.rows[0];
+    },
+
+    findByLessonId: async (lessonId) => {
+      const sql = `SELECT * FROM quizzes WHERE lesson_id = $1`;
+      const res = await db.query(sql, [lessonId]);
+      return res.rows[0];
+    },
+
+    createLessonQuiz: async (courseId, lessonId, title, durationMinutes = 15, passingScore = 100) => {
+      const sql = `
+        INSERT INTO quizzes (course_id, lesson_id, title, duration_minutes, passing_score)
+        VALUES ($1, $2, $3, $4, $5)
+        RETURNING *
+      `;
+      const res = await db.query(sql, [courseId, lessonId, title, durationMinutes, passingScore]);
       return res.rows[0];
     },
 
@@ -529,6 +546,17 @@ module.exports = {
       `;
       const res = await db.query(sql, [userId]);
       return res.rows;
+    },
+
+    findUserPassedSubmission: async (userId, quizId) => {
+      const sql = `
+        SELECT * FROM quiz_submissions 
+        WHERE user_id = $1 AND quiz_id = $2 AND is_passed = true 
+        ORDER BY score DESC, created_at DESC 
+        LIMIT 1
+      `;
+      const res = await db.query(sql, [userId, quizId]);
+      return res.rows[0];
     }
   },
 

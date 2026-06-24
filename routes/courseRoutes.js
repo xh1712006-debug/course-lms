@@ -74,7 +74,7 @@ router.get('/courses/quiz/questions', async (req, res) => {
 
 // Nộp bài thi cuối khóa & tự động cập nhật kết quả tiến độ khóa học lên 100% nếu đạt
 router.post('/courses/quiz/submit', async (req, res) => {
-  const { Quiz, Question, QuizSubmission, Enrollment, AuditLog } = require('../models/schema');
+  const { Quiz, Question, QuizSubmission, Enrollment, AuditLog, Lesson } = require('../models/schema');
   const { quizId, answers, essayAnswer } = req.body;
   const userId = req.session.userId;
   try {
@@ -102,19 +102,40 @@ router.post('/courses/quiz/submit', async (req, res) => {
       score = Math.round((correctCount / questions.length) * 100);
       isPassed = score >= quiz.passing_score;
       
-      // Nếu thi đạt, cập nhật tiến độ học tập khóa này lên 100% (Hoàn thành)
       if (isPassed) {
-        await Enrollment.updateProgress(userId, quiz.course_id, 100);
+        if (quiz.lesson_id) {
+          // Bài kiểm tra trắc nghiệm của riêng bài học
+          const lesson = await Lesson.findById(quiz.lesson_id);
+          const lessons = await Lesson.findByCourseId(lesson.course_id);
+          const currentIdx = lessons.findIndex(l => l.id === lesson.id);
+          const totalLessons = lessons.length;
+          
+          const enrollment = await Enrollment.findByUserAndCourse(userId, lesson.course_id);
+          const calculatedProgress = Math.max(
+            enrollment ? enrollment.progress : 0,
+            Math.round(((currentIdx + 1) / totalLessons) * 100)
+          );
+          await Enrollment.updateProgress(userId, lesson.course_id, calculatedProgress);
+        } else {
+          // Thi cuối khóa: Cập nhật tiến độ hoàn thành 100%
+          await Enrollment.updateProgress(userId, quiz.course_id, 100);
+        }
       }
     } else {
-      // Nếu có câu hỏi tự luận, tiến độ đạt 95% (Chờ chấm điểm tự luận để lên 100%)
+      // Nếu có tự luận (chỉ dành cho đề cuối khóa): tiến độ đạt 95%
       await Enrollment.updateProgress(userId, quiz.course_id, 95);
     }
     
-    // Lưu kết quả nộp bài thi (bao gồm cả tự luận)
+    // Lưu kết quả nộp bài thi
     await QuizSubmission.create(quiz.id, userId, score, isPassed, answers, essayAnswer || null);
     
-    await AuditLog.create(userId, 'QUIZ_SUBMIT', { quiz_id: quizId, score, is_passed: isPassed, has_essay: hasEssay });
+    await AuditLog.create(userId, quiz.lesson_id ? 'LESSON_QUIZ_SUBMIT' : 'QUIZ_SUBMIT', { 
+      quiz_id: quizId, 
+      score, 
+      is_passed: isPassed, 
+      has_essay: hasEssay,
+      lesson_id: quiz.lesson_id || null
+    });
     
     res.json({ score, is_passed: isPassed, has_essay: hasEssay });
   } catch (err) {

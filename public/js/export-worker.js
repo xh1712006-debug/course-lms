@@ -7,7 +7,7 @@
 self.onmessage = function(e) {
   if (e.data.action === 'start_export') {
     // Gọi API nội bộ lấy dữ liệu thô (Raw JSON) của báo cáo
-    fetch('/admin/reports/raw')
+    fetch('/admin/reports/raw?format=json')
       .then(response => {
         if (!response.ok) {
           throw new Error('Mã phản hồi HTTP: ' + response.status);

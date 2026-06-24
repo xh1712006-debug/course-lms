@@ -17,6 +17,7 @@ router.post('/course-management', requirePermission('COURSE_CREATE'), adminContr
 router.post('/course-management/:id/update', requirePermission('COURSE_UPDATE'), adminController.updateCourse);
 router.post('/course-management/:id/delete', requirePermission('COURSE_DELETE'), adminController.deleteCourse);
 router.post('/course-management/:id/publish', requirePermission('COURSE_PUBLISH'), adminController.publishCourse);
+router.post('/course-management/upload', requirePermission('CONTENT_UPLOAD'), adminController.uploadAttachment);
 
 // ==========================================
 // NHÓM 2: QUẢN LÝ BÀI HỌC (LESSON & CONTENT)
@@ -73,11 +74,5 @@ router.post('/permissions/:id/update', requirePermission('ROLE_MANAGE'), adminCo
 router.post('/permissions/:id/delete', requirePermission('ROLE_MANAGE'), adminController.deleteRole);
 router.post('/permissions/toggle', requirePermission('ROLE_MANAGE'), adminController.toggleRolePermission);
 router.get('/audit', requirePermission('AUDIT_LOG_VIEW'), adminController.getAuditLogs);
-
-// ==========================================
-// NHÓM MỚI: QUẢN TRỊ THỰC NGHIỆM KHOA HỌC (SCIENTIFIC RESEARCH)
-// ==========================================
-router.get('/experiments', requirePermission('ROLE_MANAGE'), adminController.getExperimentsDashboard);
-router.post('/experiments/run', requirePermission('ROLE_MANAGE'), adminController.runExperiment);
 
 module.exports = router;

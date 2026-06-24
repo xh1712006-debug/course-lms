@@ -24,7 +24,22 @@ function handleAiSummarize() {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ lessonId })
   })
-  .then(res => res.json())
+  .then(async res => {
+    if (!res.ok) {
+      const text = await res.text();
+      try {
+        const errJson = JSON.parse(text);
+        throw new Error(errJson.error || `HTTP ${res.status}`);
+      } catch {
+        throw new Error(`Máy chủ phản hồi lỗi (HTTP ${res.status})`);
+      }
+    }
+    const contentType = res.headers.get('content-type');
+    if (!contentType || !contentType.includes('application/json')) {
+      throw new Error('Phiên đăng nhập có thể đã hết hạn hoặc máy chủ phản hồi định dạng không hợp lệ.');
+    }
+    return res.json();
+  })
   .then(data => {
     removeMessageById(loadingId);
     if (data.error) {
@@ -74,7 +89,22 @@ function handleAiSendChat() {
       history: aiChatHistory
     })
   })
-  .then(res => res.json())
+  .then(async res => {
+    if (!res.ok) {
+      const text = await res.text();
+      try {
+        const errJson = JSON.parse(text);
+        throw new Error(errJson.error || `HTTP ${res.status}`);
+      } catch {
+        throw new Error(`Máy chủ phản hồi lỗi (HTTP ${res.status})`);
+      }
+    }
+    const contentType = res.headers.get('content-type');
+    if (!contentType || !contentType.includes('application/json')) {
+      throw new Error('Phiên đăng nhập có thể đã hết hạn hoặc máy chủ phản hồi định dạng không hợp lệ.');
+    }
+    return res.json();
+  })
   .then(data => {
     removeMessageById(loadingId);
     if (data.error) {
@@ -115,7 +145,22 @@ function handleAiGenerateQuiz() {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ lessonId })
   })
-  .then(res => res.json())
+  .then(async res => {
+    if (!res.ok) {
+      const text = await res.text();
+      try {
+        const errJson = JSON.parse(text);
+        throw new Error(errJson.error || `HTTP ${res.status}`);
+      } catch {
+        throw new Error(`Máy chủ phản hồi lỗi (HTTP ${res.status})`);
+      }
+    }
+    const contentType = res.headers.get('content-type');
+    if (!contentType || !contentType.includes('application/json')) {
+      throw new Error('Phiên đăng nhập có thể đã hết hạn hoặc máy chủ phản hồi định dạng không hợp lệ.');
+    }
+    return res.json();
+  })
   .then(data => {
     removeMessageById(loadingId);
     if (data.error) {
@@ -138,6 +183,57 @@ function handleAiGenerateQuiz() {
 }
 
 /**
+ * Admin dùng AI để sinh câu hỏi trắc nghiệm trực tiếp vào DB ngân hàng đề thi
+ */
+function handleAiGenerateToDb(quizId) {
+  const lessonIdField = document.getElementById('lesson-id-field');
+  if (!lessonIdField) return;
+
+  const lessonId = lessonIdField.value;
+  const chatBox = document.getElementById('ai-chat-box');
+
+  // Hiện thông báo đang tạo
+  const loadingId = appendAiMessage('assistant', '🤖 Đang dùng AI để tự động tạo câu hỏi trắc nghiệm chất lượng cao và đồng bộ trực tiếp vào Ngân hàng câu hỏi của hệ thống...');
+  chatBox.scrollTop = chatBox.scrollHeight;
+
+  fetch('/ai/quiz-to-bank', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ lessonId, quizId })
+  })
+  .then(async res => {
+    if (!res.ok) {
+      const text = await res.text();
+      try {
+        const errJson = JSON.parse(text);
+        throw new Error(errJson.error || `HTTP ${res.status}`);
+      } catch {
+        throw new Error(`Máy chủ phản hồi lỗi (HTTP ${res.status})`);
+      }
+    }
+    const contentType = res.headers.get('content-type');
+    if (!contentType || !contentType.includes('application/json')) {
+      throw new Error('Phiên đăng nhập có thể đã hết hạn hoặc máy chủ phản hồi định dạng không hợp lệ.');
+    }
+    return res.json();
+  })
+  .then(data => {
+    removeMessageById(loadingId);
+    if (data.error) {
+      appendAiMessage('assistant', `❌ Gặp sự cố: ${data.error}`);
+    } else {
+      appendAiMessage('assistant', `✅ Thành công: ${data.success || 'Đã thêm câu hỏi vào CSDL.'}`);
+    }
+    chatBox.scrollTop = chatBox.scrollHeight;
+  })
+  .catch(err => {
+    removeMessageById(loadingId);
+    appendAiMessage('assistant', `❌ Lỗi kết nối AI: ${err.message}`);
+    chatBox.scrollTop = chatBox.scrollHeight;
+  });
+}
+
+/**
  * Hiển thị khối trắc nghiệm tương tác
  */
 function renderQuickQuiz(questions) {
@@ -153,16 +249,18 @@ function renderQuickQuiz(questions) {
   `;
 
   questions.forEach((q, qIdx) => {
+    const qText = sanitizeMathText(q.question_text);
     html += `
       <div style="margin-bottom: 1.25rem; border-bottom: 1px solid var(--border-light); padding-bottom: 1rem; &:last-child { border-bottom:none; }">
-        <p style="font-weight:600; font-size:0.85rem; margin-bottom:0.5rem;">Câu ${qIdx + 1}: ${q.question_text}</p>
+        <p style="font-weight:600; font-size:0.85rem; margin-bottom:0.5rem;">Câu ${qIdx + 1}: ${qText}</p>
         <div style="display:flex; flex-direction:column; gap:0.4rem;">
     `;
     
     q.options.forEach((opt, oIdx) => {
+      const cleanOpt = sanitizeMathText(opt);
       html += `
-        <button class="quiz-option" id="quiz-q${qIdx}-o${oIdx}" onclick="answerQuickQuestion(${qIdx}, '${opt.replace(/'/g, "\\'")}', ${oIdx})">
-          ${opt}
+        <button class="quiz-option" id="quiz-q${qIdx}-o${oIdx}" onclick="answerQuickQuestion(${qIdx}, '${cleanOpt.replace(/'/g, "\\'")}', ${oIdx})">
+          ${cleanOpt}
         </button>
       `;
     });
@@ -175,6 +273,10 @@ function renderQuickQuiz(questions) {
   });
 
   quizArea.innerHTML = html;
+  // Kết xuất công thức toán học trong phần trắc nghiệm ôn tập nhanh
+  if (typeof renderMath === 'function') {
+    renderMath(quizArea);
+  }
   quizArea.scrollIntoView({ behavior: 'smooth' });
 }
 
@@ -264,9 +366,10 @@ function openFinalQuizModal() {
       // Render danh sách câu hỏi
       let html = '';
       data.questions.forEach((q, qIdx) => {
+        const qText = sanitizeMathText(q.question_text);
         html += `
           <div style="margin-bottom:1.5rem; border-bottom:1px solid var(--border-light); padding-bottom:1rem;">
-            <p style="font-weight:600; margin-bottom:0.75rem;">Câu ${qIdx + 1}: ${q.question_text}</p>
+            <p style="font-weight:600; margin-bottom:0.75rem;">Câu ${qIdx + 1}: ${qText}</p>
             <div style="display:flex; flex-direction:column; gap:0.5rem;">
         `;
         
@@ -276,10 +379,11 @@ function openFinalQuizModal() {
           `;
         } else {
           q.options.forEach((opt, oIdx) => {
+            const cleanOpt = sanitizeMathText(opt);
             html += `
               <label style="display:flex; align-items:center; gap:0.75rem; background:rgba(255,255,255,0.02); padding:0.6rem 1rem; border-radius:8px; border:1px solid var(--border-light); cursor:pointer;">
-                <input type="radio" name="modal-q-${q.id}" value="${opt.replace(/"/g, '&quot;')}" required>
-                <span>${opt}</span>
+                <input type="radio" name="modal-q-${q.id}" value="${cleanOpt.replace(/"/g, '&quot;')}" required>
+                <span>${cleanOpt}</span>
               </label>
             `;
           });
@@ -291,6 +395,10 @@ function openFinalQuizModal() {
         `;
       });
       container.innerHTML = html;
+      // Kết xuất công thức toán học trong phần đề thi cuối khóa
+      if (typeof renderMath === 'function') {
+        renderMath(container);
+      }
     })
     .catch(err => {
       container.innerHTML = `<p style="color:#ef4444;">❌ Không thể tải đề: ${err.message}</p>`;
@@ -381,6 +489,12 @@ function appendAiMessage(role, text) {
   msgDiv.innerHTML = text;
 
   chatBox.appendChild(msgDiv);
+
+  // Kết xuất công thức toán học trong tin nhắn vừa thêm
+  if (typeof renderMath === 'function') {
+    renderMath(msgDiv);
+  }
+
   return msgId;
 }
 
@@ -390,11 +504,113 @@ function removeMessageById(id) {
 }
 
 function formatMarkdown(text) {
+  const cleanedText = typeof text === 'string' ? text.replace(/\\ +([a-zA-Z]+)/g, '\\$1') : text;
+  if (typeof marked !== 'undefined') {
+    return marked.parse(cleanedText);
+  }
   // Thay thế thô các thẻ markdown cơ bản sang HTML để hiển thị đẹp
-  let formatted = text
+  let formatted = cleanedText
     .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
     .replace(/\*(.*?)\*/g, '<em>$1</em>')
     .replace(/`(.*?)`/g, '<code style="background:rgba(255,255,255,0.1); padding:0.1rem 0.3rem; border-radius:3px; font-family:monospace;">$1</code>')
     .replace(/\n/g, '<br>');
   return formatted;
+}
+
+function sanitizeMathText(str) {
+  if (typeof str !== 'string') return str;
+  return str.replace(/\\ +([a-zA-Z]+)/g, '\\$1');
+}
+
+// Xử lý nộp bài thi kiểm tra trắc nghiệm AI của riêng bài học
+function highlightSelectedOption(element) {
+  const siblings = element.parentNode.querySelectorAll('.quiz-option-label');
+  siblings.forEach(sib => {
+    sib.style.background = 'rgba(255, 255, 255, 0.01)';
+    sib.style.borderColor = 'var(--border-light)';
+  });
+  element.style.background = 'rgba(99, 102, 241, 0.1)';
+  element.style.borderColor = '#6366f1';
+}
+
+function submitLessonQuiz(event) {
+  event.preventDefault();
+  const form = document.getElementById('lesson-quiz-form');
+  const quizId = document.getElementById('lesson-quiz-id').value;
+  const lessonId = document.getElementById('lesson-id-field').value;
+  const btn = document.getElementById('btn-submit-lesson-quiz');
+  const alertBox = document.getElementById('quiz-result-alert');
+
+  if (!btn || !alertBox) return;
+
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Đang chấm điểm...';
+
+  // Thu thập đáp án
+  const answers = {};
+  const formData = new FormData(form);
+  for (let [key, value] of formData.entries()) {
+    if (key.startsWith('q-')) {
+      const questionId = key.replace('q-', '');
+      answers[questionId] = value;
+    }
+  }
+
+  fetch('/courses/quiz/submit', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ quizId, answers })
+  })
+    .then(res => res.json())
+    .then(data => {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Nộp bài kiểm tra';
+
+      if (data.error) {
+        alertBox.style.display = 'block';
+        alertBox.className = 'alert alert-danger';
+        alertBox.style.background = 'rgba(239, 68, 68, 0.15)';
+        alertBox.style.border = '1px solid #ef4444';
+        alertBox.style.color = '#f87171';
+        alertBox.innerText = '❌ Lỗi: ' + data.error;
+        return;
+      }
+
+      alertBox.style.display = 'block';
+      if (data.is_passed) {
+        alertBox.style.background = 'rgba(16, 185, 129, 0.15)';
+        alertBox.style.border = '1px solid #10b981';
+        alertBox.style.color = '#34d399';
+        alertBox.innerHTML = `🎉 <strong>Tuyệt vời!</strong> Bạn đã trả lời đúng ${data.score}% (${data.score / 10}/10 câu) và hoàn thành bài kiểm tra!`;
+
+        setTimeout(() => {
+          window.location.reload();
+        }, 2000);
+      } else {
+        alertBox.style.background = 'rgba(239, 68, 68, 0.15)';
+        alertBox.style.border = '1px solid #ef4444';
+        alertBox.style.color = '#f87171';
+        alertBox.innerHTML = `❌ <strong>Không đạt!</strong> Điểm số của bạn: ${data.score}% (Yêu cầu phải đạt 100% để vượt qua). <br>Vui lòng nhấn nút dưới đây để làm lại bài kiểm tra từ đầu.`;
+
+        // Đổi nút nộp bài thành nút làm lại
+        const actionsContainer = document.getElementById('quiz-actions-container');
+        if (actionsContainer) {
+          actionsContainer.innerHTML = `
+            <button type="button" class="btn btn-secondary" onclick="window.location.reload()" style="padding: 0.8rem 2.5rem; font-size: 0.95rem; font-weight: 600; display: inline-flex; align-items: center; gap: 0.5rem;">
+              <i class="fa-solid fa-rotate-left"></i> Làm lại từ đầu
+            </button>
+          `;
+        }
+      }
+    })
+    .catch(err => {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Nộp bài kiểm tra';
+      alertBox.style.display = 'block';
+      alertBox.className = 'alert alert-danger';
+      alertBox.style.background = 'rgba(239, 68, 68, 0.15)';
+      alertBox.style.border = '1px solid #ef4444';
+      alertBox.style.color = '#f87171';
+      alertBox.innerText = '❌ Không thể kết nối đến máy chủ: ' + err.message;
+    });
 }
