@@ -50,9 +50,8 @@
     <div class="form-group">
       <label class="form-label">Hình thức đăng ký học</label>
       <select name="enrollment_type" style="width: 100%; padding: 0.65rem 1rem; background: rgba(15, 23, 42, 0.5); border: 1px solid var(--border-light); border-radius: 8px; color: var(--text-main); font-size: 0.9rem; outline: none;">
-        <option value="open">Tự học (Vào học ngay tự do)</option>
-        <option value="restricted">Cần duyệt (Gửi yêu cầu và đợi duyệt)</option>
-        <option value="only_assigned">Bắt buộc (Chỉ nhân sự được gán mới được học)</option>
+        <option value="open">Tự học (Học ngay, không cần xét duyệt)</option>
+        <option value="restricted">Cần phê duyệt (Gửi yêu cầu, đợi HR/Admin duyệt)</option>
       </select>
     </div>
 
@@ -89,10 +88,8 @@
             <%= course.description %>
           </td>
           <td>
-            <% if (course.enrollment_type === 'only_assigned') { %>
-              <span style="color: #f87171; font-weight: 600;"><i class="fa-solid fa-lock"></i> Chỉ gán học</span>
-            <% } else if (course.enrollment_type === 'restricted') { %>
-              <span style="color: #fbbf24; font-weight: 600;"><i class="fa-solid fa-clock"></i> Cần phê duyệt</span>
+            <% if (course.enrollment_type === 'restricted') { %>
+              <span style="color: #fbbf24; font-weight: 600;"><i class="fa-solid fa-shield-halved"></i> Cần phê duyệt</span>
             <% } else { %>
               <span style="color: #34d399; font-weight: 600;"><i class="fa-solid fa-globe"></i> Tự học tự do</span>
             <% } %>
@@ -174,9 +171,8 @@
     <div class="form-group">
       <label class="form-label">Hình thức đăng ký học</label>
       <select id="edit-enrollment-type" name="enrollment_type" style="width: 100%; padding: 0.65rem 1rem; background: rgba(15, 23, 42, 0.5); border: 1px solid var(--border-light); border-radius: 8px; color: var(--text-main); font-size: 0.9rem; outline: none;">
-        <option value="open">Tự học (Vào học ngay tự do)</option>
-        <option value="restricted">Cần duyệt (Gửi yêu cầu và đợi HR duyệt)</option>
-        <option value="only_assigned">Bắt buộc (Chỉ nhân viên được gán mới được học)</option>
+        <option value="open">Tự học (Học ngay, không cần xét duyệt)</option>
+        <option value="restricted">Cần phê duyệt (Gửi yêu cầu, đợi HR/Admin duyệt)</option>
       </select>
     </div>
 

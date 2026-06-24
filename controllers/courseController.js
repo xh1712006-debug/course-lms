@@ -220,11 +220,6 @@ module.exports = {
         return res.status(404).render('error', { message: 'Khóa học không hợp lệ.' });
       }
 
-      // Kiểm soát hình thức tham gia học tập
-      if (course.enrollment_type === 'only_assigned') {
-        return res.status(403).render('error', { message: 'Khóa học này chỉ dành cho nhân sự được chỉ định học tập bắt buộc, bạn không thể tự đăng ký.' });
-      }
-
       // Nếu hình thức là 'restricted' thì cần phê duyệt (status = pending), ngược lại thì tự duyệt ngay (approved)
       const status = (course.enrollment_type === 'restricted') ? 'pending' : 'approved';
       await Enrollment.create(userId, courseId, false, status);

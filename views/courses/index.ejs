@@ -281,9 +281,7 @@
         <% } else if (course.isPending) { %>
           <span class="badge-capsule type-restricted"><i class="fa-solid fa-clock"></i> Đang chờ duyệt</span>
         <% } else { %>
-          <% if (course.enrollment_type === 'only_assigned') { %>
-            <span class="badge-capsule type-assigned"><i class="fa-solid fa-lock"></i> Chỉ gán học</span>
-          <% } else if (course.enrollment_type === 'restricted') { %>
+          <% if (course.enrollment_type === 'restricted') { %>
             <span class="badge-capsule type-restricted"><i class="fa-solid fa-user-shield"></i> Cần phê duyệt</span>
           <% } else { %>
             <span class="badge-capsule type-open"><i class="fa-solid fa-globe"></i> Học tự do</span>
