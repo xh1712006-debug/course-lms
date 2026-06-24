@@ -17,6 +17,7 @@ router.post('/course-management', requirePermission('COURSE_CREATE'), adminContr
 router.post('/course-management/:id/update', requirePermission('COURSE_UPDATE'), adminController.updateCourse);
 router.post('/course-management/:id/delete', requirePermission('COURSE_DELETE'), adminController.deleteCourse);
 router.post('/course-management/:id/publish', requirePermission('COURSE_PUBLISH'), adminController.publishCourse);
+router.post('/course-management/:id/assign', requirePermission('ENROLL_ASSIGN'), adminController.assignCourseBulk);
 router.post('/course-management/upload', requirePermission('CONTENT_UPLOAD'), adminController.uploadAttachment);
 
 // ==========================================

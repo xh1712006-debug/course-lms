@@ -82,12 +82,21 @@ module.exports = {
       return res.status(403).render('error', { message: 'Bạn không có quyền xem khóa học.' });
     }
     try {
+      const success = req.query.success || null;
+      const error = req.query.error || null;
       const courses = await Course.findAll();
+      const users = await User.findAll();
+      const departments = await Department.findAll();
       res.render('admin/courses', { 
         courses, 
+        users,
+        departments,
+        success,
+        error,
         user: { permissions: req.session.permissions } 
       });
     } catch (err) {
+      console.error('[Admin Controller] Lỗi tải danh sách khóa học:', err);
       res.render('error', { message: 'Lỗi tải danh sách khóa học.' });
     }
   },
@@ -664,6 +673,88 @@ module.exports = {
     }
   },
 
+  assignCourseBulk: async (req, res) => {
+    if (!req.session.permissions.includes('ENROLL_ASSIGN')) {
+      return res.status(403).json({ error: 'Không có quyền giao khóa học học tập.' });
+    }
+    const courseId = parseInt(req.params.id);
+    const { userIds, departmentIds, timeLimitDays } = req.body;
+
+    try {
+      const course = await Course.findById(courseId);
+      if (!course) {
+        return res.redirect('/course-management?error=' + encodeURIComponent('Khóa học không tồn tại.'));
+      }
+
+      // Chuẩn hóa danh sách ID từ form submit
+      let uIds = [];
+      if (userIds) {
+        uIds = Array.isArray(userIds) ? userIds.map(Number) : [Number(userIds)];
+      }
+      let dIds = [];
+      if (departmentIds) {
+        dIds = Array.isArray(departmentIds) ? departmentIds.map(Number) : [Number(departmentIds)];
+      }
+
+      if (uIds.length === 0 && dIds.length === 0) {
+        return res.redirect('/course-management?error=' + encodeURIComponent('Vui lòng chọn ít nhất một cá nhân hoặc phòng ban để giao khóa học.'));
+      }
+
+      // Sử dụng Set để tránh gán trùng lặp cho một nhân sự
+      const targetUserIds = new Set(uIds);
+
+      // Tìm tất cả user active thuộc các phòng ban được chọn
+      for (let deptId of dIds) {
+        const sql = 'SELECT id FROM users WHERE department_id = $1 AND status = \'active\'';
+        const usersInDept = await require('../config/db').query(sql, [deptId]);
+        for (let u of usersInDept.rows) {
+          targetUserIds.add(u.id);
+        }
+      }
+
+      if (targetUserIds.size === 0) {
+        return res.redirect('/course-management?error=' + encodeURIComponent('Không tìm thấy nhân sự phù hợp nào trong đối tượng đã chọn.'));
+      }
+
+      // Tính toán deadline dựa trên số ngày chỉ định
+      let deadline = null;
+      if (timeLimitDays && !isNaN(timeLimitDays) && parseInt(timeLimitDays) > 0) {
+        deadline = new Date();
+        deadline.setDate(deadline.getDate() + parseInt(timeLimitDays));
+      }
+
+      let assignedCount = 0;
+      // Giao khóa học cho từng nhân sự
+      for (let uId of targetUserIds) {
+        await Enrollment.create(uId, courseId, true, 'approved', deadline);
+        assignedCount++;
+      }
+
+      // Lưu log Audit Log tổng hợp
+      await AuditLog.create(req.session.userId, 'COURSE_ASSIGN_BULK', {
+        course_id: courseId,
+        user_count: assignedCount,
+        selected_users: uIds,
+        selected_departments: dIds,
+        deadline
+      });
+
+      // Thông báo qua WebSocket
+      try {
+        const { getIO } = require('../config/socket');
+        const io = getIO();
+        io.emit('course_assigned_notification', { courseId, userIds: uIds, departmentIds: dIds });
+      } catch (ioErr) {
+        console.warn('[Admin Controller] Không thể gửi Socket notification:', ioErr.message);
+      }
+
+      res.redirect('/course-management?success=' + encodeURIComponent(`Giao thành công khóa học "${course.title}" cho ${assignedCount} nhân sự.`));
+    } catch (err) {
+      console.error('[Admin Controller] Lỗi giao khóa học:', err);
+      res.redirect('/course-management?error=' + encodeURIComponent('Lỗi hệ thống khi giao khóa học.'));
+    }
+  },
+
   getEnrollmentApprovals: async (req, res) => {
     if (!req.session.permissions.includes('ENROLL_APPROVE')) {
       return res.status(403).render('error', { message: 'Không có quyền duyệt đăng ký.' });
@@ -1149,10 +1240,13 @@ module.exports = {
         { value: 'COURSE_PUBLISH', label: 'Thay đổi trạng thái khóa học' },
         { value: 'COURSE_ASSIGN_USER', label: 'Giao khóa học cho nhân sự' },
         { value: 'COURSE_ASSIGN_DEPARTMENT', label: 'Giao khóa học cho phòng ban' },
+        { value: 'COURSE_ASSIGN_BULK', label: 'Giao khóa học hàng loạt' },
         { value: 'LESSON_CREATE', label: 'Thêm bài giảng' },
         { value: 'LESSON_UPDATE', label: 'Sửa bài giảng' },
         { value: 'LESSON_DELETE', label: 'Xóa bài giảng' },
         { value: 'PATH_CREATE', label: 'Tạo lộ trình đào tạo' },
+        { value: 'PATH_UPDATE', label: 'Cập nhật lộ trình đào tạo' },
+        { value: 'PATH_DELETE', label: 'Xóa lộ trình đào tạo' },
         { value: 'PATH_ASSIGN_BULK', label: 'Giao lộ trình học tập hàng loạt' },
         { value: 'DEPARTMENT_CREATE', label: 'Tạo phòng ban' },
         { value: 'DEPARTMENT_DELETE', label: 'Xóa phòng ban' },
