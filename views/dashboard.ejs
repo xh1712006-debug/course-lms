@@ -56,6 +56,39 @@
     </div>
   <% } %>
 
+  <!-- Bảng phân tích thống kê học tập (Learning Analytics) -->
+  <% if (enrollments.length > 0) { %>
+    <div style="margin-bottom: 2.5rem;">
+      <h2 style="font-size: 1.4rem; display: flex; align-items: center; gap: 0.5rem; color: var(--text-main); margin-bottom: 1.25rem;">
+        <i class="fa-solid fa-chart-line" style="color: #6366f1;"></i> Báo cáo phân tích tiến độ học tập
+      </h2>
+      
+      <div class="glass-card" style="padding: 2rem; border-radius: 16px;">
+        <div style="display: grid; grid-template-columns: 1.8fr 1.2fr; gap: 2.5rem; min-height: 320px;" class="analytics-grid">
+          <!-- Canvas 1: Tiến trình chi tiết -->
+          <div style="position: relative; width: 100%; height: 100%; min-height: 280px; display: flex; flex-direction: column; justify-content: space-between;">
+            <h4 style="font-size: 0.95rem; font-weight: 700; color: var(--text-main); margin-bottom: 1rem; display: flex; align-items: center; gap: 0.4rem;">
+              <i class="fa-solid fa-chart-bar" style="color: #4f46e5;"></i> Chi tiết tiến độ hoàn thành các khóa học (%)
+            </h4>
+            <div style="flex-grow: 1; position: relative; width: 100%; height: 250px;">
+              <canvas id="courseProgressChart"></canvas>
+            </div>
+          </div>
+          
+          <!-- Canvas 2: Phân bổ trạng thái -->
+          <div style="position: relative; width: 100%; height: 100%; min-height: 280px; display: flex; flex-direction: column; justify-content: space-between; border-left: 1px solid var(--border-light); padding-left: 2rem;" class="status-chart-container">
+            <h4 style="font-size: 0.95rem; font-weight: 700; color: var(--text-main); margin-bottom: 1rem; display: flex; align-items: center; gap: 0.4rem;">
+              <i class="fa-solid fa-chart-pie" style="color: #0d9488;"></i> Tỷ lệ trạng thái hoàn thành khóa học
+            </h4>
+            <div style="flex-grow: 1; position: relative; width: 100%; height: 220px; display: flex; align-items: center; justify-content: center;">
+              <canvas id="courseStatusChart"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  <% } %>
+
   <%
     let layoutStyle = "display: grid; gap: 2rem;";
     if ((user.permissions.includes('COURSE_ENROLL_REQUEST') || user.permissions.includes('PROGRESS_TRACK')) && (user.permissions.includes('PATH_VIEW') || user.permissions.includes('HISTORY_VIEW'))) {
@@ -70,9 +103,16 @@
     <!-- Cột bên trái: Khóa học của tôi -->
     <% if (user.permissions.includes('COURSE_ENROLL_REQUEST') || user.permissions.includes('PROGRESS_TRACK')) { %>
       <div style="display: flex; flex-direction: column; gap: 1.5rem;">
-        <h2 style="font-size: 1.4rem; display: flex; align-items: center; gap: 0.5rem; color: var(--text-main);">
-          <i class="fa-solid fa-graduation-cap" style="color: var(--text-accent);"></i> Khóa học đang tham gia
-        </h2>
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <h2 style="font-size: 1.4rem; display: flex; align-items: center; gap: 0.5rem; color: var(--text-main); margin: 0;">
+            <i class="fa-solid fa-graduation-cap" style="color: var(--text-accent);"></i> Khóa học đang tham gia
+          </h2>
+          <% if (enrollments.length > 2) { %>
+            <a href="/my-paths" class="btn btn-secondary" style="padding: 0.4rem 0.85rem; font-size: 0.82rem; border-radius: 8px; font-weight: 600; display: inline-flex; align-items: center; gap: 0.25rem;">
+              Xem tất cả (<%= enrollments.length %>) <i class="fa-solid fa-arrow-right" style="font-size: 0.75rem;"></i>
+            </a>
+          <% } %>
+        </div>
 
         <% if (enrollments.length === 0) { %>
           <div class="glass-card" style="text-align: center; padding: 3rem 2rem; border-style: dashed; border-width: 2px;">
@@ -84,8 +124,16 @@
             <% } %>
           </div>
         <% } else { %>
+          <% 
+            // Sắp xếp khóa học chưa hoàn thành lên trước, hoặc theo tiến độ giảm dần
+            const activeEnrollments = [...enrollments].sort((a, b) => {
+              if (a.progress === 100 && b.progress < 100) return 1;
+              if (a.progress < 100 && b.progress === 100) return -1;
+              return b.progress - a.progress;
+            }).slice(0, 2);
+          %>
           <div class="course-grid">
-            <% enrollments.forEach(enroll => { %>
+            <% activeEnrollments.forEach(enroll => { %>
               <div class="glass-card course-card">
                 <img src="<%= enroll.image_url %>" alt="<%= enroll.title %>">
                 <div class="course-title"><%= enroll.title %></div>
@@ -533,12 +581,160 @@
   </script>
 <% } %>
 
-<!-- Thêm Media Query tinh chỉnh responsive cho Grid -->
+<!-- Nhập Chart.js qua CDN -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    // 1. Dữ liệu nạp từ Express/EJS
+    const enrollmentsData = <%- JSON.stringify(enrollments) %>;
+    
+    if (enrollmentsData && enrollmentsData.length > 0) {
+      // --- BIỂU ĐỒ 1: TIẾN ĐỘ KHÓA HỌC (BAR CHART) ---
+      const labels = enrollmentsData.map(e => {
+        return e.title.length > 25 ? e.title.substring(0, 22) + '...' : e.title;
+      });
+      const progressValues = enrollmentsData.map(e => e.progress);
+      
+      const backgroundColors = enrollmentsData.map(e => {
+        if (e.progress === 100) return 'rgba(16, 185, 129, 0.75)';
+        if (e.progress > 0) return 'rgba(79, 70, 229, 0.75)';
+        return 'rgba(148, 163, 184, 0.6)';
+      });
+      const borderColors = enrollmentsData.map(e => {
+        if (e.progress === 100) return '#10b981';
+        if (e.progress > 0) return '#4f46e5';
+        return '#94a3b8';
+      });
+
+      const ctxProgress = document.getElementById('courseProgressChart').getContext('2d');
+      new Chart(ctxProgress, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Tiến độ hoàn thành (%)',
+            data: progressValues,
+            backgroundColor: backgroundColors,
+            borderColor: borderColors,
+            borderWidth: 1.5,
+            borderRadius: 8,
+            borderSkipped: false,
+            barPercentage: 0.55
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              display: false
+            },
+            tooltip: {
+              callbacks: {
+                label: function(context) {
+                  const idx = context.dataIndex;
+                  return `Khóa học: ${enrollmentsData[idx].title}\nTiến độ: ${context.raw}%`;
+                }
+              }
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              max: 100,
+              grid: {
+                color: 'rgba(226, 232, 240, 0.6)'
+              },
+              ticks: {
+                callback: value => value + '%',
+                font: {
+                  family: 'Inter',
+                  size: 11
+                }
+              }
+            },
+            x: {
+              grid: {
+                display: false
+              },
+              ticks: {
+                font: {
+                  family: 'Inter',
+                  size: 11
+                }
+              }
+            }
+          }
+        }
+      });
+
+      // --- BIỂU ĐỒ 2: TỶ LỆ TRẠNG THÁI (DOUGHNUT CHART) ---
+      const completedCount = enrollmentsData.filter(e => e.progress === 100).length;
+      const inProgressCount = enrollmentsData.filter(e => e.progress < 100 && e.progress > 0).length;
+      const notStartedCount = enrollmentsData.filter(e => e.progress === 0).length;
+
+      const ctxStatus = document.getElementById('courseStatusChart').getContext('2d');
+      new Chart(ctxStatus, {
+        type: 'doughnut',
+        data: {
+          labels: ['Đã hoàn thành', 'Đang thực hiện', 'Chưa bắt đầu'],
+          datasets: [{
+            data: [completedCount, inProgressCount, notStartedCount],
+            backgroundColor: [
+              'rgba(16, 185, 129, 0.8)',
+              'rgba(79, 70, 229, 0.8)',
+              'rgba(245, 158, 11, 0.8)'
+            ],
+            borderColor: [
+              '#10b981',
+              '#4f46e5',
+              '#f59e0b'
+            ],
+            borderWidth: 1.5,
+            hoverOffset: 4
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: 'bottom',
+              labels: {
+                boxWidth: 12,
+                font: {
+                  family: 'Inter',
+                  size: 11
+                },
+                padding: 15
+              }
+            }
+          },
+          cutout: '65%'
+        }
+      });
+    }
+  });
+</script>
+
+<!-- Thêm Media Query tinh chỉnh responsive cho Grid & Charts -->
 <style>
   @media (max-width: 1024px) {
     .dashboard-main-grid-override {
       grid-template-columns: 1fr !important;
       gap: 1.5rem !important;
+    }
+  }
+  @media (max-width: 768px) {
+    .analytics-grid {
+      grid-template-columns: 1fr !important;
+      gap: 2rem !important;
+    }
+    .status-chart-container {
+      border-left: none !important;
+      padding-left: 0 !important;
+      margin-top: 1rem;
     }
   }
 </style>
