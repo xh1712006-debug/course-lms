@@ -43,6 +43,8 @@ router.post('/grade/:id', requirePermission('QUIZ_GRADE'), adminController.postG
 // ==========================================
 router.get('/paths', requirePermission('PATH_MANAGE'), adminController.getLearningPaths);
 router.post('/paths', requirePermission('PATH_MANAGE'), adminController.createLearningPath);
+router.post('/paths/:id/update', requirePermission('PATH_MANAGE'), adminController.updateLearningPath);
+router.post('/paths/:id/delete', requirePermission('PATH_MANAGE'), adminController.deleteLearningPath);
 router.post('/paths/:id/assign', requirePermission('ENROLL_ASSIGN'), adminController.assignLearningPath);
 router.post('/course-management/assign', requirePermission('ENROLL_ASSIGN'), adminController.assignMandatoryCourse);
 router.get('/approvals', requirePermission('ENROLL_APPROVE'), adminController.getEnrollmentApprovals);

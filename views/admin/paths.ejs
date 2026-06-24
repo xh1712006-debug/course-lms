@@ -65,8 +65,24 @@
       <div style="display: flex; flex-direction: column; gap: 1rem;">
         <% paths.forEach(path => { %>
           <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--border-light); padding: 1.25rem; border-radius: 12px;">
-            <h4 style="font-size: 1.1rem; font-weight: 700; color: var(--text-accent);"><%= path.name %></h4>
-            <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.25rem; margin-bottom: 0.75rem;"><%= path.description %></p>
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem;">
+              <h4 style="font-size: 1.1rem; font-weight: 700; color: var(--text-accent); margin: 0;"><%= path.name %></h4>
+              <div style="display: flex; gap: 0.35rem;">
+                <% if (user.permissions.includes('PATH_MANAGE')) { %>
+                  <!-- Nút sửa lộ trình -->
+                  <button type="button" class="btn btn-secondary" onclick="openEditModal(<%= path.id %>)" style="padding: 0.35rem 0.6rem; font-size: 0.8rem; color: #8b5cf6; border-color: rgba(139, 92, 246, 0.2); background: rgba(139, 92, 246, 0.05);" title="Sửa lộ trình">
+                    <i class="fa-solid fa-pen-to-square"></i>
+                  </button>
+                  <!-- Nút xóa lộ trình -->
+                  <form action="/paths/<%= path.id %>/delete" method="POST" onsubmit="return confirm('Bạn có chắc chắn muốn xóa lộ trình này không? Hành động này không thể hoàn tác.');" style="margin: 0;">
+                    <button type="submit" class="btn btn-secondary" style="padding: 0.35rem 0.6rem; font-size: 0.8rem; color: #ef4444; border-color: rgba(239, 68, 68, 0.2); background: rgba(239, 68, 68, 0.05);" title="Xóa lộ trình">
+                      <i class="fa-solid fa-trash-can"></i>
+                    </button>
+                  </form>
+                <% } %>
+              </div>
+            </div>
+            <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.5rem; margin-bottom: 0.75rem;"><%= path.description %></p>
             
             <div style="border-top: 1px solid var(--border-light); padding-top: 0.75rem;">
               <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600; display: block; margin-bottom: 0.4rem;">Chuỗi khóa học trong lộ trình:</span>
@@ -201,6 +217,49 @@
   <% }) %>
 <% } %>
 
+<!-- Render các Modal Chỉnh Sửa Lộ Trình ở cấp độ gốc -->
+<% if (user.permissions.includes('PATH_MANAGE') && paths.length > 0) { %>
+  <% paths.forEach(path => { %>
+    <div id="editModal-<%= path.id %>" class="glass-card" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 500px; max-width: 95%; max-height: 85vh; overflow-y: auto; z-index: 2050; box-shadow: 0 10px 50px rgba(0,0,0,0.9); border-color: var(--border-glow); padding: 1.75rem;">
+      <h3 style="font-size: 1.3rem; margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-light); padding-bottom: 0.75rem;">
+        <span><i class="fa-solid fa-pen-to-square" style="color: #8b5cf6; margin-right: 0.5rem;"></i>Sửa Lộ Trình: <%= path.name %></span>
+        <button class="btn btn-secondary" onclick="closeEditModal(<%= path.id %>)" style="padding: 0.25rem 0.5rem; font-size: 0.85rem;"><i class="fa-solid fa-xmark"></i></button>
+      </h3>
+      
+      <form action="/paths/<%= path.id %>/update" method="POST">
+        <div class="form-group" style="text-align: left; margin-bottom: 1rem;">
+          <label class="form-label">Tên lộ trình đào tạo</label>
+          <input type="text" name="name" value="<%= path.name %>" required style="width: 100%; padding: 0.65rem 1rem; background: rgba(255,255,255,0.05); border: 1px solid var(--border-light); border-radius: 10px; color: var(--text-main); font-size: 0.9rem; outline: none; box-sizing: border-box;">
+        </div>
+
+        <div class="form-group" style="text-align: left; margin-bottom: 1rem;">
+          <label class="form-label">Mô tả mục tiêu lộ trình</label>
+          <textarea name="description" rows="3" required style="width: 100%; padding: 0.65rem 1rem; background: rgba(255,255,255,0.05); border: 1px solid var(--border-light); border-radius: 10px; color: var(--text-main); font-size: 0.9rem; outline: none; box-sizing: border-box;"><%= path.description %></textarea>
+        </div>
+
+        <div class="form-group" style="text-align: left; margin-bottom: 1.5rem;">
+          <label class="form-label">Chọn các khóa học thuộc lộ trình (Tích chọn nhiều)</label>
+          <div style="display: flex; flex-direction: column; gap: 0.5rem; background: rgba(0,0,0,0.15); padding: 1rem; border-radius: 8px; max-height: 150px; overflow-y: auto; border: 1px solid var(--border-light);">
+            <% 
+              const associatedIds = path.courses.map(c => c.id);
+            %>
+            <% courses.forEach(course => { %>
+              <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; cursor: pointer; color: #cbd5e1;">
+                <input type="checkbox" name="courseIds" value="<%= course.id %>" <%= associatedIds.includes(course.id) ? 'checked' : '' %>> <%= course.title %>
+              </label>
+            <% }) %>
+          </div>
+        </div>
+
+        <div style="display: flex; gap: 1rem; justify-content: flex-end; border-top: 1px solid var(--border-light); padding-top: 1.25rem;">
+          <button type="button" class="btn btn-secondary" onclick="closeEditModal(<%= path.id %>)">Hủy</button>
+          <button type="submit" class="btn btn-primary"><i class="fa-solid fa-check"></i> Lưu thay đổi</button>
+        </div>
+      </form>
+    </div>
+  <% }) %>
+<% } %>
+
 <script>
   function openAssignModal(pathId) {
     document.getElementById(`assignModal-${pathId}`).style.display = 'block';
@@ -209,6 +268,17 @@
 
   function closeAssignModal(pathId) {
     document.getElementById(`assignModal-${pathId}`).style.display = 'none';
+    document.getElementById('modal-overlay').style.display = 'none';
+  }
+
+  function openEditModal(pathId) {
+    document.getElementById(`editModal-${pathId}`).style.display = 'block';
+    document.getElementById('modal-overlay').style.display = 'block';
+  }
+
+  // Đóng modal sửa
+  function closeEditModal(pathId) {
+    document.getElementById(`editModal-${pathId}`).style.display = 'none';
     document.getElementById('modal-overlay').style.display = 'none';
   }
 
@@ -273,8 +343,10 @@
     const overlay = document.getElementById('modal-overlay');
     if (overlay) {
       overlay.addEventListener('click', () => {
-        const modals = document.querySelectorAll('[id^="assignModal-"]');
-        modals.forEach(m => m.style.display = 'none');
+        const assignModals = document.querySelectorAll('[id^="assignModal-"]');
+        assignModals.forEach(m => m.style.display = 'none');
+        const editModals = document.querySelectorAll('[id^="editModal-"]');
+        editModals.forEach(m => m.style.display = 'none');
         overlay.style.display = 'none';
       });
     }

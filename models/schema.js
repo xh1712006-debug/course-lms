@@ -626,6 +626,22 @@ module.exports = {
       } finally {
         client.release();
       }
+    },
+
+    update: async (id, name, description) => {
+      const sql = `
+        UPDATE learning_paths 
+        SET name = $1, description = $2 
+        WHERE id = $3 
+        RETURNING *
+      `;
+      const res = await db.query(sql, [name, description, id]);
+      return res.rows[0];
+    },
+
+    delete: async (id) => {
+      const sql = `DELETE FROM learning_paths WHERE id = $1`;
+      await db.query(sql, [id]);
     }
   },
 

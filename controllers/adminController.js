@@ -486,6 +486,46 @@ module.exports = {
     }
   },
 
+  updateLearningPath: async (req, res) => {
+    if (!req.session.permissions.includes('PATH_MANAGE')) {
+      return res.status(403).json({ error: 'Không có quyền cập nhật lộ trình học tập.' });
+    }
+    const pathId = parseInt(req.params.id);
+    const { name, description, courseIds } = req.body;
+    try {
+      await LearningPath.update(pathId, name, description);
+      
+      // Xử lý mảng id khóa học
+      let courses = [];
+      if (courseIds) {
+        courses = Array.isArray(courseIds) ? courseIds.map(Number) : [Number(courseIds)];
+      }
+      await LearningPath.addCourses(pathId, courses);
+
+      await AuditLog.create(req.session.userId, 'PATH_UPDATE', { path_id: pathId, name, courses });
+      res.redirect('/paths?success=' + encodeURIComponent('Đã cập nhật lộ trình đào tạo thành công.'));
+    } catch (err) {
+      console.error('[Admin Controller] Lỗi cập nhật lộ trình:', err);
+      res.redirect('/paths?error=' + encodeURIComponent('Không thể cập nhật lộ trình đào tạo.'));
+    }
+  },
+
+  deleteLearningPath: async (req, res) => {
+    if (!req.session.permissions.includes('PATH_MANAGE')) {
+      return res.status(403).json({ error: 'Không có quyền xóa lộ trình học tập.' });
+    }
+    const pathId = parseInt(req.params.id);
+    try {
+      await LearningPath.delete(pathId);
+      
+      await AuditLog.create(req.session.userId, 'PATH_DELETE', { learning_path_id: pathId });
+      res.redirect('/paths?success=' + encodeURIComponent('Đã xóa lộ trình đào tạo thành công.'));
+    } catch (err) {
+      console.error('[Admin Controller] Lỗi xóa lộ trình:', err);
+      res.redirect('/paths?error=' + encodeURIComponent('Không thể xóa lộ trình đào tạo.'));
+    }
+  },
+
   assignLearningPath: async (req, res) => {
     if (!req.session.permissions.includes('ENROLL_ASSIGN')) {
       return res.status(403).json({ error: 'Không có quyền giao lộ trình học tập.' });
