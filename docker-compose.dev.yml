@@ -1,0 +1,24 @@
+# ============================================================
+# docker-compose.dev.yml — Môi trường DEVELOPMENT
+# Chỉ chạy Redis qua Docker.
+# PostgreSQL chạy LOCAL trên máy (tránh xung đột dữ liệu).
+#
+# Cách dùng:
+#   docker-compose -f docker-compose.dev.yml up -d
+#   docker-compose -f docker-compose.dev.yml down
+# ============================================================
+
+version: '3.8'
+
+services:
+  redis:
+    image: redis:7-alpine
+    container_name: lms_redis_dev
+    restart: unless-stopped
+    ports:
+      - "6379:6379"   # Dùng port 6379 chuẩn (khớp với .env local)
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5

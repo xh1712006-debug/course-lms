@@ -632,5 +632,52 @@ module.exports = {
       console.error('[Course Controller] Lỗi thay đổi mật khẩu:', err);
       res.redirect('/settings?error=' + encodeURIComponent('Có lỗi hệ thống xảy ra khi đổi mật khẩu.'));
     }
+  },
+
+  getMyGroups: async (req, res) => {
+    const userId = req.session.userId;
+    try {
+      const { Department } = require('../models/schema');
+      const managedDepts = await Department.findManagedBy(userId);
+      if (managedDepts.length === 0) {
+        return res.status(403).render('error', { message: 'Bạn không phải là Trưởng phòng ban để truy cập chức năng này.' });
+      }
+
+      const db = require('../config/db');
+      const departmentsData = [];
+
+      for (let dept of managedDepts) {
+        const sql = `
+          SELECT u.id, u.username, u.email, u.status,
+                 COUNT(e.id) as total_courses,
+                 SUM(CASE WHEN e.progress = 100 THEN 1 ELSE 0 END) as completed_courses,
+                 COALESCE(AVG(e.progress)::numeric(5,2), 0) as average_progress
+          FROM users u
+          LEFT JOIN enrollments e ON u.id = e.user_id AND e.status = 'approved'
+          WHERE u.department_id = $1
+          GROUP BY u.id, u.username, u.email, u.status
+          ORDER BY u.username ASC
+        `;
+        const membersRes = await db.query(sql, [dept.id]);
+        
+        departmentsData.push({
+          ...dept,
+          members: membersRes.rows
+        });
+      }
+
+      res.render('courses/my-groups', {
+        departments: departmentsData,
+        user: {
+          username: req.session.username,
+          permissions: req.session.permissions,
+          isImpersonating: req.session.isImpersonating || false,
+          isManager: req.session.isManager || false
+        }
+      });
+    } catch (err) {
+      console.error('[Course Controller] Lỗi xem Nhóm của tôi:', err);
+      res.render('error', { message: 'Lỗi hệ thống khi tải thông tin nhóm quản lý.' });
+    }
   }
 };

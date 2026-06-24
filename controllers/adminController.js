@@ -792,6 +792,7 @@ module.exports = {
     }
     try {
       const departments = await Department.findAll();
+      const eligibleManagers = await User.findEligibleManagers();
       // Đếm số nhân viên theo từng phòng ban
       const db = require('../config/db');
       const countRes = await db.query(
@@ -803,6 +804,7 @@ module.exports = {
       res.render('admin/departments', {
         departments,
         deptUserCounts,
+        eligibleManagers,
         user: res.locals.user || { permissions: req.session.permissions },
         success: req.query.success || null,
         error: req.query.error || null
@@ -810,6 +812,36 @@ module.exports = {
     } catch (err) {
       console.error('[Admin Controller] Lỗi tải trang phòng ban:', err);
       res.render('error', { message: 'Lỗi tải trang quản lý phòng ban.' });
+    }
+  },
+
+  assignDepartmentManager: async (req, res) => {
+    if (!req.session.permissions.includes('DEPARTMENT_MANAGE')) {
+      return res.status(403).json({ error: 'Không có quyền quản lý sơ đồ phòng ban.' });
+    }
+    const id = parseInt(req.params.id);
+    const { managerId } = req.body;
+    try {
+      const departments = await Department.findAll();
+      const targetDept = departments.find(d => d.id === id);
+      if (!targetDept) {
+        return res.redirect('/departments?error=' + encodeURIComponent('Phòng ban không tồn tại.'));
+      }
+
+      const mId = managerId === '' ? null : parseInt(managerId);
+      await Department.assignManager(id, mId);
+
+      // Ghi log
+      await AuditLog.create(req.session.userId, 'DEPARTMENT_ASSIGN_MANAGER', {
+        department_id: id,
+        department_name: targetDept.name,
+        manager_id: mId
+      });
+
+      res.redirect('/departments?success=' + encodeURIComponent(`Đã phân công Trưởng phòng ban "${targetDept.name}" thành công.`));
+    } catch (err) {
+      console.error('[Admin Controller] Lỗi gán Trưởng phòng ban:', err);
+      res.redirect('/departments?error=' + encodeURIComponent('Lỗi hệ thống khi phân công Trưởng phòng ban.'));
     }
   },
 

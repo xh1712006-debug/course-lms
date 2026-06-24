@@ -48,6 +48,9 @@ CREATE TABLE users (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Thêm manager_id vào departments sau khi bảng users được tạo để tránh lỗi phụ thuộc vòng (circular reference)
+ALTER TABLE departments ADD COLUMN manager_id INTEGER REFERENCES users(id) ON DELETE SET NULL;
+
 -- 5. Bảng khóa học (Courses)
 CREATE TABLE courses (
     id SERIAL PRIMARY KEY,

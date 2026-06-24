@@ -132,6 +132,17 @@ module.exports = {
       `;
       const res = await db.query(sql);
       return res.rows;
+    },
+
+    findEligibleManagers: async () => {
+      const sql = `
+        SELECT id, username, email 
+        FROM users 
+        WHERE status = 'active' 
+        ORDER BY username ASC
+      `;
+      const res = await db.query(sql);
+      return res.rows;
     }
   },
 
@@ -139,9 +150,10 @@ module.exports = {
   Department: {
     findAll: async () => {
       const sql = `
-        SELECT d1.*, d2.name as parent_name 
+        SELECT d1.*, d2.name as parent_name, u.username as manager_name, u.email as manager_email
         FROM departments d1
         LEFT JOIN departments d2 ON d1.parent_id = d2.id
+        LEFT JOIN users u ON d1.manager_id = u.id
         ORDER BY d1.id ASC
       `;
       const res = await db.query(sql);
@@ -163,6 +175,24 @@ module.exports = {
     delete: async (id) => {
       const sql = `DELETE FROM departments WHERE id = $1`;
       await db.query(sql, [id]);
+    },
+
+    assignManager: async (id, managerId) => {
+      const sql = `UPDATE departments SET manager_id = $1 WHERE id = $2 RETURNING *`;
+      const res = await db.query(sql, [managerId, id]);
+      return res.rows[0];
+    },
+
+    findManagedBy: async (userId) => {
+      const sql = `
+        SELECT d1.*, d2.name as parent_name
+        FROM departments d1
+        LEFT JOIN departments d2 ON d1.parent_id = d2.id
+        WHERE d1.manager_id = $1
+        ORDER BY d1.id ASC
+      `;
+      const res = await db.query(sql, [userId]);
+      return res.rows;
     }
   },
 

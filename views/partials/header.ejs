@@ -75,6 +75,16 @@
               <% } %>
             <% } %>
 
+            <!-- ===== NHÓM: TRƯỞNG PHÒNG ===== -->
+            <% if (user.isManager) { %>
+              <li class="nav-section-label" style="margin-top: 0.75rem;">
+                <span><i class="fa-solid fa-user-tie" style="margin-right: 0.4rem; opacity: 0.6; font-size: 0.65rem;"></i>Quản lý nhóm</span>
+              </li>
+              <li class="nav-item">
+                <a href="/my-groups"><i class="fa-solid fa-users-viewfinder"></i> Nhóm của tôi</a>
+              </li>
+            <% } %>
+
             <%
             // Nhóm: Nội dung & Đào tạo
             const hasContentAccess = perms.includes('COURSE_VIEW') || perms.includes('QUIZ_BANK_VIEW') || perms.includes('LESSON_CREATE') || perms.includes('LESSON_MANAGE') || perms.includes('QUIZ_GRADE') || perms.includes('PATH_MANAGE') || perms.includes('ENROLL_APPROVE') || perms.includes('ENROLL_ASSIGN');

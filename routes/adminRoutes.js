@@ -61,6 +61,7 @@ router.get('/departments', requirePermission('DEPARTMENT_MANAGE'), adminControll
 router.post('/departments', requirePermission('DEPARTMENT_MANAGE'), adminController.createDepartment);
 router.post('/departments/:id/update', requirePermission('DEPARTMENT_MANAGE'), adminController.updateDepartment);
 router.post('/departments/:id/delete', requirePermission('DEPARTMENT_MANAGE'), adminController.deleteDepartment);
+router.post('/departments/:id/assign-manager', requirePermission('DEPARTMENT_MANAGE'), adminController.assignDepartmentManager);
 
 // ==========================================
 // NHÓM 6: BÁO CÁO & THỐNG KÊ (ANALYTICS)

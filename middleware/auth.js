@@ -90,9 +90,17 @@ async function loadDynamicPermissions(req, res, next) {
       }, 3600); // cache 1 giờ
       
       req.session.permissions = permissions || [];
+
+      // 4. Kiểm tra xem user có quản lý phòng ban nào không
+      const { Department } = require('../models/schema');
+      const managedDepts = await Department.findManagedBy(userId);
+      req.session.isManager = managedDepts.length > 0;
+      req.session.managedDepts = managedDepts.map(d => d.id);
     } catch (err) {
       console.error('[RBAC Middleware] Lỗi tải quyền hạn động:', err);
       req.session.permissions = req.session.permissions || [];
+      req.session.isManager = req.session.isManager || false;
+      req.session.managedDepts = req.session.managedDepts || [];
     }
   }
   next();

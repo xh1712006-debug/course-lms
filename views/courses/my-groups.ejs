@@ -1,0 +1,357 @@
+<%- include('../partials/header') %>
+
+<style>
+  .group-tab-btn {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .group-tab-btn.active {
+    background: linear-gradient(135deg, #06b6d4, #3b82f6) !important;
+    border-color: transparent !important;
+    color: #fff !important;
+    box-shadow: 0 4px 15px rgba(6, 182, 212, 0.3);
+  }
+  .member-row {
+    transition: all 0.2s ease;
+  }
+  .member-row:hover {
+    background: rgba(255, 255, 255, 0.02) !important;
+  }
+  .progress-bar-container {
+    width: 100%;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 9999px;
+    height: 8px;
+    overflow: hidden;
+    position: relative;
+  }
+  .progress-bar-fill {
+    height: 100%;
+    border-radius: 9999px;
+    background: linear-gradient(90deg, #3b82f6, #10b981);
+    transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .stat-card {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+  .stat-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+  }
+  .custom-select {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--border-light);
+    color: var(--text-main);
+    border-radius: 8px;
+    padding: 0.5rem 1rem;
+    outline: none;
+    transition: all 0.2s;
+  }
+  .custom-select:focus {
+    border-color: #06b6d4;
+    box-shadow: 0 0 10px rgba(6, 182, 212, 0.15);
+  }
+</style>
+
+<div style="margin-bottom: 2rem;">
+  <h1 style="font-size: 2.2rem; font-weight: 800; background: linear-gradient(135deg, #06b6d4, #3b82f6); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+    <i class="fa-solid fa-users-viewfinder" style="-webkit-text-fill-color: #06b6d4; font-size: 1.8rem; margin-right: 0.5rem;"></i>Nhóm Của Tôi
+  </h1>
+  <p style="color: var(--text-muted); margin-top: 0.25rem;">Quản lý và theo dõi tiến độ đào tạo của các thành viên trực thuộc phòng ban phụ trách.</p>
+</div>
+
+<%
+// Tính toán stats tổng quan trên tất cả các phòng ban đang quản lý
+let totalMembers = 0;
+let totalCourses = 0;
+let completedCourses = 0;
+let averageProgressSum = 0;
+let activeMembers = 0;
+
+departments.forEach(dept => {
+  dept.members.forEach(member => {
+    totalMembers++;
+    totalCourses += parseInt(member.total_courses) || 0;
+    completedCourses += parseInt(member.completed_courses) || 0;
+    averageProgressSum += parseFloat(member.average_progress) || 0;
+    if (member.status === 'active') {
+      activeMembers++;
+    }
+  });
+});
+
+let overallAverageProgress = totalMembers > 0 ? (averageProgressSum / totalMembers).toFixed(1) : 0;
+%>
+
+<!-- Thống kê tổng quan -->
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.5rem; margin-bottom: 2.5rem;">
+  <div class="glass-card stat-card" style="padding: 1.5rem; display: flex; align-items: center; gap: 1.25rem; border-left: 4px solid #06b6d4;">
+    <div style="width: 50px; height: 50px; border-radius: 12px; background: rgba(6, 182, 212, 0.1); display: flex; align-items: center; justify-content: center; color: #06b6d4; font-size: 1.5rem; flex-shrink: 0;">
+      <i class="fa-solid fa-users"></i>
+    </div>
+    <div>
+      <div style="font-size: 1.8rem; font-weight: 800; color: #e2e8f0;"><%= totalMembers %></div>
+      <div style="font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600;">Tổng thành viên</div>
+      <div style="font-size: 0.72rem; color: #10b981; margin-top: 0.15rem;"><%= activeMembers %> tài khoản hoạt động</div>
+    </div>
+  </div>
+
+  <div class="glass-card stat-card" style="padding: 1.5rem; display: flex; align-items: center; gap: 1.25rem; border-left: 4px solid #3b82f6;">
+    <div style="width: 50px; height: 50px; border-radius: 12px; background: rgba(59, 130, 246, 0.1); display: flex; align-items: center; justify-content: center; color: #3b82f6; font-size: 1.5rem; flex-shrink: 0;">
+      <i class="fa-solid fa-book-open"></i>
+    </div>
+    <div>
+      <div style="font-size: 1.8rem; font-weight: 800; color: #e2e8f0;"><%= totalCourses %></div>
+      <div style="font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600;">Khóa học đã đăng ký</div>
+      <div style="font-size: 0.72rem; color: var(--text-muted); margin-top: 0.15rem;">Đã hoàn thành: <%= completedCourses %> khóa</div>
+    </div>
+  </div>
+
+  <div class="glass-card stat-card" style="padding: 1.5rem; display: flex; align-items: center; gap: 1.25rem; border-left: 4px solid #10b981;">
+    <div style="width: 50px; height: 50px; border-radius: 12px; background: rgba(16, 185, 129, 0.1); display: flex; align-items: center; justify-content: center; color: #10b981; font-size: 1.5rem; flex-shrink: 0;">
+      <i class="fa-solid fa-gauge-high"></i>
+    </div>
+    <div>
+      <div style="font-size: 1.8rem; font-weight: 800; color: #e2e8f0;"><%= overallAverageProgress %>%</div>
+      <div style="font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600;">Tiến độ trung bình</div>
+      <div style="font-size: 0.72rem; color: var(--text-muted); margin-top: 0.15rem;">Toàn bộ nhóm được quản lý</div>
+    </div>
+  </div>
+</div>
+
+<!-- Lựa chọn phòng ban (nếu quản lý nhiều phòng ban) -->
+<div style="margin-bottom: 1.5rem;">
+  <div style="font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); font-weight: 700; margin-bottom: 0.75rem;">Phòng ban quản lý</div>
+  <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+    <button onclick="selectDepartment('all')" class="btn btn-secondary group-tab-btn active" id="tab-all" style="padding: 0.6rem 1.25rem; border-radius: 10px; font-weight: 600; display: inline-flex; align-items: center; gap: 0.5rem; border: 1px solid var(--border-light); background: rgba(255,255,255,0.02); color: var(--text-main);">
+      <i class="fa-solid fa-layer-group"></i> Tất cả phòng ban (<%= departments.length %>)
+    </button>
+    <% departments.forEach(dept => { %>
+      <button onclick="selectDepartment('<%= dept.id %>')" class="btn btn-secondary group-tab-btn" id="tab-<%= dept.id %>" style="padding: 0.6rem 1.25rem; border-radius: 10px; font-weight: 600; display: inline-flex; align-items: center; gap: 0.5rem; border: 1px solid var(--border-light); background: rgba(255,255,255,0.02); color: var(--text-main);">
+        <i class="fa-solid fa-building"></i> <%= dept.name %>
+        <span style="font-size: 0.72rem; background: rgba(255,255,255,0.1); padding: 0.1rem 0.4rem; border-radius: 6px; color: var(--text-muted);"><%= dept.members.length %></span>
+      </button>
+    <% }) %>
+  </div>
+</div>
+
+<!-- Bộ lọc tìm kiếm và sắp xếp -->
+<div class="glass-card" style="padding: 1.25rem; margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+  <div style="position: relative; flex-grow: 1; max-width: 400px;">
+    <input 
+      type="text" 
+      id="member-search" 
+      placeholder="Tìm thành viên theo tên hoặc email..." 
+      onkeyup="filterMembers()" 
+      style="width: 100%; padding: 0.65rem 1rem 0.65rem 2.2rem; background: rgba(255,255,255,0.03); border: 1px solid var(--border-light); border-radius: 8px; color: var(--text-main); font-size: 0.85rem; outline: none; box-sizing: border-box; transition: all 0.2s;"
+      onfocus="this.style.borderColor='#06b6d4'; this.style.boxShadow='0 0 10px rgba(6,182,212,0.15)';"
+      onblur="this.style.borderColor='var(--border-light)'; this.style.boxShadow='none';"
+    >
+    <i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 0.8rem; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 0.85rem;"></i>
+  </div>
+
+  <div style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
+    <div style="display: flex; align-items: center; gap: 0.5rem;">
+      <span style="font-size: 0.8rem; color: var(--text-muted);">Sắp xếp:</span>
+      <select id="member-sort" class="custom-select" onchange="sortMembers()">
+        <option value="name-asc">Tên (A-Z)</option>
+        <option value="name-desc">Tên (Z-A)</option>
+        <option value="progress-desc">Tiến độ (Giảm dần)</option>
+        <option value="progress-asc">Tiến độ (Tăng dần)</option>
+        <option value="courses-desc">Số khóa học (Nhiều nhất)</option>
+      </select>
+    </div>
+
+    <div style="display: flex; align-items: center; gap: 0.5rem;">
+      <span style="font-size: 0.8rem; color: var(--text-muted);">Trạng thái:</span>
+      <select id="member-status-filter" class="custom-select" onchange="filterMembers()">
+        <option value="all">Tất cả</option>
+        <option value="active">Hoạt động</option>
+        <option value="inactive">Khóa</option>
+      </select>
+    </div>
+  </div>
+</div>
+
+<!-- Bảng thành viên -->
+<div class="glass-card" style="padding: 1.5rem; overflow: hidden;">
+  <div style="overflow-x: auto;">
+    <table class="custom-table" style="font-size: 0.85rem; width: 100%; margin-top: 0; border-collapse: collapse;">
+      <thead>
+        <tr style="border-bottom: 1px solid var(--border-light);">
+          <th style="text-align: left; padding: 1rem;">Nhân sự</th>
+          <th style="text-align: left; padding: 1rem;">Phòng ban</th>
+          <th style="text-align: center; padding: 1rem;">Khóa đã học</th>
+          <th style="text-align: left; padding: 1rem; width: 250px;">Tiến độ học tập</th>
+          <th style="text-align: center; padding: 1rem;">Trạng thái</th>
+        </tr>
+      </thead>
+      <tbody id="member-table-body">
+        <% 
+        let hasAnyMember = false;
+        departments.forEach(dept => { 
+          dept.members.forEach(member => {
+            hasAnyMember = true;
+        %>
+          <tr class="member-row" 
+              data-dept-id="<%= dept.id %>" 
+              data-username="<%= member.username %>" 
+              data-email="<%= member.email %>" 
+              data-status="<%= member.status %>"
+              data-progress="<%= member.average_progress %>"
+              data-courses="<%= member.total_courses %>"
+              style="border-bottom: 1px solid rgba(255,255,255,0.02);">
+            
+            <td style="padding: 1rem;">
+              <div style="display: flex; align-items: center; gap: 0.75rem;">
+                <div style="width: 36px; height: 36px; border-radius: 50%; background: linear-gradient(135deg, #06b6d4, #3b82f6); display: flex; align-items: center; justify-content: center; font-weight: 700; color: #fff; text-transform: uppercase;">
+                  <%= member.username.substring(0, 2) %>
+                </div>
+                <div>
+                  <div style="font-weight: 700; color: var(--text-main);"><%= member.username %></div>
+                  <div style="font-size: 0.72rem; color: var(--text-muted);"><%= member.email %></div>
+                </div>
+              </div>
+            </td>
+
+            <td style="padding: 1rem; color: #cbd5e1;">
+              <div style="display: flex; align-items: center; gap: 0.4rem;">
+                <i class="fa-solid fa-building" style="color: #06b6d4; font-size: 0.75rem;"></i>
+                <span><%= dept.name %></span>
+              </div>
+              <% if (dept.parent_name) { %>
+                <div style="font-size: 0.7rem; color: var(--text-muted); margin-left: 1.15rem;">Trực thuộc: <%= dept.parent_name %></div>
+              <% } %>
+            </td>
+
+            <td style="padding: 1rem; text-align: center;">
+              <div style="font-size: 0.9rem; font-weight: 700; color: #fff;"><%= member.completed_courses %> / <%= member.total_courses %></div>
+              <div style="font-size: 0.7rem; color: var(--text-muted);">Hoàn thành</div>
+            </td>
+
+            <td style="padding: 1rem;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.25rem;">
+                <span style="font-size: 0.78rem; font-weight: 600; color: #10b981;"><%= member.average_progress %>%</span>
+                <span style="font-size: 0.7rem; color: var(--text-muted);">Trung bình</span>
+              </div>
+              <div class="progress-bar-container">
+                <div class="progress-bar-fill" style="width: <%= member.average_progress %>%;"></div>
+              </div>
+            </td>
+
+            <td style="padding: 1rem; text-align: center;">
+              <% if (member.status === 'active') { %>
+                <span style="display: inline-flex; align-items: center; gap: 0.35rem; background: rgba(16, 185, 129, 0.1); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.25); padding: 0.2rem 0.5rem; border-radius: 9999px; font-size: 0.7rem; font-weight: 700;">
+                  <span style="width: 6px; height: 6px; border-radius: 50%; background: #10b981; display: inline-block;"></span> Hoạt động
+                </span>
+              <% } else { %>
+                <span style="display: inline-flex; align-items: center; gap: 0.35rem; background: rgba(239, 68, 68, 0.1); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.25); padding: 0.2rem 0.5rem; border-radius: 9999px; font-size: 0.7rem; font-weight: 700;">
+                  <span style="width: 6px; height: 6px; border-radius: 50%; background: #f87171; display: inline-block;"></span> Khóa
+                </span>
+              <% } %>
+            </td>
+
+          </tr>
+        <% }) %>
+      <% }) %>
+
+      <% if (!hasAnyMember) { %>
+        <tr id="no-member-row">
+          <td colspan="5" style="text-align: center; padding: 4rem 1rem; color: var(--text-muted);">
+            <i class="fa-solid fa-users-slash" style="font-size: 3rem; opacity: 0.2; margin-bottom: 1rem; display: block;"></i>
+            Không có thành viên nào trong các phòng ban này.
+          </td>
+        </tr>
+      <% } else { %>
+        <tr id="no-filtered-member-row" style="display: none;">
+          <td colspan="5" style="text-align: center; padding: 4rem 1rem; color: var(--text-muted);">
+            <i class="fa-solid fa-magnifying-glass-minus" style="font-size: 3rem; opacity: 0.2; margin-bottom: 1rem; display: block;"></i>
+            Không tìm thấy thành viên nào khớp với bộ lọc tìm kiếm.
+          </td>
+        </tr>
+      <% } %>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+  let activeDeptId = 'all';
+
+  function selectDepartment(deptId) {
+    activeDeptId = deptId;
+    
+    // Update active button state
+    document.querySelectorAll('.group-tab-btn').forEach(btn => {
+      btn.classList.remove('active');
+    });
+    document.getElementById('tab-' + deptId).classList.add('active');
+
+    filterMembers();
+  }
+
+  function filterMembers() {
+    const searchQuery = document.getElementById('member-search').value.toLowerCase().trim();
+    const statusFilter = document.getElementById('member-status-filter').value;
+    const rows = document.querySelectorAll('#member-table-body tr.member-row');
+    const noFilteredRow = document.getElementById('no-filtered-member-row');
+    
+    let visibleCount = 0;
+
+    rows.forEach(row => {
+      const deptId = row.getAttribute('data-dept-id');
+      const username = row.getAttribute('data-username').toLowerCase();
+      const email = row.getAttribute('data-email').toLowerCase();
+      const status = row.getAttribute('data-status');
+
+      // Check department tab filter
+      const matchDept = (activeDeptId === 'all' || activeDeptId === deptId);
+      
+      // Check search query filter
+      const matchSearch = (username.includes(searchQuery) || email.includes(searchQuery));
+
+      // Check status filter
+      const matchStatus = (statusFilter === 'all' || statusFilter === status);
+
+      if (matchDept && matchSearch && matchStatus) {
+        row.style.display = '';
+        visibleCount++;
+      } else {
+        row.style.display = 'none';
+      }
+    });
+
+    if (noFilteredRow) {
+      noFilteredRow.style.display = (visibleCount === 0 && rows.length > 0) ? '' : 'none';
+    }
+  }
+
+  function sortMembers() {
+    const sortVal = document.getElementById('member-sort').value;
+    const tbody = document.getElementById('member-table-body');
+    const rows = Array.from(tbody.querySelectorAll('tr.member-row'));
+
+    rows.sort((a, b) => {
+      if (sortVal === 'name-asc') {
+        return a.getAttribute('data-username').localeCompare(b.getAttribute('data-username'));
+      } else if (sortVal === 'name-desc') {
+        return b.getAttribute('data-username').localeCompare(a.getAttribute('data-username'));
+      } else if (sortVal === 'progress-desc') {
+        return parseFloat(b.getAttribute('data-progress')) - parseFloat(a.getAttribute('data-progress'));
+      } else if (sortVal === 'progress-asc') {
+        return parseFloat(a.getAttribute('data-progress')) - parseFloat(b.getAttribute('data-progress'));
+      } else if (sortVal === 'courses-desc') {
+        return parseInt(b.getAttribute('data-courses')) - parseInt(a.getAttribute('data-courses'));
+      }
+      return 0;
+    });
+
+    // Re-append sorted rows
+    rows.forEach(row => tbody.appendChild(row));
+    
+    // Put helper rows at the bottom
+    const noFilteredRow = document.getElementById('no-filtered-member-row');
+    if (noFilteredRow) tbody.appendChild(noFilteredRow);
+  }
+</script>
+
+<%- include('../partials/footer') %>

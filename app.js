@@ -53,7 +53,9 @@ app.use((req, res, next) => {
     departmentId: req.session.departmentId,
     permissions: req.session.permissions,
     isImpersonating: req.session.isImpersonating || false,
-    originalUsername: req.session.originalUsername
+    originalUsername: req.session.originalUsername,
+    isManager: req.session.isManager || false,
+    managedDepts: req.session.managedDepts || []
   } : null;
   next();
 });

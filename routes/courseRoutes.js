@@ -28,6 +28,7 @@ router.get('/courses/:courseId/lessons/:lessonId', courseController.getLesson);
 router.get('/my-paths', requirePermission('PATH_VIEW'), courseController.getMyPaths);
 router.get('/my-history', requirePermission('HISTORY_VIEW'), courseController.getMyHistory);
 router.get('/my-deadlines', requirePermission('PROGRESS_TRACK'), courseController.getMyDeadlines);
+router.get('/my-groups', courseController.getMyGroups);
 router.get('/settings', courseController.getSettings);
 router.post('/settings/change-password', courseController.postChangePassword);
 
