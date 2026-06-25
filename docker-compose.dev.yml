@@ -16,7 +16,7 @@ services:
     container_name: lms_redis_dev
     restart: unless-stopped
     ports:
-      - "6379:6379"   # Dùng port 6379 chuẩn (khớp với .env local)
+      - "6378:6379"   # Dùng port 6378 thay vì 6379 chuẩn để tránh xung đột
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 5s

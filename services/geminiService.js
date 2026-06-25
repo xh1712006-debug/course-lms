@@ -356,7 +356,7 @@ module.exports = {
           "options": ["Đáp án A", "Đáp án B", "Đáp án C", "Đáp án D"],
           "correct_answer": "Phải khớp chính xác hoàn toàn với 1 trong 4 lựa chọn trong mảng options"
         }
-        3. Nội dung câu hỏi phải bám sát nội dung bài học được cung cấp, có độ khó phù hợp với thực tế công việc.
+        3. RÀNG BUỘC SỰ THẬT NGHIÊM NGẶT: Câu hỏi và tất cả các đáp án (bao gồm cả đáp án đúng và đáp án gây nhiễu) BẮT BUỘC phải dựa trực tiếp và hoàn toàn vào thông tin đã được nêu cụ thể trong "Nội dung các bài học trước đó" ở trên. Tuyệt đối KHÔNG suy diễn, tự giả định hoặc bổ sung bất kỳ kiến thức bên ngoài nào không có trong văn bản được cung cấp. Nếu tài liệu chứa các quy trình hoặc thuật ngữ nội bộ đặc thù, hãy kiểm tra chính xác các chi tiết đó.
         4. QUY TẮC CÔNG THỨC TOÁN: Nếu câu hỏi hoặc đáp án có chứa ký hiệu toán học hoặc công thức LaTeX, bạn BẮT BUỘC phải viết đúng định dạng LaTeX chuẩn trong cặp dấu $...$ (ví dụ: viết $\\Delta$, không viết $\\ Delta$).
       `;
 
@@ -396,45 +396,63 @@ module.exports = {
       throw new Error('Gemini API Key chưa được cấu hình. Vui lòng liên hệ Admin hệ thống.');
     }
 
-    // Tổng hợp nội dung từ tất cả các bài học trong các khóa học được chọn
-    let combinedContent = '';
+    // Trích xuất danh sách tất cả các bài học có nội dung chữ
+    const lessonsWithContent = [];
     for (const course of coursesData) {
-      combinedContent += `\n\n=== KHÓA HỌC: ${course.courseTitle} ===\n`;
       for (const lesson of course.lessons) {
         if (lesson.content && lesson.content.trim()) {
-          combinedContent += `\n--- Bài học: ${lesson.title} ---\n${lesson.content}\n`;
+          lessonsWithContent.push({
+            courseTitle: course.courseTitle,
+            lessonTitle: lesson.title,
+            content: lesson.content.trim()
+          });
         }
       }
     }
 
-    if (!combinedContent.trim()) {
+    if (lessonsWithContent.length === 0) {
       throw new Error('Các khóa học được chọn chưa có nội dung bài học để AI có thể sinh câu hỏi.');
     }
 
-    try {
+    // Chia đều số lượng câu hỏi cho các bài học
+    const totalLessons = lessonsWithContent.length;
+    const baseCount = Math.floor(count / totalLessons);
+    let remainder = count % totalLessons;
+
+    const allocations = lessonsWithContent.map((l) => {
+      let allocated = baseCount;
+      if (remainder > 0) {
+        allocated += 1;
+        remainder -= 1;
+      }
+      return { ...l, allocatedCount: allocated };
+    });
+
+    console.log(`[Gemini Service] Phân chia sinh câu hỏi cho ${totalLessons} bài học. Tổng số câu hỏi yêu cầu: ${count}.`);
+
+    // Hàm sinh câu hỏi cho một bài giảng đơn lẻ
+    const generateForSingleLesson = async (courseTitle, lessonTitle, content, allocatedCount) => {
       const prompt = `
 Bạn là một chuyên gia L&D (Learning & Development) thiết kế bài kiểm tra năng lực nhân sự cho doanh nghiệp.
-Dựa vào nội dung tổng hợp các khóa học dưới đây, hãy sinh ra đúng ${count} câu hỏi trắc nghiệm (multiple choice) chất lượng cao để đánh giá năng lực nhân viên.
+Dựa vào nội dung bài học dưới đây thuộc khóa học "${courseTitle}", hãy sinh ra đúng ${allocatedCount} câu hỏi trắc nghiệm (multiple choice) chất lượng cao để đánh giá kiến thức nhân viên về riêng bài học này.
 
-Tiêu đề bài kiểm tra: "${assessmentTitle}"
+Tiêu đề bài học: "${lessonTitle}"
 
-NỘI DUNG CÁC KHÓA HỌC:
-${combinedContent}
+NỘI DUNG BÀI HỌC:
+${content}
 
 YÊU CẦU BẮT BUỘC:
-1. Sinh ĐÚNG ${count} câu hỏi, không nhiều hơn, không ít hơn.
-2. Phân bổ câu hỏi đều giữa các khóa học (nếu có nhiều khóa).
-3. Độ khó đa dạng: 40% dễ, 40% trung bình, 20% khó.
-4. Câu hỏi phải bám sát nội dung bài học thực tế, có tính ứng dụng công việc cao.
-5. Mỗi câu có ĐÚNG 4 đáp án (A/B/C/D), chỉ 1 đáp án đúng.
-6. Trả về KẾT QUẢ DUY NHẤT là một mảng JSON (JSON array), KHÔNG có văn bản giải thích trước/sau.
-7. Cấu trúc mỗi phần tử:
+1. Sinh ĐÚNG ${allocatedCount} câu hỏi, không nhiều hơn, không ít hơn.
+2. RÀNG BUỘC SỰ THẬT NGHIÊM NGẶT: Câu hỏi và tất cả các lựa chọn đáp án (đúng/sai) BẮT BUỘC phải dựa trực tiếp và hoàn toàn vào thông tin đã được nêu cụ thể trong phần "NỘI DUNG BÀI HỌC" ở trên. Tuyệt đối KHÔNG suy diễn, tự giả định hoặc bổ sung bất kỳ kiến thức bên ngoài nào không có trong tài liệu nguồn. Nếu tài liệu chứa các chính sách, quy tắc hoặc thuật ngữ nội bộ đặc thù, hãy kiểm tra chính xác các chi tiết thực tế đó.
+3. Mỗi câu có ĐÚNG 4 đáp án (A/B/C/D), chỉ 1 đáp án đúng.
+4. Trả về KẾT QUẢ DUY NHẤT là một mảng JSON (JSON array), KHÔNG có văn bản giải thích trước/sau.
+5. Cấu trúc mỗi phần tử:
 {
   "question_text": "Nội dung câu hỏi",
   "options": ["Đáp án A", "Đáp án B", "Đáp án C", "Đáp án D"],
   "correct_answer": "Phải khớp chính xác với 1 trong 4 options"
 }
-8. QUY TẮC LATEX: Công thức toán viết trong $...$ không có khoảng trắng sau backslash (ví dụ: $\\Delta$ đúng, $\\ Delta$ sai).
+6. QUY TẮC LATEX: Công thức toán viết trong $...$ không có khoảng trắng sau backslash (ví dụ: $\\Delta$ đúng, $\\ Delta$ sai).
 `;
 
       const result = await generateContentWithFallback(prompt);
@@ -445,20 +463,40 @@ YÊU CẦU BẮT BUỘC:
       if (!Array.isArray(questions)) {
         throw new Error('Đầu ra của AI không phải là mảng JSON hợp lệ.');
       }
-      console.log(`[Gemini] Sinh thành công ${questions.length} câu hỏi cho bài kiểm tra "${assessmentTitle}"`);
       return questions;
-    } catch (err) {
-      console.error('[Gemini Service] Lỗi sinh câu hỏi bài kiểm tra doanh nghiệp:', err);
-      // Fallback: tạo câu hỏi mẫu
-      const fallback = [];
-      for (let i = 1; i <= count; i++) {
-        fallback.push({
-          question_text: `[Câu hỏi ${i}] Nội dung câu hỏi liên quan đến "${assessmentTitle}"`,
-          options: ["Đáp án A (Đúng)", "Đáp án B", "Đáp án C", "Đáp án D"],
-          correct_answer: "Đáp án A (Đúng)"
-        });
+    };
+
+    // Chạy tuần tự quá trình tạo câu hỏi cho từng bài học để tránh Rate Limit (429/503)
+    const allQuestions = [];
+    const filteredAllocations = allocations.filter(l => l.allocatedCount > 0);
+
+    for (let idx = 0; idx < filteredAllocations.length; idx++) {
+      const l = filteredAllocations[idx];
+      try {
+        console.log(`[Gemini Service] [Bài học ${idx+1}/${filteredAllocations.length}] Đang sinh ${l.allocatedCount} câu hỏi cho bài: "${l.lessonTitle}"`);
+        const resQuestions = await generateForSingleLesson(l.courseTitle, l.lessonTitle, l.content, l.allocatedCount);
+        allQuestions.push(...resQuestions);
+      } catch (err) {
+        console.error(`[Gemini Service] Lỗi khi sinh câu hỏi cho bài "${l.lessonTitle}":`, err.message);
+        // Fallback cục bộ cho bài giảng bị lỗi
+        const fallback = [];
+        for (let i = 1; i <= l.allocatedCount; i++) {
+          fallback.push({
+            question_text: `[Câu hỏi bài giảng: ${l.lessonTitle}] Câu hỏi trắc nghiệm kiểm tra nội dung bài giảng.`,
+            options: ["Đáp án Đúng", "Đáp án Sai A", "Đáp án Sai B", "Đáp án Sai C"],
+            correct_answer: "Đáp án Đúng"
+          });
+        }
+        allQuestions.push(...fallback);
       }
-      return fallback;
+
+      // Đợi 300ms giữa các bài giảng để tránh Rate Limit từ Gemini API
+      if (idx < filteredAllocations.length - 1) {
+        await new Promise(resolve => setTimeout(resolve, 300));
+      }
     }
+
+    console.log(`[Gemini Service] Tổng cộng đã sinh thành công ${allQuestions.length} câu hỏi cho bài kiểm tra "${assessmentTitle}"`);
+    return allQuestions;
   }
 };

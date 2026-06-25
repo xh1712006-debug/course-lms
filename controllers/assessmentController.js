@@ -132,7 +132,7 @@ module.exports = {
   // ADMIN: Phân phối bài kiểm tra — API JSON
   // ============================================================
   postAssign: async (req, res) => {
-    const { assessmentId, targetType, targetIds, deadline } = req.body;
+    const { assessmentId, targetType, targetIds, startTime, deadline } = req.body;
     const userId = req.session.userId;
 
     try {
@@ -141,9 +141,10 @@ module.exports = {
       }
 
       const ids = Array.isArray(targetIds) ? targetIds.map(Number) : [Number(targetIds)];
+      const startTimeDate = startTime ? new Date(startTime) : null;
       const deadlineDate = deadline ? new Date(deadline) : null;
 
-      await AssessmentAssignment.assign(parseInt(assessmentId), targetType, ids, deadlineDate, userId);
+      await AssessmentAssignment.assign(parseInt(assessmentId), targetType, ids, startTimeDate, deadlineDate, userId);
       await AuditLog.create(userId, 'ASSESSMENT_ASSIGN', {
         assessment_id: parseInt(assessmentId),
         target_type: targetType,
@@ -217,6 +218,37 @@ module.exports = {
       const assessment = await Assessment.findById(parseInt(id));
       if (!assessment || assessment.status !== 'published') {
         return res.status(404).render('error', { message: 'Bài kiểm tra không tồn tại hoặc chưa được xuất bản.' });
+      }
+
+      // Kiểm tra thời gian làm bài từ bảng phân phối
+      const db = require('../config/db');
+      const deptId = req.session.departmentId || null;
+      const assignQuery = `
+        SELECT start_time, deadline FROM assessment_assignments
+        WHERE assessment_id = $1
+          AND (
+            (target_type = 'user' AND target_id = $2)
+            ${deptId ? `OR (target_type = 'department' AND target_id = $3)` : ''}
+          )
+        ORDER BY assigned_at DESC
+        LIMIT 1
+      `;
+      const assignParams = deptId ? [parseInt(id), userId, deptId] : [parseInt(id), userId];
+      const assignRes = await db.query(assignQuery, assignParams);
+      const assignment = assignRes.rows[0];
+
+      if (assignment) {
+        const now = new Date();
+        if (assignment.start_time && new Date(assignment.start_time) > now) {
+          return res.status(403).render('error', { 
+            message: `Bài kiểm tra chưa mở. Thời gian mở làm bài: ${new Date(assignment.start_time).toLocaleString('vi-VN', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' })}` 
+          });
+        }
+        if (assignment.deadline && new Date(assignment.deadline) < now) {
+          return res.status(403).render('error', { 
+            message: `Bài kiểm tra đã hết hạn lúc: ${new Date(assignment.deadline).toLocaleString('vi-VN', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' })}` 
+          });
+        }
       }
 
       // Kiểm tra đã nộp chưa

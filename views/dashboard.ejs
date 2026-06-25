@@ -221,6 +221,75 @@
     <% if (user.permissions.includes('PATH_VIEW') || user.permissions.includes('HISTORY_VIEW')) { %>
       <div style="display: flex; flex-direction: column; gap: 2rem;">
         
+        <!-- Bài kiểm tra doanh nghiệp được giao -->
+        <div>
+          <h2 style="font-size: 1.3rem; margin-bottom: 1rem; display: flex; align-items: center; justify-content: space-between; color: var(--text-main);">
+            <span style="display: flex; align-items: center; gap: 0.5rem;">
+              <i class="fa-solid fa-clipboard-check" style="color: #8b5cf6;"></i> Bài kiểm tra doanh nghiệp
+            </span>
+            <a href="/assessments" style="font-size: 0.8rem; color: var(--text-accent); font-weight: 600;">Xem tất cả <i class="fa-solid fa-arrow-right" style="font-size: 0.75rem;"></i></a>
+          </h2>
+          <div class="glass-card" style="padding: 1.5rem; display: flex; flex-direction: column; gap: 1rem;">
+            <% if (myAssessments.length === 0) { %>
+              <p style="color: var(--text-muted); font-size: 0.85rem; text-align: center; margin: 0; padding: 1rem 0;">Bạn không có bài kiểm tra doanh nghiệp nào được giao.</p>
+            <% } else { %>
+              <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                <% 
+                  const pendingAssessments = myAssessments.filter(a => !a.submission_id).slice(0, 3);
+                  const displayAssessments = pendingAssessments.length > 0 ? pendingAssessments : myAssessments.slice(0, 3);
+                %>
+                <% displayAssessments.forEach(a => { 
+                  const isSubmitted = !!a.submission_id;
+                  const isNotStarted = a.start_time && new Date(a.start_time) > new Date() && !isSubmitted;
+                  const isExpired = a.deadline && new Date(a.deadline) < new Date() && !isSubmitted;
+                %>
+                  <div style="display: flex; flex-direction: column; background: rgba(255,255,255,0.03); padding: 1rem; border-radius: 10px; border: 1px solid var(--border-light); gap: 0.5rem; transition: border-color 0.2s; position: relative;" onmouseover="this.style.borderColor='rgba(99,102,241,0.3)'" onmouseout="this.style.borderColor='var(--border-light)'">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 0.5rem; padding-right: 4.5rem;">
+                      <div>
+                        <h4 style="font-size: 0.9rem; font-weight: 700; margin: 0; color: var(--text-main); line-height: 1.3;"><%= a.title %></h4>
+                        <span style="font-size: 0.75rem; color: var(--text-muted); display: block; margin-top: 0.15rem;"><%= a.question_count %> câu • <%= a.duration_minutes %> phút</span>
+                      </div>
+                      
+                      <!-- Badge -->
+                      <div style="position: absolute; top: 1rem; right: 1rem;">
+                        <% if (isSubmitted) { %>
+                          <span style="padding: 0.2rem 0.5rem; border-radius: 6px; font-size: 0.7rem; font-weight: 700; background: rgba(16,185,129,0.1); color: #34d399; border: 1px solid rgba(52,211,153,0.25);">Đã nộp</span>
+                        <% } else if (isNotStarted) { %>
+                          <span style="padding: 0.2rem 0.5rem; border-radius: 6px; font-size: 0.7rem; font-weight: 700; background: rgba(156,163,175,0.1); color: #9ca3af; border: 1px solid rgba(156,163,175,0.25);">Chưa mở</span>
+                        <% } else if (isExpired) { %>
+                          <span style="padding: 0.2rem 0.5rem; border-radius: 6px; font-size: 0.7rem; font-weight: 700; background: rgba(239,68,68,0.1); color: #fca5a5; border: 1px solid rgba(239,68,68,0.25);">Hết hạn</span>
+                        <% } else { %>
+                          <span style="padding: 0.2rem 0.5rem; border-radius: 6px; font-size: 0.7rem; font-weight: 700; background: rgba(245,158,11,0.1); color: #fbbf24; border: 1px solid rgba(251,191,36,0.25);">Chờ làm</span>
+                        <% } %>
+                      </div>
+                    </div>
+                    
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.25rem; font-size: 0.8rem; border-top: 1px solid rgba(255,255,255,0.02); padding-top: 0.5rem;">
+                      <% if (isSubmitted) { %>
+                        <span style="color: #34d399; font-weight: 600;">Điểm: <%= parseFloat(a.score).toFixed(1) %>% (<%= a.is_passed ? 'Đạt' : 'Chưa đạt' %>)</span>
+                        <a href="/assessments/<%= a.id %>/result" style="color: var(--text-accent); font-weight: 600; font-size: 0.8rem; text-decoration: none;">Xem kết quả</a>
+                      <% } else if (isNotStarted) { %>
+                        <span style="color: var(--text-muted); font-size: 0.75rem;">
+                          Mở: <strong><%= new Date(a.start_time).toLocaleDateString('vi-VN', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' }) %></strong>
+                        </span>
+                        <span style="color: var(--text-muted); opacity: 0.6; font-size: 0.8rem;"><i class="fa-solid fa-lock" style="margin-right: 0.25rem;"></i> Chưa mở</span>
+                      <% } else if (isExpired) { %>
+                        <span style="color: var(--text-muted);">Đã hết hạn làm bài</span>
+                        <span style="color: var(--text-muted); opacity: 0.5;"><i class="fa-solid fa-lock"></i> Khóa</span>
+                      <% } else { %>
+                        <span style="color: var(--text-muted); font-size: 0.75rem;">
+                          Hạn: <strong><%= a.deadline ? new Date(a.deadline).toLocaleDateString('vi-VN') : 'Không hạn' %></strong>
+                        </span>
+                        <a href="/assessments/<%= a.id %>/take" style="color: var(--text-accent); font-weight: 700; font-size: 0.8rem; text-decoration: none;" onclick="return confirm('Bắt đầu làm bài thi ngay?')">Làm bài <i class="fa-solid fa-play" style="font-size: 0.7rem; margin-left: 0.25rem;"></i></a>
+                      <% } %>
+                    </div>
+                  </div>
+                <% }) %>
+              </div>
+            <% } %>
+          </div>
+        </div>
+
         <!-- Lộ trình học gợi ý -->
         <% if (user.permissions.includes('PATH_VIEW')) { %>
           <div>
@@ -402,6 +471,172 @@
           <% if (recentLogs.length === 0) { %>
             <div style="text-align: center; color: var(--text-muted); padding: 2rem;">Chưa có lịch sử hoạt động ghi nhận.</div>
           <% } else { %>
+            <%
+              const actionLabels = {
+                'USER_LOGIN': 'Đăng nhập',
+                'USER_LOGOUT': 'Đăng xuất',
+                'PASSWORD_RESET_REQUESTED': 'Yêu cầu OTP quên mật khẩu',
+                'PASSWORD_RESET_SUCCESS': 'Đặt lại mật khẩu thành công',
+                'USER_CREATE': 'Tạo tài khoản nhân viên',
+                'USER_PROFILE_UPDATE': 'Cập nhật tài khoản',
+                'ROLE_CREATE': 'Tạo vai trò mới',
+                'ROLE_DELETE': 'Xóa vai trò',
+                'ROLE_PERMISSIONS_UPDATE': 'Cập nhật phân quyền',
+                'ROLE_PERMISSION_TOGGLE': 'Thay đổi phân quyền nhanh',
+                'COURSE_CREATE': 'Tạo khóa học mới',
+                'COURSE_UPDATE': 'Cập nhật khóa học',
+                'COURSE_DELETE': 'Xóa khóa học',
+                'COURSE_PUBLISH': 'Thay đổi trạng thái khóa học',
+                'LESSON_CREATE': 'Thêm bài giảng',
+                'LESSON_UPDATE': 'Sửa bài giảng',
+                'LESSON_DELETE': 'Xóa bài giảng',
+                'PATH_CREATE': 'Tạo lộ trình đào tạo',
+                'DEPARTMENT_CREATE': 'Tạo phòng ban mới',
+                'DEPARTMENT_DELETE': 'Xóa phòng ban',
+                'DEPARTMENT_UPDATE': 'Cập nhật phòng ban',
+                'ENROLLMENT_APPROVED': 'Phê duyệt đăng ký khóa học',
+                'ENROLLMENT_REJECTED': 'Từ chối đăng ký khóa học',
+                'USER_IMPERSONATE_START': 'Bắt đầu đóng vai',
+                'USER_IMPERSONATE_END': 'Thoát đóng vai',
+                'RUN_EXPERIMENT_SUCCESS': 'Huấn luyện AI thành công',
+                'RUN_EXPERIMENT_FAILED': 'Huấn luyện AI thất bại',
+                'AI_SUMMARIZE_LESSON': 'AI tóm tắt bài giảng',
+                'AI_CHAT_ASSISTANT': 'Trò chuyện với trợ lý AI',
+                'AI_GENERATE_QUICK_QUIZ': 'AI sinh đề trắc nghiệm nhanh',
+                'AI_GENERATE_QUIZ_TO_BANK': 'AI lưu trắc nghiệm vào DB',
+                'COURSE_ASSIGN_USER': 'Giao khóa học cho nhân sự',
+                'COURSE_ASSIGN_DEPARTMENT': 'Giao khóa học cho phòng ban',
+                'QUIZ_SETTING_UPDATE': 'Cập nhật cài đặt đề thi',
+                'QUIZ_GRADE': 'Chấm điểm đề thi',
+                'QUIZ_SUBMIT': 'Nộp bài thi trắc nghiệm',
+                'PATH_ASSIGN_BULK': 'Giao lộ trình hàng loạt',
+                'ENROLL_REQUEST': 'Yêu cầu đăng ký khóa học',
+                'ENROLL_DIRECT': 'Vào học trực tiếp'
+              };
+
+              const detailKeys = {
+                'reason': 'Lý do',
+                'role_id': 'Mã vai trò',
+                'role_name': 'Tên vai trò',
+                'permission': 'Quyền hạn',
+                'is_assigned': 'Gán quyền',
+                'lesson_id': 'Mã bài học',
+                'lesson_title': 'Tên bài học',
+                'course_id': 'Mã khóa học',
+                'course_title': 'Tên khóa học',
+                'user_id': 'Mã nhân viên',
+                'target_user_id': 'Mã nhân viên mục tiêu',
+                'new_user_id': 'Mã nhân viên mới',
+                'username': 'Tên tài khoản',
+                'email': 'Email',
+                'status': 'Trạng thái',
+                'name': 'Tên phòng ban',
+                'parent_id': 'Mã phòng ban cha',
+                'department_id': 'Mã phòng ban',
+                'enrollment_id': 'Mã đăng ký',
+                'experiment_id': 'Mã thực nghiệm',
+                'accuracy': 'Độ chính xác',
+                'loss': 'Độ hao hụt (Loss)',
+                'message_length': 'Độ dài tin nhắn',
+                'questions_count': 'Số lượng câu hỏi',
+                'count': 'Số lượng',
+                'title': 'Tiêu đề',
+                'has_essay': 'Có câu tự luận',
+                'score': 'Điểm số',
+                'is_passed': 'Kết quả đạt',
+                'submission_id': 'Mã bài nộp',
+                'path_id': 'Mã lộ trình',
+                'courses': 'Mã các khóa học',
+                'users': 'Số nhân sự nhận',
+                'target_username': 'Tài khoản bị đóng vai',
+                'original_user_id': 'Mã người quản trị',
+                'original_username': 'Tài khoản quản trị',
+                'error': 'Lỗi chi tiết',
+                'permissions': 'Danh sách quyền'
+              };
+
+              const detailValues = {
+                'user_settings_change': 'Thay đổi cài đặt tài khoản',
+                'active': 'Đang hoạt động',
+                'disabled': 'Vô hiệu hóa',
+                'approved': 'Đã duyệt',
+                'rejected': 'Từ chối',
+                'pending': 'Đang chờ duyệt',
+                'true': 'Đúng / Có / Đạt',
+                'false': 'Sai / Không / Không đạt',
+                'null': 'Không có',
+                'published': 'Xuất bản',
+                'draft': 'Bản nháp',
+                
+                // Ánh xạ tên quyền hạn (Permissions Mapping)
+                'COURSE_VIEW': 'Xem khóa học',
+                'COURSE_CREATE': 'Tạo khóa học',
+                'COURSE_UPDATE': 'Cập nhật khóa học',
+                'COURSE_DELETE': 'Xóa khóa học',
+                'COURSE_PUBLISH': 'Xuất bản khóa học',
+                'LESSON_CREATE': 'Tạo bài học',
+                'CONTENT_UPLOAD': 'Tải lên học liệu (video/file)',
+                'LESSON_MANAGE': 'Quản lý bài giảng',
+                'QUIZ_BANK_VIEW': 'Xem ngân hàng câu hỏi',
+                'QUIZ_BANK_MANAGE': 'Quản lý ngân hàng câu hỏi',
+                'QUIZ_SETTING': 'Cài đặt đề thi',
+                'QUIZ_GRADE': 'Chấm điểm đề thi',
+                'PATH_MANAGE': 'Quản lý lộ trình học',
+                'ENROLL_ASSIGN': 'Giao khóa học',
+                'ENROLL_APPROVE': 'Phê duyệt đăng ký',
+                'USER_VIEW': 'Xem danh sách nhân viên',
+                'USER_MANAGE': 'Quản lý tài khoản nhân viên',
+                'USER_DISABLE': 'Vô hiệu hóa tài khoản',
+                'DEPARTMENT_MANAGE': 'Quản lý phòng ban',
+                'REPORT_VIEW': 'Xem báo cáo thống kê',
+                'REPORT_EXPORT': 'Xuất dữ liệu báo cáo',
+                'ROLE_MANAGE': 'Quản lý vai trò & phân quyền',
+                'USER_IMPERSONATE': 'Đóng vai người dùng',
+                'AUDIT_LOG_VIEW': 'Xem nhật ký hệ thống',
+                'PATH_VIEW': 'Xem lộ trình học cá nhân',
+                'COURSE_ENROLL_REQUEST': 'Yêu cầu tham gia khóa học',
+                'HISTORY_VIEW': 'Xem lịch sử học tập',
+                'PROGRESS_TRACK': 'Theo dõi tiến độ học tập'
+              };
+
+              function formatAuditDetails(details) {
+                if (!details) {
+                  return '<span style="font-style: italic; opacity: 0.7;">Không có chi tiết</span>';
+                }
+                
+                let parsedDetails = details;
+                if (typeof details === 'string') {
+                  try {
+                    parsedDetails = JSON.parse(details);
+                  } catch (e) {
+                    return details;
+                  }
+                }
+                
+                if (!parsedDetails || typeof parsedDetails !== 'object' || Object.keys(parsedDetails).length === 0) {
+                  return '<span style="font-style: italic; opacity: 0.7;">Không có chi tiết</span>';
+                }
+                
+                return Object.entries(parsedDetails).map(([key, val]) => {
+                  const label = detailKeys[key] || key;
+                  let displayVal = val;
+                  
+                  if (val === true) {
+                    displayVal = 'Có';
+                  } else if (val === false) {
+                    displayVal = 'Không';
+                  } else if (val === null || val === undefined) {
+                    displayVal = 'Rỗng';
+                  } else if (Array.isArray(val)) {
+                    displayVal = val.map(item => detailValues[item] || item).join(', ');
+                  } else {
+                    displayVal = detailValues[val] !== undefined ? detailValues[val] : val;
+                  }
+                  
+                  return `<strong>${label}</strong>: ${displayVal}`;
+                }).join(', ');
+              }
+            %>
             <table class="custom-table" style="margin-top: 0; font-size: 0.85rem;">
               <thead>
                 <tr>
@@ -418,20 +653,20 @@
                     <td><strong><%= log.username || 'Hệ thống' %></strong></td>
                     <td>
                       <% 
-                        let badgeStyle = "background: rgba(79, 70, 229, 0.08); color: var(--text-accent); border: 1px solid rgba(79, 70, 229, 0.2);";
+                        let badgeStyle = "background: rgba(99, 102, 241, 0.15); color: var(--text-accent); border: 1px solid rgba(99, 102, 241, 0.3); font-weight: 600;";
                         if (log.action.includes('SUCCESS') || log.action === 'USER_LOGIN') {
-                          badgeStyle = "background: rgba(13, 148, 136, 0.08); color: #0d9488; border: 1px solid rgba(13, 148, 136, 0.2);";
+                          badgeStyle = "background: rgba(13, 148, 136, 0.12); color: #0d9488; border: 1px solid rgba(13, 148, 136, 0.25); font-weight: 600;";
                         } else if (log.action.includes('REQUESTED') || log.action.includes('FAIL')) {
-                          badgeStyle = "background: rgba(234, 88, 12, 0.08); color: #ea580c; border: 1px solid rgba(234, 88, 12, 0.2);";
+                          badgeStyle = "background: rgba(234, 88, 12, 0.12); color: #ea580c; border: 1px solid rgba(234, 88, 12, 0.25); font-weight: 600;";
                         } else if (log.action === 'USER_LOGOUT') {
-                          badgeStyle = "background: rgba(100, 116, 139, 0.08); color: #64748b; border: 1px solid rgba(100, 116, 139, 0.2);";
+                          badgeStyle = "background: rgba(100, 116, 139, 0.12); color: #64748b; border: 1px solid rgba(100, 116, 139, 0.25); font-weight: 600;";
                         }
                       %>
-                      <span style="<%= badgeStyle %> padding: 0.2rem 0.5rem; border-radius: 4px; font-family: monospace; font-size: 0.75rem;">
-                        <%= log.action %>
+                      <span style="<%= badgeStyle %> padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.75rem;">
+                        <%= actionLabels[log.action] || log.action %>
                       </span>
                     </td>
-                    <td style="color: var(--text-muted); font-size: 0.8rem; font-family: monospace; max-width: 300px; overflow-x: auto; white-space: nowrap;"><%= JSON.stringify(log.details) %></td>
+                    <td style="max-width: 300px; color: var(--text-main); font-size: 0.82rem; word-break: break-word; white-space: normal;"><%- formatAuditDetails(log.details) %></td>
                   </tr>
                 <% }) %>
               </tbody>
@@ -592,7 +827,34 @@
     if (enrollmentsData && enrollmentsData.length > 0) {
       // --- BIỂU ĐỒ 1: TIẾN ĐỘ KHÓA HỌC (BAR CHART) ---
       const labels = enrollmentsData.map(e => {
-        return e.title.length > 25 ? e.title.substring(0, 22) + '...' : e.title;
+        const title = e.title;
+        const words = title.split(' ');
+        const lines = [];
+        let currentLine = '';
+        
+        words.forEach(word => {
+          if ((currentLine + ' ' + word).trim().length <= 14) {
+            currentLine = (currentLine + ' ' + word).trim();
+          } else {
+            if (currentLine) lines.push(currentLine);
+            currentLine = word;
+          }
+        });
+        if (currentLine) {
+          lines.push(currentLine);
+        }
+        
+        // Giới hạn tối đa 3 dòng để tránh làm vỡ biểu đồ
+        if (lines.length > 3) {
+          const result = lines.slice(0, 2);
+          let thirdLine = lines.slice(2).join(' ');
+          if (thirdLine.length > 12) {
+            thirdLine = thirdLine.substring(0, 11) + '...';
+          }
+          result.push(thirdLine);
+          return result;
+        }
+        return lines;
       });
       const progressValues = enrollmentsData.map(e => e.progress);
       
@@ -606,7 +868,7 @@
         if (e.progress > 0) return '#4f46e5';
         return '#94a3b8';
       });
-
+ 
       const ctxProgress = document.getElementById('courseProgressChart').getContext('2d');
       new Chart(ctxProgress, {
         type: 'bar',
@@ -648,9 +910,11 @@
               },
               ticks: {
                 callback: value => value + '%',
+                color: '#64748b',
                 font: {
                   family: 'Inter',
-                  size: 11
+                  size: 11,
+                  weight: '500'
                 }
               }
             },
@@ -659,9 +923,14 @@
                 display: false
               },
               ticks: {
+                maxRotation: 0,
+                minRotation: 0,
+                padding: 6,
+                color: '#475569',
                 font: {
                   family: 'Inter',
-                  size: 11
+                  size: 10,
+                  weight: '600'
                 }
               }
             }

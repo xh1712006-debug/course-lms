@@ -108,16 +108,15 @@ const permissionGroups = [
     ]
   },
   {
-    title: 'Đề thi & Ngân hàng (Quiz & Question Bank)',
-    icon: 'fa-circle-question',
+    title: 'Kiểm tra Doanh nghiệp (Company Assessments)',
+    icon: 'fa-clipboard-check',
     color: '#34d399',
-    sidebarNote: 'Đề thi & Câu hỏi',
-    sidebarUrl: '/quiz-management',
+    sidebarNote: 'Kiểm tra Doanh nghiệp',
+    sidebarUrl: '/admin/assessments',
     perms: [
-      { key: 'QUIZ_BANK_VIEW',    desc: 'Xem ngân hàng câu hỏi (mở sidebar Đề thi & Câu hỏi)' },
-      { key: 'QUIZ_BANK_MANAGE',  desc: 'Soạn câu hỏi đề thi' },
-      { key: 'QUIZ_SETTING',      desc: 'Cấu hình đề kiểm tra khóa học' },
-      { key: 'QUIZ_GRADE',        desc: 'Chấm điểm bài tự luận (mở sidebar Chấm điểm)' }
+      { key: 'QUIZ_BANK_VIEW',    desc: 'Xem danh sách bài kiểm tra doanh nghiệp (mở sidebar Kiểm tra Doanh nghiệp)' },
+      { key: 'QUIZ_BANK_MANAGE',  desc: 'Tạo, xóa, xuất bản bài kiểm tra doanh nghiệp bằng AI' },
+      { key: 'QUIZ_GRADE',        desc: 'Chấm điểm và phản hồi bài thi tự luận (mở sidebar Chấm điểm)' }
     ]
   },
   {

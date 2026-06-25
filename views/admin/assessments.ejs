@@ -88,7 +88,7 @@
             <td style="padding: 1rem 1.5rem; text-align: right;">
               <div style="display: flex; gap: 0.5rem; justify-content: flex-end; flex-wrap: wrap;">
                 <% if (user.permissions.includes('ENROLL_ASSIGN') && a.status === 'published') { %>
-                  <button class="btn" onclick="openAssignModal(<%= a.id %>, '<%= a.title.replace(/'/g, \"'\") %>')"
+                  <button class="btn" onclick="openAssignModal(<%= a.id %>, '<%= a.title.replace(/'/g, "\\'") %>')"
                     style="padding: 0.4rem 0.9rem; font-size: 0.8rem; background: rgba(99,102,241,0.15); border: 1px solid rgba(99,102,241,0.4); color: #a5b4fc;">
                     <i class="fa-solid fa-paper-plane"></i> Phân phối
                   </button>
@@ -234,11 +234,17 @@
       </div>
 
       <div class="form-group" id="assign-user-section">
-        <label class="form-label">Chọn người dùng</label>
-        <div style="max-height: 200px; overflow-y: auto; display: grid; gap: 0.4rem; padding-right:0.5rem;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+          <label class="form-label" style="margin-bottom: 0;">Chọn người dùng</label>
+          <label style="display: flex; align-items: center; gap: 0.35rem; font-size: 0.8rem; cursor: pointer; user-select: none; color: var(--text-accent); font-weight: 600;">
+            <input type="checkbox" id="user-select-all" onchange="toggleSelectAllUsers(this)" style="width: 14px; height: 14px; accent-color: #8b5cf6;"> Chọn tất cả
+          </label>
+        </div>
+        <input type="text" id="user-search" placeholder="🔍 Nhập tên hoặc email để tìm..." oninput="filterUsers()" style="margin-bottom: 0.75rem; padding: 0.55rem 0.85rem; font-size: 0.85rem; border-radius: 8px;">
+        <div id="user-list-container" style="max-height: 200px; overflow-y: auto; display: grid; gap: 0.4rem; padding-right:0.5rem;">
           <% users.forEach(u => { %>
-          <label style="display:flex; align-items:center; gap:0.6rem; padding:0.5rem 0.75rem; border-radius:7px; border:1px solid var(--border-light); cursor:pointer; font-size:0.87rem;">
-            <input type="checkbox" class="assign-user-cb" value="<%= u.id %>" style="accent-color:#8b5cf6;">
+          <label class="user-item" data-search="<%= u.username.toLowerCase() %> <%= u.email.toLowerCase() %>" style="display:flex; align-items:center; gap:0.6rem; padding:0.5rem 0.75rem; border-radius:7px; border:1px solid var(--border-light); cursor:pointer; font-size:0.87rem; transition: border-color 0.15s;">
+            <input type="checkbox" class="assign-user-cb" value="<%= u.id %>" style="accent-color:#8b5cf6;" onchange="updateSelectAllState('user')">
             <i class="fa-solid fa-user-circle" style="color: #6366f1;"></i> <%= u.username %> <span style="color:var(--text-muted); font-size:0.8rem;">— <%= u.email %></span>
           </label>
           <% }) %>
@@ -246,20 +252,32 @@
       </div>
 
       <div class="form-group" id="assign-dept-section" style="display:none;">
-        <label class="form-label">Chọn phòng ban</label>
-        <div style="display: grid; gap: 0.4rem;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+          <label class="form-label" style="margin-bottom: 0;">Chọn phòng ban</label>
+          <label style="display: flex; align-items: center; gap: 0.35rem; font-size: 0.8rem; cursor: pointer; user-select: none; color: var(--text-accent); font-weight: 600;">
+            <input type="checkbox" id="dept-select-all" onchange="toggleSelectAllDepts(this)" style="width: 14px; height: 14px; accent-color: #8b5cf6;"> Chọn tất cả
+          </label>
+        </div>
+        <input type="text" id="dept-search" placeholder="🔍 Nhập tên phòng ban để tìm..." oninput="filterDepts()" style="margin-bottom: 0.75rem; padding: 0.55rem 0.85rem; font-size: 0.85rem; border-radius: 8px;">
+        <div id="dept-list-container" style="max-height: 200px; overflow-y: auto; display: grid; gap: 0.4rem; padding-right:0.5rem;">
           <% departments.forEach(d => { %>
-          <label style="display:flex; align-items:center; gap:0.6rem; padding:0.5rem 0.75rem; border-radius:7px; border:1px solid var(--border-light); cursor:pointer; font-size:0.87rem;">
-            <input type="checkbox" class="assign-dept-cb" value="<%= d.id %>" style="accent-color:#8b5cf6;">
+          <label class="dept-item" data-search="<%= d.name.toLowerCase() %>" style="display:flex; align-items:center; gap:0.6rem; padding:0.5rem 0.75rem; border-radius:7px; border:1px solid var(--border-light); cursor:pointer; font-size:0.87rem; transition: border-color 0.15s;">
+            <input type="checkbox" class="assign-dept-cb" value="<%= d.id %>" style="accent-color:#8b5cf6;" onchange="updateSelectAllState('dept')">
             <i class="fa-solid fa-building" style="color:#6366f1;"></i> <%= d.name %>
           </label>
           <% }) %>
         </div>
       </div>
 
-      <div class="form-group">
-        <label class="form-label">Hạn hoàn thành (tuỳ chọn)</label>
-        <input type="datetime-local" id="assign-deadline" style="width:100%;">
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.25rem;">
+        <div class="form-group" style="margin-bottom: 0;">
+          <label class="form-label">Thời gian mở đề (tuỳ chọn)</label>
+          <input type="datetime-local" id="assign-starttime" style="width:100%;">
+        </div>
+        <div class="form-group" style="margin-bottom: 0;">
+          <label class="form-label">Hạn hoàn thành (tuỳ chọn)</label>
+          <input type="datetime-local" id="assign-deadline" style="width:100%;">
+        </div>
       </div>
 
       <div style="display: flex; gap: 1rem; justify-content: flex-end;">
@@ -293,11 +311,89 @@ function closeCreateModal() {
 function openAssignModal(id, title) {
   document.getElementById('assign-assessment-id').value = id;
   document.getElementById('assign-title-display').textContent = title;
+  
+  // Reset checkboxes
   document.querySelectorAll('.assign-user-cb, .assign-dept-cb').forEach(cb => cb.checked = false);
+  document.getElementById('user-select-all').checked = false;
+  document.getElementById('dept-select-all').checked = false;
+  
+  // Reset search inputs
+  document.getElementById('user-search').value = '';
+  document.getElementById('dept-search').value = '';
+  filterUsers();
+  filterDepts();
+  
+  // Reset date times
+  document.getElementById('assign-starttime').value = '';
   document.getElementById('assign-deadline').value = '';
+  
   document.getElementById('modal-assign').style.display = 'block';
   document.body.style.overflow = 'hidden';
 }
+
+function filterUsers() {
+  const query = document.getElementById('user-search').value.toLowerCase().trim();
+  const items = document.querySelectorAll('#user-list-container .user-item');
+  items.forEach(item => {
+    const text = item.getAttribute('data-search') || '';
+    if (text.includes(query)) {
+      item.style.display = 'flex';
+    } else {
+      item.style.display = 'none';
+    }
+  });
+  updateSelectAllState('user');
+}
+
+function toggleSelectAllUsers(selectAllCb) {
+  const items = document.querySelectorAll('#user-list-container .user-item');
+  items.forEach(item => {
+    if (item.style.display !== 'none') {
+      const cb = item.querySelector('.assign-user-cb');
+      cb.checked = selectAllCb.checked;
+    }
+  });
+}
+
+function filterDepts() {
+  const query = document.getElementById('dept-search').value.toLowerCase().trim();
+  const items = document.querySelectorAll('#dept-list-container .dept-item');
+  items.forEach(item => {
+    const text = item.getAttribute('data-search') || '';
+    if (text.includes(query)) {
+      item.style.display = 'flex';
+    } else {
+      item.style.display = 'none';
+    }
+  });
+  updateSelectAllState('dept');
+}
+
+function toggleSelectAllDepts(selectAllCb) {
+  const items = document.querySelectorAll('#dept-list-container .dept-item');
+  items.forEach(item => {
+    if (item.style.display !== 'none') {
+      const cb = item.querySelector('.assign-dept-cb');
+      cb.checked = selectAllCb.checked;
+    }
+  });
+}
+
+function updateSelectAllState(type) {
+  const items = document.querySelectorAll(type === 'user' ? '#user-list-container .user-item' : '#dept-list-container .dept-item');
+  const visibleItems = Array.from(items).filter(item => item.style.display !== 'none');
+  const selectAllCb = document.getElementById(type === 'user' ? 'user-select-all' : 'dept-select-all');
+  
+  if (visibleItems.length === 0) {
+    selectAllCb.checked = false;
+    return;
+  }
+  
+  const cbClass = type === 'user' ? '.assign-user-cb' : '.assign-dept-cb';
+  const allChecked = visibleItems.every(item => item.querySelector(cbClass).checked);
+  selectAllCb.checked = allChecked;
+}
+
 function closeAssignModal() {
   document.getElementById('modal-assign').style.display = 'none';
   document.body.style.overflow = '';
@@ -379,6 +475,7 @@ async function submitCreateAssessment() {
 
 async function submitAssign() {
   const assessmentId = document.getElementById('assign-assessment-id').value;
+  const startTime = document.getElementById('assign-starttime').value;
   const deadline = document.getElementById('assign-deadline').value;
   const cbClass = currentAssignType === 'user' ? '.assign-user-cb' : '.assign-dept-cb';
   const targetIds = [...document.querySelectorAll(`${cbClass}:checked`)].map(cb => cb.value);
@@ -392,7 +489,7 @@ async function submitAssign() {
     const res = await fetch(`/admin/assessments/${assessmentId}/assign`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ assessmentId, targetType: currentAssignType, targetIds, deadline: deadline || null })
+      body: JSON.stringify({ assessmentId, targetType: currentAssignType, targetIds, startTime: startTime || null, deadline: deadline || null })
     });
     const data = await res.json();
     closeAssignModal();

@@ -937,7 +937,7 @@ module.exports = {
     findForUser: async (userId, departmentId) => {
       const sql = `
         SELECT DISTINCT a.*, u.username as creator_name,
-               aa.deadline, aa.target_type,
+               aa.deadline, aa.target_type, aa.assigned_at, aa.start_time,
                asub.id as submission_id, asub.score, asub.is_passed, asub.submitted_at
         FROM assessments a
         JOIN assessment_assignments aa ON a.id = aa.assessment_id
@@ -997,7 +997,7 @@ module.exports = {
 
   AssessmentAssignment: {
     // Phân phối đến user hoặc department
-    assign: async (assessmentId, targetType, targetIds, deadline, assignedBy) => {
+    assign: async (assessmentId, targetType, targetIds, startTime, deadline, assignedBy) => {
       const client = await db.pool.connect();
       try {
         await client.query('BEGIN');
@@ -1009,9 +1009,9 @@ module.exports = {
           );
           if (check.rows.length === 0) {
             await client.query(
-              `INSERT INTO assessment_assignments (assessment_id, target_type, target_id, deadline, assigned_by)
-               VALUES ($1, $2, $3, $4, $5)`,
-              [assessmentId, targetType, targetId, deadline || null, assignedBy]
+              `INSERT INTO assessment_assignments (assessment_id, target_type, target_id, start_time, deadline, assigned_by)
+               VALUES ($1, $2, $3, $4, $5, $6)`,
+              [assessmentId, targetType, targetId, startTime || null, deadline || null, assignedBy]
             );
           }
         }

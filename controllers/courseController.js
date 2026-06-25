@@ -26,6 +26,7 @@ module.exports = {
       let rejectedEnrollments = [];
       let submissions = [];
       let pathsWithCourses = [];
+      let myAssessments = [];
       
       const stats = {
         totalUsers: null,
@@ -58,6 +59,10 @@ module.exports = {
             });
           }
         }
+
+        // Lấy danh sách bài kiểm tra doanh nghiệp được phân phối
+        const { Assessment } = require('../models/schema');
+        myAssessments = await Assessment.findForUser(userId, req.session.departmentId || null);
       }
 
       // 2. Lấy thông tin thống kê quản trị nếu người dùng có quyền quản lý
@@ -100,7 +105,8 @@ module.exports = {
         pendingEnrollments,
         rejectedEnrollments,
         submissions,
-        pathsWithCourses
+        pathsWithCourses,
+        myAssessments
       });
     } catch (err) {
       console.error('[Course Controller] Lỗi tải dashboard tích hợp:', err);

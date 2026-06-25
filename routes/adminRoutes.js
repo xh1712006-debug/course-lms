@@ -32,10 +32,6 @@ router.post('/course-management/:courseId/lessons/:id/delete', requirePermission
 // ==========================================
 // NHÓM 3: QUẢN LÝ ĐỀ THI & NGÂN HÀNG CÂU HỎI
 // ==========================================
-router.get('/quiz-management', requirePermission('QUIZ_BANK_VIEW'), adminController.getQuizzes);
-router.post('/quiz-management/settings', requirePermission('QUIZ_SETTING'), adminController.saveQuizSetting);
-router.post('/quiz-management/questions', requirePermission('QUIZ_BANK_MANAGE'), adminController.createQuestion);
-router.post('/quiz-management/questions/:id/delete', requirePermission('QUIZ_BANK_MANAGE'), adminController.deleteQuestion);
 router.get('/grade', requirePermission('QUIZ_GRADE'), adminController.getGradeList);
 router.post('/grade/:id', requirePermission('QUIZ_GRADE'), adminController.postGrade);
 
@@ -83,12 +79,12 @@ router.get('/audit', requirePermission('AUDIT_LOG_VIEW'), adminController.getAud
 // NHÓM 8: BÀI KIỂM TRA DOANH NGHIỆP (ASSESSMENT)
 // ==========================================
 const assessmentController = require('../controllers/assessmentController');
-router.get('/assessments', requirePermission('QUIZ_BANK_VIEW'), assessmentController.getList);
-router.post('/assessments/create', requirePermission('QUIZ_BANK_MANAGE'), assessmentController.postCreate);
-router.get('/assessments/:id', requirePermission('QUIZ_BANK_VIEW'), assessmentController.getDetail);
-router.post('/assessments/:id/publish', requirePermission('QUIZ_BANK_MANAGE'), assessmentController.postPublish);
-router.post('/assessments/:id/delete', requirePermission('QUIZ_BANK_MANAGE'), assessmentController.postDelete);
-router.post('/assessments/:id/assign', requirePermission('ENROLL_ASSIGN'), assessmentController.postAssign);
+router.get('/admin/assessments', requirePermission('QUIZ_BANK_VIEW'), assessmentController.getList);
+router.post('/admin/assessments/create', requirePermission('QUIZ_BANK_MANAGE'), assessmentController.postCreate);
+router.get('/admin/assessments/:id', requirePermission('QUIZ_BANK_VIEW'), assessmentController.getDetail);
+router.post('/admin/assessments/:id/publish', requirePermission('QUIZ_BANK_MANAGE'), assessmentController.postPublish);
+router.post('/admin/assessments/:id/delete', requirePermission('QUIZ_BANK_MANAGE'), assessmentController.postDelete);
+router.post('/admin/assessments/:id/assign', requirePermission('ENROLL_ASSIGN'), assessmentController.postAssign);
 
 module.exports = router;
 

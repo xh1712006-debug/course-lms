@@ -7,7 +7,7 @@
     "start": "node app.js",
     "dev": "node --watch app.js",
     "test-conn": "node config/test-conn.js",
-    "test": "node research/testRoleMatrix.js && node research/testLearnerSuite.js"
+    "test": "node research/testRoleMatrix.js && node research/testLearnerSuite.js && node research/testAssessmentSchedule.js"
   },
   "dependencies": {
     "@google/generative-ai": "^0.11.0",

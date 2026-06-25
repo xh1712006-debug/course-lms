@@ -273,12 +273,6 @@
                 </form>
               </div>
             `;
-          }rem; font-size: 0.75rem; transition: all 0.2s;" title="Xóa phòng ban">
-                    <i class="fa-solid fa-trash"></i>
-                  </button>
-                </form>
-              </div>
-            `;
           }
 
           let html = `
@@ -506,7 +500,7 @@
 
 <script>
   function openAssignManagerModal(id, name, managerId) {
-    document.getElementById('assign-manager-form').action = \`/departments/\${id}/assign-manager\`;
+    document.getElementById('assign-manager-form').action = `/departments/${id}/assign-manager`;
     document.getElementById('assign-dept-name').textContent = name;
     document.getElementById('assign-manager-select').value = managerId || '';
     document.getElementById('assign-manager-modal').style.display = 'block';
