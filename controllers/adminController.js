@@ -84,16 +84,31 @@ module.exports = {
     try {
       const success = req.query.success || null;
       const error = req.query.error || null;
-      const courses = await Course.findAll();
-      const users = await User.findAll();
-      const departments = await Department.findAll();
+
+      // Xử lý phân trang (mặc định trang 1, mỗi trang 15 khóa học)
+      const page = Math.max(1, parseInt(req.query.page) || 1);
+      const limit = 15;
+      const offset = (page - 1) * limit;
+
+      // Lấy song song dữ liệu phân trang và danh sách liên quan
+      const [courses, totalCourses, users, departments] = await Promise.all([
+        Course.findPaginated(limit, offset),
+        Course.countAll(),
+        User.findAll(),
+        Department.findAll()
+      ]);
+
+      const totalPages = Math.max(1, Math.ceil(totalCourses / limit));
+
       res.render('admin/courses', { 
         courses, 
         users,
         departments,
         success,
         error,
-        user: { permissions: req.session.permissions } 
+        currentPage: page,
+        totalPages,
+        totalCourses
       });
     } catch (err) {
       console.error('[Admin Controller] Lỗi tải danh sách khóa học:', err);
@@ -107,7 +122,7 @@ module.exports = {
     }
     const { title, description, image_url, enrollment_type } = req.body;
     try {
-      const newCourse = await Course.create(title, description, image_url || '/images/default_course.jpg', 'draft', enrollment_type || 'open');
+      const newCourse = await Course.create(title, description, image_url || '/images/default_course.svg', 'draft', enrollment_type || 'open');
       
       // Ghi nhật ký
       await AuditLog.create(req.session.userId, 'COURSE_CREATE', { course_id: newCourse.id, title });
@@ -127,7 +142,7 @@ module.exports = {
     const courseId = parseInt(req.params.id);
     const { title, description, image_url, status, enrollment_type } = req.body;
     try {
-      await Course.update(courseId, title, description, image_url, status, enrollment_type || 'open');
+      await Course.update(courseId, title, description, image_url || '/images/default_course.svg', status, enrollment_type || 'open');
       
       await AuditLog.create(req.session.userId, 'COURSE_UPDATE', { course_id: courseId, title });
       await invalidateCourseCache();
@@ -198,8 +213,7 @@ module.exports = {
       res.render('admin/lessons-overview', {
         allLessons,
         lessonsByCourse: Object.values(lessonsByCourse),
-        courses,
-        user: res.locals.user || { permissions: req.session.permissions }
+        courses
       });
     } catch (err) {
       console.error('[Admin Controller] Lỗi tải danh sách tất cả bài học:', err);
@@ -217,8 +231,7 @@ module.exports = {
       }
       res.render('admin/lessons', { 
         course, 
-        lessons, 
-        user: { permissions: req.session.permissions } 
+        lessons
       });
     } catch (err) {
       if (req.query.json === 'true') {
@@ -301,7 +314,7 @@ module.exports = {
     try {
       // Vì là trắc nghiệm tự chấm điểm ở Client, ở đây ta lấy danh sách các bài làm để giám sát hoặc tự luận (nếu có)
       const submissions = await QuizSubmission.findAllToGrade();
-      res.render('admin/grade', { submissions, user: { permissions: req.session.permissions } });
+      res.render('admin/grade', { submissions });
     } catch (err) {
       res.render('error', { message: 'Lỗi tải danh sách chấm thi.' });
     }
@@ -387,8 +400,7 @@ module.exports = {
         users,
         departments,
         success,
-        error,
-        user: { permissions: req.session.permissions } 
+        error
       });
     } catch (err) {
       console.error('[Admin Controller] Lỗi tải lộ trình học tập:', err);
@@ -513,34 +525,74 @@ module.exports = {
         deadline.setDate(deadline.getDate() + parseInt(timeLimitDays));
       }
 
-      let assignedCount = 0;
-      // Giao tất cả khóa học của lộ trình cho từng nhân sự
-      for (let uId of targetUserIds) {
-        for (let c of pathCourses) {
-          await Enrollment.create(uId, c.id, true, 'approved', deadline);
+      const adminId = req.session.userId;
+      const targetUserIdArray = Array.from(targetUserIds);
+
+      // Respond immediately to the administrator
+      res.redirect('/paths?success=' + encodeURIComponent(`Đang tiến hành giao lộ trình "${path.name}" trong nền. Hệ thống sẽ thông báo khi hoàn thành.`));
+
+      // Start background assignment task in batches
+      setImmediate(async () => {
+        try {
+          const batchSize = 10;
+          let assignedCount = 0;
+          
+          for (let i = 0; i < targetUserIdArray.length; i += batchSize) {
+            const batch = targetUserIdArray.slice(i, i + batchSize);
+            
+            // Process the current batch of users
+            for (const uId of batch) {
+              for (const c of pathCourses) {
+                await Enrollment.create(uId, c.id, true, 'approved', deadline);
+              }
+              assignedCount++;
+            }
+            
+            // Yield execution back to the Event Loop
+            await new Promise(resolve => setImmediate(resolve));
+          }
+
+          // Save aggregate Audit Log
+          await AuditLog.create(adminId, 'PATH_ASSIGN_BULK', {
+            learning_path_id: pathId,
+            user_count: assignedCount,
+            course_count: pathCourses.length,
+            selected_users: uIds,
+            selected_departments: dIds
+          });
+
+          // Send real-time notifications
+          try {
+            const { getIO, emitToUser } = require('../config/socket');
+            const io = getIO();
+            
+            // Notify learners
+            io.emit('path_assigned_notification', { pathId, userIds: uIds, departmentIds: dIds });
+            
+            // Notify the admin who triggered the action
+            emitToUser(adminId, 'path_assign_completed', {
+              pathName: path.name,
+              assignedCount: assignedCount,
+              success: true
+            });
+          } catch (ioErr) {
+            console.warn('[Background Job] Lỗi gửi Socket notification:', ioErr.message);
+          }
+
+        } catch (bgErr) {
+          console.error('[Background Job] Lỗi khi chạy ngầm giao lộ trình:', bgErr);
+          try {
+            const { emitToUser } = require('../config/socket');
+            emitToUser(adminId, 'path_assign_completed', {
+              pathName: path.name,
+              success: false,
+              error: bgErr.message || 'Lỗi cơ sở dữ liệu.'
+            });
+          } catch (emitErr) {
+            console.warn('[Background Job] Không thể thông báo lỗi cho admin:', emitErr.message);
+          }
         }
-        assignedCount++;
-      }
-
-      // Lưu log Audit Log tổng hợp
-      await AuditLog.create(req.session.userId, 'PATH_ASSIGN_BULK', {
-        learning_path_id: pathId,
-        user_count: assignedCount,
-        course_count: pathCourses.length,
-        selected_users: uIds,
-        selected_departments: dIds
       });
-
-      // Thông báo qua WebSocket
-      try {
-        const { getIO } = require('../config/socket');
-        const io = getIO();
-        io.emit('path_assigned_notification', { pathId, userIds: uIds, departmentIds: dIds });
-      } catch (ioErr) {
-        console.warn('[Admin Controller] Không thể gửi Socket notification:', ioErr.message);
-      }
-
-      res.redirect('/paths?success=' + encodeURIComponent(`Giao thành công lộ trình "${path.name}" cho ${assignedCount} nhân sự.`));
     } catch (err) {
       console.error('[Admin Controller] Lỗi giao lộ trình:', err);
       res.redirect('/paths?error=' + encodeURIComponent('Lỗi hệ thống khi giao lộ trình đào tạo.'));
@@ -684,7 +736,7 @@ module.exports = {
     }
     try {
       const pendings = await Enrollment.findAllPending();
-      res.render('admin/approvals', { pendings, user: { permissions: req.session.permissions } });
+      res.render('admin/approvals', { pendings });
     } catch (err) {
       res.render('error', { message: 'Lỗi tải danh sách phê duyệt.' });
     }
@@ -728,7 +780,6 @@ module.exports = {
         departments,
         deptUserCounts,
         eligibleManagers,
-        user: res.locals.user || { permissions: req.session.permissions },
         success: req.query.success || null,
         error: req.query.error || null
       });
@@ -804,7 +855,6 @@ module.exports = {
         totalCount,
         search,
         selectedDeptId: departmentId,
-        user: { permissions: req.session.permissions },
         createSuccess: req.query.createSuccess || null,
         createError: req.query.createError || null
       });
@@ -944,12 +994,7 @@ module.exports = {
       res.render('admin/reports', { 
         stats, 
         deptStats,
-        leaderboard,
-        user: { 
-          username: req.session.username,
-          permissions: req.session.permissions,
-          isImpersonating: req.session.isImpersonating || false
-        } 
+        leaderboard
       });
     } catch (err) {
       console.error('[Admin Controller] Lỗi tải báo cáo:', err);
@@ -1017,12 +1062,7 @@ module.exports = {
         selectedCourse: courseFilter,
         selectedDept: deptFilter,
         coursesList: uniqueCourses,
-        deptsList: uniqueDepts,
-        user: { 
-          username: req.session.username,
-          permissions: req.session.permissions,
-          isImpersonating: req.session.isImpersonating || false
-        } 
+        deptsList: uniqueDepts
       });
     } catch (err) {
       console.error('[Admin Controller] Lỗi xuất dữ liệu báo cáo:', err);
@@ -1056,7 +1096,6 @@ module.exports = {
 
       res.render('admin/roles', { 
         roles: rolesWithPerms, 
-        user: { permissions: req.session.permissions },
         success: req.query.success || null,
         error: req.query.error || null
       });
@@ -1225,7 +1264,6 @@ module.exports = {
 
       res.render('admin/audit', { 
         logs, 
-        user: { permissions: req.session.permissions },
         currentPage: page,
         totalPages,
         totalLogs,

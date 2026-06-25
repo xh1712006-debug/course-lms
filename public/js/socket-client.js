@@ -203,6 +203,19 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
 
+    // 3.1c. Nhận thông báo khi hoàn thành giao lộ trình chạy nền (dành cho Admin/Trưởng phòng)
+    socket.on('path_assign_completed', ({ pathName, assignedCount, success, error }) => {
+      if (success) {
+        const msg = `Đã hoàn thành gán lộ trình "${pathName}" cho ${assignedCount} nhân sự thành công!`;
+        showToastNotification(msg);
+        addNotification('Giao lộ trình hoàn thành', msg);
+      } else {
+        const msg = `Gặp lỗi khi giao lộ trình "${pathName}": ${error}`;
+        showToastNotification(msg);
+        addNotification('Lỗi giao lộ trình', msg);
+      }
+    });
+
     // 3.2. Nhận thông báo chấm điểm tự luận từ Giảng viên
     socket.on('quiz_graded_notification', ({ submissionId, userId, score, isPassed }) => {
       if (userId === parseInt(window.currentUser.id)) {

@@ -35,6 +35,16 @@
     </span>
   </div>
 
+  <!-- Bộ chọn Tab bài kiểm tra -->
+  <div style="padding: 1rem 1.75rem 0 1.75rem; display: flex; gap: 0.75rem; border-bottom: 1px solid var(--border-light); background: rgba(255,255,255,0.01);">
+    <button type="button" onclick="switchAssessmentTab('published')" id="tab-btn-published" class="btn" style="padding: 0.6rem 1.25rem; font-size: 0.85rem; font-weight: 600; border-radius: 8px 8px 0 0; border: none; border-bottom: 2px solid #8b5cf6; background: rgba(139,92,246,0.1); color: #a5b4fc; display: flex; align-items: center; gap: 0.4rem; cursor: pointer; margin-bottom: -1px; transition: all 0.2s;">
+      <i class="fa-solid fa-circle-check" style="color: #10b981;"></i> Đã xuất bản (<%= assessments.filter(a => a.status === 'published').length %>)
+    </button>
+    <button type="button" onclick="switchAssessmentTab('draft')" id="tab-btn-draft" class="btn" style="padding: 0.6rem 1.25rem; font-size: 0.85rem; font-weight: 600; border-radius: 8px 8px 0 0; border: none; border-bottom: 2px solid transparent; background: transparent; color: var(--text-muted); display: flex; align-items: center; gap: 0.4rem; cursor: pointer; margin-bottom: -1px; transition: all 0.2s;">
+      <i class="fa-solid fa-pen-to-square" style="color: #fbbf24;"></i> Bản nháp (<%= assessments.filter(a => a.status === 'draft').length %>)
+    </button>
+  </div>
+
   <% if (assessments.length === 0) { %>
     <div style="text-align: center; padding: 4rem 2rem; color: var(--text-muted);">
       <i class="fa-solid fa-file-circle-question" style="font-size: 3rem; color: #4b5563; margin-bottom: 1rem; display: block;"></i>
@@ -42,7 +52,7 @@
     </div>
   <% } else { %>
     <div style="overflow-x: auto;">
-      <table style="width: 100%; border-collapse: collapse;">
+      <table id="assessments-table" style="width: 100%; border-collapse: collapse;">
         <thead>
           <tr style="background: rgba(255,255,255,0.03); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted);">
             <th style="padding: 0.85rem 1.5rem; text-align: left;">Tiêu Đề</th>
@@ -56,7 +66,7 @@
         </thead>
         <tbody>
           <% assessments.forEach(a => { %>
-          <tr style="border-top: 1px solid var(--border-light); transition: background 0.15s;" onmouseover="this.style.background='rgba(255,255,255,0.025)'" onmouseout="this.style.background='transparent'">
+          <tr class="assessment-row" data-status="<%= a.status %>" style="border-top: 1px solid var(--border-light); transition: background 0.15s;" onmouseover="this.style.background='rgba(255,255,255,0.025)'" onmouseout="this.style.background='transparent'">
             <td style="padding: 1rem 1.5rem;">
               <div style="font-weight: 600; font-size: 0.95rem; margin-bottom: 0.2rem;"><%= a.title %></div>
               <% if (a.description) { %>
@@ -118,6 +128,18 @@
           <% }) %>
         </tbody>
       </table>
+    </div>
+
+    <!-- Khung trống khi không có bài kiểm tra đã xuất bản -->
+    <div id="empty-published" style="display: none; text-align: center; padding: 4rem 2rem; color: var(--text-muted);">
+      <i class="fa-solid fa-circle-check" style="font-size: 3rem; color: #10b981; opacity: 0.6; margin-bottom: 1rem; display: block;"></i>
+      <p style="font-size: 1rem;">Không có bài kiểm tra nào đã xuất bản.</p>
+    </div>
+
+    <!-- Khung trống khi không có bài kiểm tra nháp -->
+    <div id="empty-draft" style="display: none; text-align: center; padding: 4rem 2rem; color: var(--text-muted);">
+      <i class="fa-solid fa-pen-to-square" style="font-size: 3rem; color: #fbbf24; opacity: 0.6; margin-bottom: 1rem; display: block;"></i>
+      <p style="font-size: 1rem;">Không có bài kiểm tra nháp nào.</p>
     </div>
   <% } %>
 </div>
@@ -506,6 +528,68 @@ async function submitAssign() {
     document.getElementById('btn-assign-submit').innerHTML = '<i class="fa-solid fa-paper-plane" style="margin-right:0.4rem;"></i> Gửi Bài Kiểm Tra';
   }
 }
+
+function switchAssessmentTab(tab) {
+  // Cập nhật kiểu dáng cho nút tab tích cực
+  const btnPublished = document.getElementById('tab-btn-published');
+  const btnDraft = document.getElementById('tab-btn-draft');
+  
+  if (!btnPublished || !btnDraft) return;
+
+  if (tab === 'published') {
+    btnPublished.style.borderBottom = '2px solid #8b5cf6';
+    btnPublished.style.background = 'rgba(139,92,246,0.1)';
+    btnPublished.style.color = '#a5b4fc';
+    
+    btnDraft.style.borderBottom = '2px solid transparent';
+    btnDraft.style.background = 'transparent';
+    btnDraft.style.color = 'var(--text-muted)';
+  } else {
+    btnDraft.style.borderBottom = '2px solid #8b5cf6';
+    btnDraft.style.background = 'rgba(139,92,246,0.1)';
+    btnDraft.style.color = '#a5b4fc';
+    
+    btnPublished.style.borderBottom = '2px solid transparent';
+    btnPublished.style.background = 'transparent';
+    btnPublished.style.color = 'var(--text-muted)';
+  }
+  
+  // Lọc hiển thị các dòng tương ứng
+  let visibleCount = 0;
+  const rows = document.querySelectorAll('.assessment-row');
+  rows.forEach(row => {
+    if (row.dataset.status === tab) {
+      row.style.display = '';
+      visibleCount++;
+    } else {
+      row.style.display = 'none';
+    }
+  });
+  
+  // Hiển thị/ẩn trạng thái trống (empty state)
+  const emptyPublished = document.getElementById('empty-published');
+  const emptyDraft = document.getElementById('empty-draft');
+  const tableEl = document.getElementById('assessments-table');
+  
+  if (emptyPublished) emptyPublished.style.display = 'none';
+  if (emptyDraft) emptyDraft.style.display = 'none';
+  
+  if (visibleCount === 0) {
+    if (tableEl) tableEl.style.display = 'none';
+    if (tab === 'published' && emptyPublished) {
+      emptyPublished.style.display = 'block';
+    } else if (tab === 'draft' && emptyDraft) {
+      emptyDraft.style.display = 'block';
+    }
+  } else {
+    if (tableEl) tableEl.style.display = '';
+  }
+}
+
+// Khởi chạy tab đã xuất bản khi tải trang hoàn tất
+document.addEventListener('DOMContentLoaded', () => {
+  switchAssessmentTab('published');
+});
 
 // Đóng modal khi click nền
 document.getElementById('modal-create').addEventListener('click', function(e) {

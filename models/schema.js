@@ -280,6 +280,20 @@ module.exports = {
     delete: async (id) => {
       const sql = `DELETE FROM courses WHERE id = $1`;
       await db.query(sql, [id]);
+    },
+
+    // Tìm kiếm khóa học phân trang
+    findPaginated: async (limit, offset) => {
+      const sql = `SELECT * FROM courses ORDER BY id DESC LIMIT $1 OFFSET $2`;
+      const res = await db.query(sql, [limit, offset]);
+      return res.rows;
+    },
+
+    // Đếm tổng số lượng khóa học hiện có
+    countAll: async () => {
+      const sql = `SELECT COUNT(*)::int as total FROM courses`;
+      const res = await db.query(sql);
+      return res.rows[0].total;
     }
   },
 

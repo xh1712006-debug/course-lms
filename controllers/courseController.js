@@ -91,12 +91,6 @@ module.exports = {
       }
 
       res.render('dashboard', {
-        user: {
-          username: req.session.username,
-          roleName: req.session.roleName,
-          permissions: req.session.permissions,
-          isImpersonating: req.session.isImpersonating || false
-        },
         hasStudentAccess,
         hasAdminAccess,
         stats,
@@ -143,11 +137,7 @@ module.exports = {
       });
 
       res.render('courses/index', { 
-        courses: coursesWithEnrollment,
-        user: {
-          permissions: req.session.permissions,
-          isImpersonating: req.session.isImpersonating || false
-        }
+        courses: coursesWithEnrollment
       });
     } catch (err) {
       console.error('[Course Controller] Lỗi lấy danh sách khóa học:', err);
@@ -172,11 +162,7 @@ module.exports = {
         });
 
         return res.render('courses/index', { 
-          courses: coursesWithEnrollment, 
-          user: { 
-            permissions: req.session.permissions,
-            isImpersonating: req.session.isImpersonating || false
-          } 
+          courses: coursesWithEnrollment 
         });
       } catch (dbErr) {
         res.render('error', { message: 'Không thể lấy danh sách khóa học.' });
@@ -203,11 +189,7 @@ module.exports = {
         course,
         lessons,
         enrollment,
-        quiz,
-        user: {
-          permissions: req.session.permissions,
-          isImpersonating: req.session.isImpersonating || false
-        }
+        quiz
       });
     } catch (err) {
       console.error('[Course Controller] Lỗi tải chi tiết khóa học:', err);
@@ -383,13 +365,7 @@ module.exports = {
         quiz,
         lessonQuiz,
         lessonQuestions,
-        isQuizPassed,
-        user: {
-          id: userId,
-          username: req.session.username,
-          permissions: req.session.permissions,
-          isImpersonating: req.session.isImpersonating || false
-        }
+        isQuizPassed
       });
     } catch (err) {
       console.error('[Course Controller] Lỗi xem bài giảng:', err);
@@ -417,9 +393,6 @@ module.exports = {
       res.render('courses/certificate', {
         course,
         enrollment,
-        user: {
-          username: req.session.username,
-        },
         completionDate: new Date(enrollment.last_accessed).toLocaleDateString('vi-VN')
       });
     } catch (err) {
@@ -483,11 +456,7 @@ module.exports = {
         paths: pathsWithCourses,
         mandatoryPaths,
         electivePaths,
-        myCourses,
-        user: {
-          permissions: req.session.permissions,
-          isImpersonating: req.session.isImpersonating || false
-        }
+        myCourses
       });
     } catch (err) {
       console.error('[Course Controller] Lỗi lấy lộ trình học viên:', err);
@@ -505,11 +474,7 @@ module.exports = {
       
       res.render('courses/my-history', {
         submissions,
-        completedCourses,
-        user: {
-          permissions: req.session.permissions,
-          isImpersonating: req.session.isImpersonating || false
-        }
+        completedCourses
       });
     } catch (err) {
       console.error('[Course Controller] Lỗi lấy lịch sử học tập:', err);
@@ -560,11 +525,7 @@ module.exports = {
       });
       
       res.render('courses/my-deadlines', {
-        deadlines,
-        user: {
-          permissions: req.session.permissions,
-          isImpersonating: req.session.isImpersonating || false
-        }
+        deadlines
       });
     } catch (err) {
       console.error('[Course Controller] Lỗi lấy lịch trình và deadline:', err);
@@ -580,11 +541,7 @@ module.exports = {
       res.render('courses/settings', {
         userDetails,
         success: req.query.success || null,
-        error: req.query.error || null,
-        user: {
-          permissions: req.session.permissions,
-          isImpersonating: req.session.isImpersonating || false
-        }
+        error: req.query.error || null
       });
     } catch (err) {
       console.error('[Course Controller] Lỗi hiển thị cài đặt:', err);
@@ -673,13 +630,7 @@ module.exports = {
       }
 
       res.render('courses/my-groups', {
-        departments: departmentsData,
-        user: {
-          username: req.session.username,
-          permissions: req.session.permissions,
-          isImpersonating: req.session.isImpersonating || false,
-          isManager: req.session.isManager || false
-        }
+        departments: departmentsData
       });
     } catch (err) {
       console.error('[Course Controller] Lỗi xem Nhóm của tôi:', err);

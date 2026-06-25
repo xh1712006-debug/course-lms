@@ -79,7 +79,14 @@
       <% courses.forEach(course => { %>
         <tr>
           <td style="width: 100px;">
-            <img src="<%= course.image_url %>" alt="" style="width: 80px; height: 50px; object-fit: cover; border-radius: 6px; border: 1px solid var(--border-light);">
+            <% 
+              // Lấy ảnh mặc định nếu course.image_url rỗng, null hoặc trỏ tới ảnh .jpg không tồn tại
+              let displayImg = course.image_url;
+              if (!displayImg || !displayImg.trim() || displayImg === '/images/default_course.jpg') {
+                displayImg = '/images/default_course.svg';
+              }
+            %>
+            <img src="<%= displayImg %>" onerror="this.onerror=null; this.src='/images/default_course.svg';" alt="" style="width: 80px; height: 50px; object-fit: cover; border-radius: 6px; border: 1px solid var(--border-light);">
           </td>
           <td>
             <strong style="font-size: 1.05rem;"><%= course.title %></strong>
@@ -144,6 +151,74 @@
       <% }) %>
     </tbody>
   </table>
+
+  <!-- Bộ điều hướng phân trang (Pagination UI) -->
+  <% if (totalCourses > 0) { %>
+    <div style="margin-top: 1.5rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; border-top: 1px solid var(--border-light); padding-top: 1.25rem;">
+      <div style="color: var(--text-muted); font-size: 0.88rem;">
+        Hiển thị từ <strong><%= (currentPage - 1) * 15 + 1 %></strong> đến <strong><%= Math.min(currentPage * 15, totalCourses) %></strong> trong tổng số <strong><%= totalCourses %></strong> khóa học
+      </div>
+      
+      <% if (totalPages > 1) { %>
+        <div style="display: flex; gap: 0.4rem; align-items: center;">
+          <!-- Nút về trang trước -->
+          <% if (currentPage > 1) { %>
+            <a href="/course-management?page=<%= currentPage - 1 %>" class="btn btn-secondary btn-pagination" style="padding: 0.45rem 0.85rem; font-size: 0.82rem; border-radius: 8px; display: flex; align-items: center; gap: 0.35rem;" title="Trang trước">
+              <i class="fa-solid fa-chevron-left" style="font-size: 0.75rem;"></i> Trước
+            </a>
+          <% } else { %>
+            <button class="btn btn-secondary btn-pagination" disabled style="padding: 0.45rem 0.85rem; font-size: 0.82rem; border-radius: 8px; display: flex; align-items: center; gap: 0.35rem; opacity: 0.4; cursor: not-allowed;" title="Trang trước">
+              <i class="fa-solid fa-chevron-left" style="font-size: 0.75rem;"></i> Trước
+            </button>
+          <% } %>
+
+          <!-- Danh sách các trang -->
+          <% 
+            let startPage = Math.max(1, currentPage - 2);
+            let endPage = Math.min(totalPages, currentPage + 2);
+            
+            if (startPage > 1) { %>
+              <a href="/course-management?page=1" class="btn btn-secondary btn-pagination" style="padding: 0.45rem 0.85rem; font-size: 0.82rem; border-radius: 8px;">1</a>
+              <% if (startPage > 2) { %>
+                <span style="color: var(--text-muted); padding: 0 0.25rem;">...</span>
+              <% } %>
+            <% } %>
+
+            <% for (let i = startPage; i <= endPage; i++) { %>
+              <% if (i === currentPage) { %>
+                <span class="btn btn-primary" style="padding: 0.45rem 0.85rem; font-size: 0.82rem; border-radius: 8px; font-weight: 700; cursor: default; background: var(--primary-gradient); border: none; box-shadow: 0 4px 15px rgba(99, 102, 241, 0.35);"><%= i %></span>
+              <% } else { %>
+                <a href="/course-management?page=<%= i %>" class="btn btn-secondary btn-pagination" style="padding: 0.45rem 0.85rem; font-size: 0.82rem; border-radius: 8px;"><%= i %></a>
+              <% } %>
+            <% } %>
+
+            <% if (endPage < totalPages) { %>
+              <% if (endPage < totalPages - 1) { %>
+                <span style="color: var(--text-muted); padding: 0 0.25rem;">...</span>
+              <% } %>
+              <a href="/course-management?page=<%= totalPages %>" class="btn btn-secondary btn-pagination" style="padding: 0.45rem 0.85rem; font-size: 0.82rem; border-radius: 8px;"><%= totalPages %></a>
+            <% } 
+          %>
+
+          <!-- Nút sang trang sau -->
+          <% if (currentPage < totalPages) { %>
+            <a href="/course-management?page=<%= currentPage + 1 %>" class="btn btn-secondary btn-pagination" style="padding: 0.45rem 0.85rem; font-size: 0.82rem; border-radius: 8px; display: flex; align-items: center; gap: 0.35rem;" title="Trang sau">
+              Sau <i class="fa-solid fa-chevron-right" style="font-size: 0.75rem;"></i>
+            </a>
+          <% } else { %>
+            <button class="btn btn-secondary btn-pagination" disabled style="padding: 0.45rem 0.85rem; font-size: 0.82rem; border-radius: 8px; display: flex; align-items: center; gap: 0.35rem; opacity: 0.4; cursor: not-allowed;" title="Trang sau">
+              Sau <i class="fa-solid fa-chevron-right" style="font-size: 0.75rem;"></i>
+            </button>
+          <% } %>
+        </div>
+      <% } %>
+    </div>
+  <% } else { %>
+    <div style="text-align: center; padding: 3.5rem 1.5rem; color: var(--text-muted);">
+      <i class="fa-solid fa-graduation-cap" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.3; display: block;"></i>
+      <span style="font-size: 0.95rem;">Chưa có khóa học nào trong hệ thống.</span>
+    </div>
+  <% } %>
 </div>
  
 <!-- Modal Sửa Khóa Học Mờ Kính -->
@@ -396,6 +471,26 @@
   @keyframes slideDown {
     from { opacity: 0; transform: translateY(-10px); }
     to { opacity: 1; transform: translateY(0); }
+  }
+
+  .btn-pagination {
+    background: rgba(255, 255, 255, 0.05) !important;
+    color: var(--text-muted) !important;
+    border: 1px solid var(--border-light) !important;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .btn-pagination:hover:not([disabled]) {
+    background: rgba(255, 255, 255, 0.1) !important;
+    color: #fff !important;
+    border-color: rgba(99, 102, 241, 0.5) !important;
+    box-shadow: 0 0 12px rgba(99, 102, 241, 0.3) !important;
+    transform: translateY(-1px);
+  }
+  .btn-pagination:active:not([disabled]) {
+    transform: translateY(1px);
   }
 </style>
 

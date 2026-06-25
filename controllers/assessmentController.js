@@ -198,7 +198,6 @@ module.exports = {
     try {
       const assessments = await Assessment.findForUser(userId, departmentId);
       res.render('courses/my-assessments', {
-        user: req.session,
         assessments
       });
     } catch (err) {
