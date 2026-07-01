@@ -26,13 +26,6 @@
     }
   }
 
-  @media (max-width: 992px) {
-    .course-content-grid {
-      grid-template-columns: 1fr !important;
-      gap: 2rem !important;
-    }
-  }
-
   /* Ảnh đại diện */
   .detail-img-wrapper {
     position: relative;
@@ -256,7 +249,7 @@
   </div>
 </div>
 
-<div class="course-content-grid" style="display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1.2fr); gap: 2.5rem; align-items: start;">
+<div style="display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1.2fr); gap: 2.5rem; align-items: start;">
   
   <!-- Cột bên trái: Danh sách các bài giảng -->
   <div>
@@ -274,7 +267,16 @@
         </div>
       <% } else { %>
         <% lessons.forEach((lesson, index) => { %>
-          <div class="lesson-card-item">
+          <% 
+            let isUnlocked = false;
+            let lockTitle = 'Vui lòng đăng ký khóa học để mở khóa bài giảng';
+            if (enrollment && enrollment.status === 'approved') {
+              const requiredProgress = Math.round((index / lessons.length) * 100);
+              isUnlocked = enrollment.progress >= requiredProgress;
+              lockTitle = 'Vui lòng hoàn thành các bài học trước để mở khóa bài này';
+            }
+          %>
+          <div class="lesson-card-item" style="<%= !isUnlocked ? 'opacity: 0.65; background: #f8fafc;' : '' %>">
             <div style="display: flex; align-items: center; gap: 1.25rem; min-width: 0;">
               <!-- Số thứ tự bài học -->
               <span class="lesson-number">#<%= index + 1 %></span>
@@ -293,12 +295,12 @@
             </div>
             
             <div style="flex-shrink: 0; margin-left: 1rem;">
-              <% if (enrollment && enrollment.status === 'approved') { %>
+              <% if (isUnlocked) { %>
                 <a href="/courses/<%= course.id %>/lessons/<%= lesson.id %>" class="btn btn-secondary" style="padding: 0.45rem 1rem; font-size: 0.8rem; border-radius: 8px; display: inline-flex; align-items: center; gap: 0.3rem;">
                   Vào xem <i class="fa-solid fa-chevron-right" style="font-size: 0.7rem;"></i>
                 </a>
               <% } else { %>
-                <i class="fa-solid fa-lock" style="color: var(--text-muted); font-size: 0.95rem; margin-right: 0.5rem;" title="Vui lòng đăng ký khóa học để mở khóa bài giảng"></i>
+                <i class="fa-solid fa-lock" style="color: var(--text-muted); font-size: 0.95rem; margin-right: 0.5rem;" title="<%= lockTitle %>"></i>
               <% } %>
             </div>
           </div>

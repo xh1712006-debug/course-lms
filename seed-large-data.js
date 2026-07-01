@@ -98,9 +98,8 @@ async function seedLargeData() {
     console.log('- Đã tạo thành công 20 phòng ban phân cấp.');
 
     // 4. Tạo khoảng 200 tài khoản với vai trò và phòng ban được phân bổ đều
-    console.log('[5/7] Đang mã hóa mật khẩu và tạo 200 tài khoản người dùng...');
-    const salt = await bcrypt.genSalt(10);
-    const passwordHash = await bcrypt.hash('password123', salt);
+    console.log('[5/7] Tạo 200 tài khoản người dùng với mật khẩu không mã hóa...');
+    const passwordHash = 'password123';
 
     let userCount = 0;
 

@@ -896,6 +896,43 @@ module.exports = {
     }
   },
 
+  deleteUser: async (req, res) => {
+    if (!req.session.permissions.includes('USER_MANAGE')) {
+      return res.status(403).json({ error: 'Không có quyền quản lý nhân sự.' });
+    }
+    const uId = parseInt(req.params.id);
+    if (uId === parseInt(req.session.userId)) {
+      return res.redirect('/users?createError=' + encodeURIComponent('Bạn không thể tự xóa tài khoản của chính mình.'));
+    }
+    if (uId === 1) {
+      return res.redirect('/users?createError=' + encodeURIComponent('Không thể xóa tài khoản Super Admin mặc định.'));
+    }
+    try {
+      const targetUser = await User.findById(uId);
+      if (!targetUser) {
+        return res.redirect('/users?createError=' + encodeURIComponent('Không tìm thấy thông tin nhân viên để xóa.'));
+      }
+      
+      await User.delete(uId);
+      
+      // Xóa cache trạng thái và quyền hạn để thay đổi có hiệu lực ngay lập tức
+      await redis.del(`user_status:${uId}`);
+      await redis.del(`role_permissions:${targetUser.role_id}`);
+      
+      // Ghi nhật ký hệ thống
+      await AuditLog.create(req.session.userId, 'USER_DELETE', { 
+        target_user_id: uId, 
+        username: targetUser.username, 
+        email: targetUser.email 
+      });
+      
+      res.redirect('/users?createSuccess=' + encodeURIComponent(`Đã xóa vĩnh viễn tài khoản của "${targetUser.username}" thành công.`));
+    } catch (err) {
+      console.error('[Admin Controller] Lỗi xóa nhân sự:', err);
+      res.redirect('/users?createError=' + encodeURIComponent('Có lỗi xảy ra khi xóa tài khoản.'));
+    }
+  },
+
   createUser: async (req, res) => {
     if (!req.session.permissions.includes('USER_MANAGE')) {
       return res.status(403).json({ error: 'Không có quyền tạo tài khoản nhân viên.' });
@@ -910,8 +947,8 @@ module.exports = {
       if (existing) {
         return res.redirect(`/users?createError=Email đã tồn tại trong hệ thống.`);
       }
-      const salt = await bcrypt.genSalt(10);
-      const hashedPassword = await bcrypt.hash(password, salt);
+      // Không mã hóa mật khẩu (Lưu mật khẩu dạng plain text)
+      const hashedPassword = password;
       const rId = roleId && roleId !== '' ? parseInt(roleId) : 4;
       const dId = departmentId && departmentId !== '' ? parseInt(departmentId) : null;
       const newUser = await User.create(username.trim(), email.trim().toLowerCase(), hashedPassword, rId, dId);

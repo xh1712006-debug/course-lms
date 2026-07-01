@@ -52,7 +52,9 @@ router.post('/approvals/:id', requirePermission('ENROLL_APPROVE'), adminControll
 // ==========================================
 router.get('/users', requirePermission('USER_VIEW'), adminController.getUsers);
 router.post('/users/create', requirePermission('USER_MANAGE'), adminController.createUser);
+router.get('/users/create', requirePermission('USER_MANAGE'), (req, res) => res.redirect('/users'));
 router.post('/users/:id/update', requirePermission('USER_MANAGE'), adminController.updateUser);
+router.post('/users/:id/delete', requirePermission('USER_MANAGE'), adminController.deleteUser);
 router.get('/departments', requirePermission('DEPARTMENT_MANAGE'), adminController.getDepartments);
 router.post('/departments', requirePermission('DEPARTMENT_MANAGE'), adminController.createDepartment);
 router.post('/departments/:id/update', requirePermission('DEPARTMENT_MANAGE'), adminController.updateDepartment);
@@ -81,10 +83,13 @@ router.get('/audit', requirePermission('AUDIT_LOG_VIEW'), adminController.getAud
 const assessmentController = require('../controllers/assessmentController');
 router.get('/admin/assessments', requirePermission('QUIZ_BANK_VIEW'), assessmentController.getList);
 router.post('/admin/assessments/create', requirePermission('QUIZ_BANK_MANAGE'), assessmentController.postCreate);
+router.get('/admin/assessments/create', requirePermission('QUIZ_BANK_MANAGE'), (req, res) => res.redirect('/admin/assessments'));
 router.get('/admin/assessments/:id', requirePermission('QUIZ_BANK_VIEW'), assessmentController.getDetail);
 router.post('/admin/assessments/:id/publish', requirePermission('QUIZ_BANK_MANAGE'), assessmentController.postPublish);
 router.post('/admin/assessments/:id/delete', requirePermission('QUIZ_BANK_MANAGE'), assessmentController.postDelete);
 router.post('/admin/assessments/:id/assign', requirePermission('ENROLL_ASSIGN'), assessmentController.postAssign);
+router.post('/admin/assessments/:id/questions/add', requirePermission('QUIZ_BANK_MANAGE'), assessmentController.postAddQuestion);
+router.post('/admin/assessments/:id/questions/:questionId/delete', requirePermission('QUIZ_BANK_MANAGE'), assessmentController.postDeleteQuestion);
 
 module.exports = router;
 

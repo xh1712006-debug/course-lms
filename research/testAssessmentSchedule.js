@@ -16,9 +16,7 @@ async function testAssessmentSchedule() {
     const email = 'test_schedule_user@company.com';
     await db.query('DELETE FROM users WHERE email = $1', [email]);
     
-    const bcrypt = require('bcryptjs');
-    const salt = await bcrypt.genSalt(10);
-    const passwordHash = await bcrypt.hash('password123', salt);
+    const passwordHash = 'password123'; // Không mã hóa mật khẩu
     
     const newUser = await User.create(username, email, passwordHash, 4, null);
     testUserId = newUser.id;

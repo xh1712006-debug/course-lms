@@ -10,6 +10,10 @@ DROP TABLE IF EXISTS learning_path_courses CASCADE;
 DROP TABLE IF EXISTS learning_paths CASCADE;
 DROP TABLE IF EXISTS lessons CASCADE;
 DROP TABLE IF EXISTS courses CASCADE;
+DROP TABLE IF EXISTS assessment_submissions CASCADE;
+DROP TABLE IF EXISTS assessment_assignments CASCADE;
+DROP TABLE IF EXISTS assessment_questions CASCADE;
+DROP TABLE IF EXISTS assessments CASCADE;
 DROP TABLE IF EXISTS users CASCADE;
 DROP TABLE IF EXISTS role_permissions CASCADE;
 DROP TABLE IF EXISTS roles CASCADE;
@@ -307,6 +311,7 @@ CREATE TABLE IF NOT EXISTS assessment_assignments (
     assessment_id INTEGER REFERENCES assessments(id) ON DELETE CASCADE,
     target_type VARCHAR(20) NOT NULL,
     target_id INTEGER NOT NULL,
+    start_time TIMESTAMP DEFAULT NULL,
     deadline TIMESTAMP DEFAULT NULL,
     assigned_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
     assigned_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP

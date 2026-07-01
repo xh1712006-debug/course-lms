@@ -265,6 +265,15 @@
                     </button>
                   <% } %>
 
+                  <% if (user.permissions.includes('USER_MANAGE') && u.id !== user.id && u.id !== 1) { %>
+                    <!-- Nút Xóa tài khoản vĩnh viễn -->
+                    <form action="/users/<%= u.id %>/delete" method="POST" style="display: inline;" onsubmit="return confirm('CẢNH BÁO: Hành động này sẽ XÓA VĨNH VIỄN tài khoản của « <%= u.username %> » và toàn bộ thông tin liên quan (lịch sử học tập, tiến trình, kết quả kiểm tra, bình luận). Thao tác này không thể hoàn tác. Bạn có chắc chắn?')">
+                      <button type="submit" class="btn btn-secondary" style="padding: 0.3rem 0.5rem; font-size: 0.75rem; color: #f87171;" title="Xóa tài khoản vĩnh viễn">
+                        <i class="fa-solid fa-trash-can"></i>
+                      </button>
+                    </form>
+                  <% } %>
+
                 </div>
               </td>
             </tr>

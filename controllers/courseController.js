@@ -1,5 +1,5 @@
 const redis = require('../config/redis');
-const { Course, Lesson, Enrollment, Comment, Quiz, Question, QuizSubmission, LearningPath, User, AuditLog } = require('../models/schema');
+const { Course, Lesson, Enrollment, Comment, Quiz, Question, QuizSubmission, LearningPath, User, AuditLog, Report } = require('../models/schema');
 
 module.exports = {
   // Trang tổng quan tích hợp (Unified Dashboard)
@@ -51,7 +51,9 @@ module.exports = {
 
         if (permissions.includes('PATH_VIEW')) {
           const learningPaths = await LearningPath.findAll();
-          for (let path of learningPaths) {
+          // Lấy tối đa 3 lộ trình mới nhất để gợi ý trên dashboard
+          const latestPaths = learningPaths.slice(0, 3);
+          for (let path of latestPaths) {
             const pathCourses = await LearningPath.getCourses(path.id);
             pathsWithCourses.push({
               ...path,
@@ -85,6 +87,17 @@ module.exports = {
         if (permissions.includes('AUDIT_LOG_VIEW')) {
           const logs = await AuditLog.findAll();
           recentLogs = logs.slice(0, 10);
+        }
+
+        if (permissions.includes('REPORT_VIEW')) {
+          try {
+            stats.completionStats = await Report.getCompletionStats();
+            stats.departmentStats = await Report.getDepartmentStats();
+          } catch (reportErr) {
+            console.error('[Course Controller] Lỗi lấy báo cáo thống kê quản trị:', reportErr);
+            stats.completionStats = [];
+            stats.departmentStats = [];
+          }
         }
 
         stats.onlineCount = await redis.scard('online_users');
@@ -373,33 +386,6 @@ module.exports = {
     }
   },
 
-  // Xem và tải chứng nhận hoàn thành khóa học
-  getCertificate: async (req, res) => {
-    const courseId = parseInt(req.params.id);
-    const userId = req.session.userId;
-
-    try {
-      const course = await Course.findById(courseId);
-      if (!course) {
-        return res.status(404).render('error', { message: 'Khóa học không tồn tại.' });
-      }
-
-      const enrollment = await Enrollment.findByUserAndCourse(userId, courseId);
-      if (!enrollment || enrollment.status !== 'approved' || enrollment.progress < 100) {
-        return res.status(403).render('error', { message: 'Bạn chưa hoàn thành khóa học này để nhận chứng chỉ.' });
-      }
-
-      // Render trang chứng chỉ độc lập
-      res.render('courses/certificate', {
-        course,
-        enrollment,
-        completionDate: new Date(enrollment.last_accessed).toLocaleDateString('vi-VN')
-      });
-    } catch (err) {
-      console.error('[Course Controller] Lỗi tải chứng nhận:', err);
-      res.render('error', { message: 'Không thể tải chứng nhận khóa học.' });
-    }
-  },
 
   // Lộ trình học tập của tôi
   getMyPaths: async (req, res) => {
@@ -579,9 +565,8 @@ module.exports = {
         return res.redirect('/settings?error=' + encodeURIComponent('Mật khẩu mới phải từ 6 ký tự trở lên.'));
       }
       
-      // Mã hóa mật khẩu
-      const salt = await bcrypt.genSalt(10);
-      const hashedPassword = await bcrypt.hash(newPassword, salt);
+      // Không mã hóa mật khẩu (Lưu mật khẩu dạng plain text)
+      const hashedPassword = newPassword;
       
       // Cập nhật DB
       await db.query('UPDATE users SET password = $1 WHERE id = $2', [hashedPassword, userId]);

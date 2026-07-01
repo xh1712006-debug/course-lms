@@ -585,12 +585,7 @@
               </div>
               
               <div style="display: flex; gap: 0.6rem;">
-                <% if (c.progress === 100) { %>
-                  <a href="/courses/<%= c.course_id %>/certificate" class="btn btn-secondary" style="flex: 1; padding: 0.5rem; font-size: 0.82rem; border-color: #f59e0b; color: #f59e0b; text-align: center; display: inline-flex; align-items: center; justify-content: center; gap: 0.25rem;">
-                    <i class="fa-solid fa-award"></i> Chứng chỉ
-                  </a>
-                <% } %>
-                <a href="/courses/<%= c.course_id %>/lessons/1" class="btn btn-primary" style="flex: 2; padding: 0.5rem; font-size: 0.82rem; text-align: center; display: inline-flex; align-items: center; justify-content: center; gap: 0.25rem;">
+                <a href="/courses/<%= c.course_id %>/lessons/1" class="btn btn-primary" style="flex: 1; padding: 0.5rem; font-size: 0.82rem; text-align: center; display: inline-flex; align-items: center; justify-content: center; gap: 0.25rem;">
                   <i class="fa-solid fa-circle-play"></i> <%= c.progress === 100 ? 'Ôn tập' : 'Vào học' %>
                 </a>
               </div>
@@ -803,11 +798,6 @@
                     
                     <% if (c.isEnrolled) { %>
                       <div style="display: flex; gap: 0.4rem;">
-                        <% if (c.progress === 100) { %>
-                          <a href="/courses/<%= c.id %>/certificate" class="btn btn-secondary" style="padding: 0.4rem 0.75rem; font-size: 0.78rem; border-color: #f59e0b; color: #f59e0b; display: inline-flex; align-items: center; gap: 0.25rem;" title="Chứng chỉ">
-                            <i class="fa-solid fa-award"></i>
-                          </a>
-                        <% } %>
                         <a href="/courses/<%= c.id %>/lessons/1" class="btn btn-primary" style="padding: 0.4rem 1rem; font-size: 0.78rem; display: inline-flex; align-items: center; gap: 0.25rem;">
                           <i class="fa-solid fa-circle-play"></i> <%= c.progress === 100 ? 'Ôn tập' : 'Vào học' %>
                         </a>
@@ -1036,11 +1026,6 @@
                     
                     <% if (c.isEnrolled) { %>
                       <div style="display: flex; gap: 0.4rem;">
-                        <% if (c.progress === 100) { %>
-                          <a href="/courses/<%= c.id %>/certificate" class="btn btn-secondary" style="padding: 0.4rem 0.75rem; font-size: 0.78rem; border-color: #f59e0b; color: #f59e0b; display: inline-flex; align-items: center; gap: 0.25rem;" title="Chứng chỉ">
-                            <i class="fa-solid fa-award"></i>
-                          </a>
-                        <% } %>
                         <a href="/courses/<%= c.id %>/lessons/1" class="btn btn-primary" style="padding: 0.4rem 1rem; font-size: 0.78rem; display: inline-flex; align-items: center; gap: 0.25rem;">
                           <i class="fa-solid fa-circle-play"></i> <%= c.progress === 100 ? 'Ôn tập' : 'Vào học' %>
                         </a>

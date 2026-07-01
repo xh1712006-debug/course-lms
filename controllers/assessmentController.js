@@ -32,21 +32,40 @@ module.exports = {
   // ADMIN: Tạo bài kiểm tra mới (AI sinh câu hỏi) — API
   // ============================================================
   postCreate: async (req, res) => {
-    const { title, description, courseIds, questionCount, durationMinutes, passingScore } = req.body;
+    const { type, title, description, courseIds, questionCount, durationMinutes, passingScore } = req.body;
     const userId = req.session.userId;
 
     try {
-      // Validate
-      if (!title || !courseIds || courseIds.length === 0) {
-        return res.status(400).json({ error: 'Vui lòng nhập tiêu đề và chọn ít nhất 1 khóa học.' });
+      if (!title) {
+        return res.status(400).json({ error: 'Vui lòng nhập tiêu đề bài kiểm tra.' });
+      }
+
+      const duration = parseInt(durationMinutes) || 60;
+      const passing = parseInt(passingScore) || 70;
+
+      if (type === 'manual') {
+        // Tạo bài kiểm tra thủ công trống (chưa có câu hỏi)
+        const assessment = await Assessment.create(title, description, [], 0, duration, passing, userId);
+        
+        await AuditLog.create(userId, 'ASSESSMENT_CREATE_MANUAL', {
+          assessment_id: assessment.id,
+          title
+        }, req.ip);
+
+        return res.json({
+          success: true,
+          message: `Đã tạo bài kiểm tra thủ công "${title}" thành công!`,
+          assessmentId: assessment.id
+        });
+      }
+
+      // Giữ nguyên luồng AI nếu type !== 'manual'
+      if (!courseIds || courseIds.length === 0) {
+        return res.status(400).json({ error: 'Vui lòng chọn ít nhất 1 khóa học nguồn.' });
       }
 
       const ids = Array.isArray(courseIds) ? courseIds.map(Number) : [Number(courseIds)];
       const count = parseInt(questionCount) || 50;
-      const duration = parseInt(durationMinutes) || 60;
-      const passing = parseInt(passingScore) || 70;
-
-      // Tạo bài kiểm tra (draft)
       const assessment = await Assessment.create(title, description, ids, count, duration, passing, userId);
 
       // Thu thập nội dung các bài học từ các khóa học được chọn
@@ -74,7 +93,7 @@ module.exports = {
       await AssessmentQuestion.createBulk(assessment.id, questions);
 
       // Ghi audit log
-      await AuditLog.create(userId, 'ASSESSMENT_CREATE', {
+      await AuditLog.create(userId, 'ASSESSMENT_CREATE_AI', {
         assessment_id: assessment.id,
         title,
         course_ids: ids,
@@ -89,6 +108,80 @@ module.exports = {
     } catch (err) {
       console.error('[AssessmentController] Lỗi postCreate:', err);
       res.status(500).json({ error: err.message || 'Có lỗi xảy ra khi tạo bài kiểm tra.' });
+    }
+  },
+
+  // ============================================================
+  // ADMIN: Thêm câu hỏi thủ công vào bài kiểm tra nháp
+  // ============================================================
+  postAddQuestion: async (req, res) => {
+    const { id } = req.params;
+    const { question_text, options, correct_answer } = req.body;
+    const userId = req.session.userId;
+
+    try {
+      const assessment = await Assessment.findById(parseInt(id));
+      if (!assessment) {
+        return res.status(404).json({ error: 'Không tìm thấy bài kiểm tra.' });
+      }
+      if (assessment.status !== 'draft') {
+        return res.status(400).json({ error: 'Chỉ có thể thêm câu hỏi vào bài kiểm tra đang ở dạng bản nháp.' });
+      }
+      if (!question_text || !options || options.length < 2 || !correct_answer) {
+        return res.status(400).json({ error: 'Vui lòng điền đầy đủ câu hỏi, các phương án lựa chọn và đáp án đúng.' });
+      }
+
+      const questions = await AssessmentQuestion.findByAssessmentId(parseInt(id));
+      const orderIndex = questions.length + 1;
+
+      const newQuestion = await AssessmentQuestion.createOne(parseInt(id), question_text.trim(), options, correct_answer.trim(), orderIndex);
+      
+      // Cập nhật question_count trong bảng assessments
+      await Assessment.updateQuestionCount(parseInt(id), orderIndex);
+
+      await AuditLog.create(userId, 'ASSESSMENT_QUESTION_ADD', {
+        assessment_id: parseInt(id),
+        question_id: newQuestion.id
+      }, req.ip);
+
+      res.json({ success: true, message: 'Đã thêm câu hỏi thành công!', question: newQuestion });
+    } catch (err) {
+      console.error('[AssessmentController] Lỗi postAddQuestion:', err);
+      res.status(500).json({ error: err.message || 'Lỗi hệ thống khi thêm câu hỏi.' });
+    }
+  },
+
+  // ============================================================
+  // ADMIN: Xóa câu hỏi trong bài kiểm tra nháp
+  // ============================================================
+  postDeleteQuestion: async (req, res) => {
+    const { id, questionId } = req.params;
+    const userId = req.session.userId;
+
+    try {
+      const assessment = await Assessment.findById(parseInt(id));
+      if (!assessment) {
+        return res.status(404).json({ error: 'Không tìm thấy bài kiểm tra.' });
+      }
+      if (assessment.status !== 'draft') {
+        return res.status(400).json({ error: 'Chỉ có thể xóa câu hỏi ở bài kiểm tra nháp.' });
+      }
+
+      await AssessmentQuestion.deleteOne(parseInt(questionId));
+
+      // Lấy lại số câu hỏi thực tế sau khi xóa để cập nhật question_count
+      const remainingQuestions = await AssessmentQuestion.findByAssessmentId(parseInt(id));
+      await Assessment.updateQuestionCount(parseInt(id), remainingQuestions.length);
+
+      await AuditLog.create(userId, 'ASSESSMENT_QUESTION_DELETE', {
+        assessment_id: parseInt(id),
+        question_id: parseInt(questionId)
+      }, req.ip);
+
+      res.json({ success: true, message: 'Đã xóa câu hỏi thành công!' });
+    } catch (err) {
+      console.error('[AssessmentController] Lỗi postDeleteQuestion:', err);
+      res.status(500).json({ error: err.message || 'Lỗi hệ thống khi xóa câu hỏi.' });
     }
   },
 

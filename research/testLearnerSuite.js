@@ -19,9 +19,7 @@ async function testLearnerSuite() {
   try {
     // 1. Dọn dẹp nếu đã tồn tại và tạo tài khoản mới
     await db.query('DELETE FROM users WHERE email = $1', [email]);
-    const bcrypt = require('bcryptjs');
-    const salt = await bcrypt.genSalt(10);
-    const passwordHash = await bcrypt.hash('password123', salt);
+    const passwordHash = 'password123'; // Không mã hóa mật khẩu
     
     // Tạo user với role Employee (role_id = 4)
     const newUser = await User.create(username, email, passwordHash, 4, null);
@@ -169,16 +167,13 @@ async function testLearnerSuite() {
     
     // Kiểm tra DB cập nhật password và lưu log
     const userRes = await db.query('SELECT password FROM users WHERE id = $1', [testUserId]);
-    const newHash = userRes.rows[0].password;
-    assert.ok(newHash.startsWith('$2'), 'Mật khẩu mới phải được băm bcrypt.');
-    
-    const isMatch = await bcrypt.compare('newpassword123', newHash);
-    assert.strictEqual(isMatch, true, 'Băm mật khẩu mới phải chính xác.');
+    const newPasswordInDb = userRes.rows[0].password;
+    assert.strictEqual(newPasswordInDb, 'newpassword123', 'Mật khẩu mới phải lưu ở dạng plain text.');
     
     const logs = await AuditLog.findAll();
     const latestLog = logs[0];
     assert.strictEqual(latestLog.action, 'PASSWORD_RESET_SUCCESS', 'Phải lưu hành động PASSWORD_RESET_SUCCESS vào Audit Log.');
-    console.log('      [OK] Thay đổi mật khẩu thành công, băm bằng bcryptjs và ghi log bảo mật.');
+    console.log('      [OK] Thay đổi mật khẩu thành công, lưu mật khẩu dạng plain text và ghi log bảo mật.');
 
   } catch (err) {
     console.error('\n[FAIL] Kiểm thử bộ chức năng Học viên thất bại:', err);

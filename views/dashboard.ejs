@@ -8,10 +8,12 @@
     <p style="color: var(--text-muted); margin-top: 0.25rem; margin-bottom: 0;">Chào mừng bạn trở lại không gian học tập và quản lý của doanh nghiệp.</p>
   </div>
   
-  <div class="glass-card" style="padding: 0.75rem 1.25rem; display: flex; align-items: center; gap: 0.75rem;">
-    <i class="fa-solid fa-circle-nodes" style="color: #0d9488; animation: pulse 2s infinite;"></i>
-    <span style="font-size: 0.9rem; font-weight: 600;">Đang trực tuyến: <strong id="online-counter" style="color: #0d9488;"><%= stats.onlineCount || 1 %></strong> nhân sự</span>
-  </div>
+  <% if (hasAdminAccess) { %>
+    <div id="online-counter-card" class="glass-card" style="padding: 0.75rem 1.25rem; display: flex; align-items: center; gap: 0.75rem;">
+      <i class="fa-solid fa-circle-nodes" style="color: #0d9488; animation: pulse 2s infinite;"></i>
+      <span style="font-size: 0.9rem; font-weight: 600;">Đang trực tuyến: <strong id="online-counter" style="color: #0d9488;"><%= stats.onlineCount || 1 %></strong> nhân sự</span>
+    </div>
+  <% } %>
 </div>
 
 <% if (hasStudentAccess && hasAdminAccess) { %>
@@ -46,13 +48,6 @@
           <%= enrollments.filter(e => e.progress === 100).length %>
         </div>
       </div>
-      
-      <div class="glass-card kpi-card">
-        <div class="kpi-title">Chứng chỉ đạt được</div>
-        <div class="kpi-value" style="background: linear-gradient(135deg, #ea580c 0%, #f43f5e 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
-          <%= enrollments.filter(e => e.progress === 100).length %>
-        </div>
-      </div>
     </div>
   <% } %>
 
@@ -64,23 +59,32 @@
       </h2>
       
       <div class="glass-card" style="padding: 2rem; border-radius: 16px;">
-        <div style="display: grid; grid-template-columns: 1.8fr 1.2fr; gap: 2.5rem; min-height: 320px;" class="analytics-grid">
+        <div style="display: grid; grid-template-columns: 1.8fr 1.2fr; gap: 2.5rem;" class="analytics-grid">
           <!-- Canvas 1: Tiến trình chi tiết -->
-          <div style="position: relative; width: 100%; height: 100%; min-height: 280px; display: flex; flex-direction: column; justify-content: space-between;">
+          <div style="position: relative; width: 100%; display: flex; flex-direction: column; justify-content: space-between; overflow: hidden;">
             <h4 style="font-size: 0.95rem; font-weight: 700; color: var(--text-main); margin-bottom: 1rem; display: flex; align-items: center; gap: 0.4rem;">
               <i class="fa-solid fa-chart-bar" style="color: #4f46e5;"></i> Chi tiết tiến độ hoàn thành các khóa học (%)
             </h4>
-            <div style="flex-grow: 1; position: relative; width: 100%; height: 250px;">
-              <canvas id="courseProgressChart"></canvas>
+            <div style="display: flex; position: relative; width: 100%; height: 258px; overflow: hidden;">
+              <!-- Cột Y-Axis cố định bên trái -->
+              <div style="width: 50px; height: 250px; flex-shrink: 0; position: relative;">
+                <canvas id="courseProgressChartTicks" style="width: 100%; height: 100%;"></canvas>
+              </div>
+              <!-- Khung cuộn chứa các cột dữ liệu bên phải -->
+              <div class="chart-scroll-container" style="flex-grow: 1; overflow-x: auto; overflow-y: hidden; -webkit-overflow-scrolling: touch; height: 258px;">
+                <div style="position: relative; height: 250px; min-width: 100%;" id="courseProgressChartWrapper">
+                  <canvas id="courseProgressChart"></canvas>
+                </div>
+              </div>
             </div>
           </div>
           
           <!-- Canvas 2: Phân bổ trạng thái -->
-          <div style="position: relative; width: 100%; height: 100%; min-height: 280px; display: flex; flex-direction: column; justify-content: space-between; border-left: 1px solid var(--border-light); padding-left: 2rem;" class="status-chart-container">
+          <div style="position: relative; width: 100%; display: flex; flex-direction: column; justify-content: space-between; border-left: 1px solid var(--border-light); padding-left: 2rem;" class="status-chart-container">
             <h4 style="font-size: 0.95rem; font-weight: 700; color: var(--text-main); margin-bottom: 1rem; display: flex; align-items: center; gap: 0.4rem;">
               <i class="fa-solid fa-chart-pie" style="color: #0d9488;"></i> Tỷ lệ trạng thái hoàn thành khóa học
             </h4>
-            <div style="flex-grow: 1; position: relative; width: 100%; height: 220px; display: flex; align-items: center; justify-content: center;">
+            <div style="position: relative; width: 100%;">
               <canvas id="courseStatusChart"></canvas>
             </div>
           </div>
@@ -150,9 +154,6 @@
                   
                   <div style="display: flex; gap: 0.5rem;">
                     <% if (enroll.progress === 100) { %>
-                      <a href="/courses/<%= enroll.course_id %>/certificate" class="btn btn-secondary" style="flex: 1; padding: 0.5rem 1rem; font-size: 0.85rem; border-color: #ea580c; color: #ea580c;" title="Tải chứng nhận hoàn thành khóa học">
-                        <i class="fa-solid fa-award"></i> Chứng chỉ
-                      </a>
                       <a href="/courses/<%= enroll.course_id %>/lessons/1" class="btn btn-primary" style="flex: 1; padding: 0.5rem 1rem; font-size: 0.85rem; background: var(--secondary-gradient); color: #fff;">
                         <i class="fa-solid fa-rotate-left"></i> Ôn tập
                       </a>
@@ -221,75 +222,6 @@
     <% if (user.permissions.includes('PATH_VIEW') || user.permissions.includes('HISTORY_VIEW')) { %>
       <div style="display: flex; flex-direction: column; gap: 2rem;">
         
-        <!-- Bài kiểm tra doanh nghiệp được giao -->
-        <div>
-          <h2 style="font-size: 1.3rem; margin-bottom: 1rem; display: flex; align-items: center; justify-content: space-between; color: var(--text-main);">
-            <span style="display: flex; align-items: center; gap: 0.5rem;">
-              <i class="fa-solid fa-clipboard-check" style="color: #8b5cf6;"></i> Bài kiểm tra doanh nghiệp
-            </span>
-            <a href="/assessments" style="font-size: 0.8rem; color: var(--text-accent); font-weight: 600;">Xem tất cả <i class="fa-solid fa-arrow-right" style="font-size: 0.75rem;"></i></a>
-          </h2>
-          <div class="glass-card" style="padding: 1.5rem; display: flex; flex-direction: column; gap: 1rem;">
-            <% if (myAssessments.length === 0) { %>
-              <p style="color: var(--text-muted); font-size: 0.85rem; text-align: center; margin: 0; padding: 1rem 0;">Bạn không có bài kiểm tra doanh nghiệp nào được giao.</p>
-            <% } else { %>
-              <div style="display: flex; flex-direction: column; gap: 0.75rem;">
-                <% 
-                  const pendingAssessments = myAssessments.filter(a => !a.submission_id).slice(0, 3);
-                  const displayAssessments = pendingAssessments.length > 0 ? pendingAssessments : myAssessments.slice(0, 3);
-                %>
-                <% displayAssessments.forEach(a => { 
-                  const isSubmitted = !!a.submission_id;
-                  const isNotStarted = a.start_time && new Date(a.start_time) > new Date() && !isSubmitted;
-                  const isExpired = a.deadline && new Date(a.deadline) < new Date() && !isSubmitted;
-                %>
-                  <div style="display: flex; flex-direction: column; background: rgba(255,255,255,0.03); padding: 1rem; border-radius: 10px; border: 1px solid var(--border-light); gap: 0.5rem; transition: border-color 0.2s; position: relative;" onmouseover="this.style.borderColor='rgba(99,102,241,0.3)'" onmouseout="this.style.borderColor='var(--border-light)'">
-                    <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 0.5rem; padding-right: 4.5rem;">
-                      <div>
-                        <h4 style="font-size: 0.9rem; font-weight: 700; margin: 0; color: var(--text-main); line-height: 1.3;"><%= a.title %></h4>
-                        <span style="font-size: 0.75rem; color: var(--text-muted); display: block; margin-top: 0.15rem;"><%= a.question_count %> câu • <%= a.duration_minutes %> phút</span>
-                      </div>
-                      
-                      <!-- Badge -->
-                      <div style="position: absolute; top: 1rem; right: 1rem;">
-                        <% if (isSubmitted) { %>
-                          <span style="padding: 0.2rem 0.5rem; border-radius: 6px; font-size: 0.7rem; font-weight: 700; background: rgba(16,185,129,0.1); color: #34d399; border: 1px solid rgba(52,211,153,0.25);">Đã nộp</span>
-                        <% } else if (isNotStarted) { %>
-                          <span style="padding: 0.2rem 0.5rem; border-radius: 6px; font-size: 0.7rem; font-weight: 700; background: rgba(156,163,175,0.1); color: #9ca3af; border: 1px solid rgba(156,163,175,0.25);">Chưa mở</span>
-                        <% } else if (isExpired) { %>
-                          <span style="padding: 0.2rem 0.5rem; border-radius: 6px; font-size: 0.7rem; font-weight: 700; background: rgba(239,68,68,0.1); color: #fca5a5; border: 1px solid rgba(239,68,68,0.25);">Hết hạn</span>
-                        <% } else { %>
-                          <span style="padding: 0.2rem 0.5rem; border-radius: 6px; font-size: 0.7rem; font-weight: 700; background: rgba(245,158,11,0.1); color: #fbbf24; border: 1px solid rgba(251,191,36,0.25);">Chờ làm</span>
-                        <% } %>
-                      </div>
-                    </div>
-                    
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.25rem; font-size: 0.8rem; border-top: 1px solid rgba(255,255,255,0.02); padding-top: 0.5rem;">
-                      <% if (isSubmitted) { %>
-                        <span style="color: #34d399; font-weight: 600;">Điểm: <%= parseFloat(a.score).toFixed(1) %>% (<%= a.is_passed ? 'Đạt' : 'Chưa đạt' %>)</span>
-                        <a href="/assessments/<%= a.id %>/result" style="color: var(--text-accent); font-weight: 600; font-size: 0.8rem; text-decoration: none;">Xem kết quả</a>
-                      <% } else if (isNotStarted) { %>
-                        <span style="color: var(--text-muted); font-size: 0.75rem;">
-                          Mở: <strong><%= new Date(a.start_time).toLocaleDateString('vi-VN', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' }) %></strong>
-                        </span>
-                        <span style="color: var(--text-muted); opacity: 0.6; font-size: 0.8rem;"><i class="fa-solid fa-lock" style="margin-right: 0.25rem;"></i> Chưa mở</span>
-                      <% } else if (isExpired) { %>
-                        <span style="color: var(--text-muted);">Đã hết hạn làm bài</span>
-                        <span style="color: var(--text-muted); opacity: 0.5;"><i class="fa-solid fa-lock"></i> Khóa</span>
-                      <% } else { %>
-                        <span style="color: var(--text-muted); font-size: 0.75rem;">
-                          Hạn: <strong><%= a.deadline ? new Date(a.deadline).toLocaleDateString('vi-VN') : 'Không hạn' %></strong>
-                        </span>
-                        <a href="/assessments/<%= a.id %>/take" style="color: var(--text-accent); font-weight: 700; font-size: 0.8rem; text-decoration: none;" onclick="return confirm('Bắt đầu làm bài thi ngay?')">Làm bài <i class="fa-solid fa-play" style="font-size: 0.7rem; margin-left: 0.25rem;"></i></a>
-                      <% } %>
-                    </div>
-                  </div>
-                <% }) %>
-              </div>
-            <% } %>
-          </div>
-        </div>
-
         <!-- Lộ trình học gợi ý -->
         <% if (user.permissions.includes('PATH_VIEW')) { %>
           <div>
@@ -313,48 +245,43 @@
                     </div>
                   </div>
                 <% }) %>
+                <a href="/my-paths" class="btn btn-secondary" style="margin-top: 0.5rem; justify-content: center; font-size: 0.82rem; padding: 0.5rem; border-radius: 8px; font-weight: 600; display: flex; align-items: center; gap: 0.25rem;">
+                  Xem tất cả lộ trình <i class="fa-solid fa-arrow-right" style="font-size: 0.75rem;"></i>
+                </a>
               <% } %>
             </div>
           </div>
         <% } %>
 
-        <!-- Kết quả thi trắc nghiệm gần nhất -->
-        <% if (user.permissions.includes('HISTORY_VIEW')) { %>
+        <!-- Bài kiểm tra sắp tới -->
+        <% if (typeof myAssessments !== 'undefined') { %>
+          <% 
+            const upcomingAssessments = myAssessments.filter(a => !a.submission_id);
+          %>
           <div>
             <h2 style="font-size: 1.3rem; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem; color: var(--text-main);">
-              <i class="fa-solid fa-square-poll-vertical" style="color: #8b5cf6;"></i> Điểm số bài thi
+              <i class="fa-solid fa-square-poll-vertical" style="color: #8b5cf6;"></i> Bài kiểm tra sắp tới
             </h2>
             <div class="glass-card" style="padding: 1.5rem;">
-              <% if (submissions.length === 0) { %>
-                <p style="color: var(--text-muted); font-size: 0.85rem; text-align: center;">Bạn chưa thực hiện bài kiểm tra nào.</p>
+              <% if (upcomingAssessments.length === 0) { %>
+                <p style="color: var(--text-muted); font-size: 0.85rem; text-align: center;">Không có bài kiểm tra nào sắp tới.</p>
               <% } else { %>
                 <div style="display: flex; flex-direction: column; gap: 0.75rem;">
-                  <% submissions.forEach(sub => { %>
+                  <% upcomingAssessments.forEach(assess => { %>
                     <div style="display: flex; flex-direction: column; background: #f8fafc; padding: 1rem; border-radius: 8px; border: 1px solid var(--border-light); gap: 0.5rem;">
                       <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 0.5rem;">
                         <div>
-                          <h4 style="font-size: 0.85rem; font-weight: 600; margin: 0; color: var(--text-main);"><%= sub.quiz_title %></h4>
-                          <span style="font-size: 0.75rem; color: var(--text-muted);"><%= sub.course_title %></span>
+                          <h4 style="font-size: 0.85rem; font-weight: 600; margin: 0; color: var(--text-main);"><%= assess.title %></h4>
+                          <span style="font-size: 0.75rem; color: var(--text-muted);">
+                            Hạn nộp: <%= assess.deadline ? new Date(assess.deadline).toLocaleDateString('vi-VN') : 'Không giới hạn' %>
+                          </span>
                         </div>
                         <div style="text-align: right; flex-shrink: 0;">
-                          <% if (sub.score === null || typeof sub.score === 'undefined') { %>
-                            <span class="btn" style="padding: 0.2rem 0.5rem; font-size: 0.7rem; cursor: default; background: rgba(234,88,12,0.1); color: #ea580c; border: 1px solid #ea580c;">
-                              <i class="fa-solid fa-spinner fa-spin" style="margin-right: 0.25rem;"></i> Chờ chấm
-                            </span>
-                          <% } else { %>
-                            <span class="btn" style="padding: 0.2rem 0.5rem; font-size: 0.75rem; cursor: default; <%= sub.is_passed ? 'background: rgba(16,185,129,0.1); color: #0d9488; border: 1px solid #10b981;' : 'background: rgba(244,63,94,0.1); color: #f43f5e; border: 1px solid #f43f5e;' %>">
-                              <%= sub.score %>/100
-                            </span>
-                          <% } %>
+                          <a href="/assessments/<%= assess.id %>/take" class="btn btn-primary" style="padding: 0.35rem 0.75rem; font-size: 0.75rem; font-weight: 600; border-radius: 6px; text-decoration: none;">
+                            Làm bài
+                          </a>
                         </div>
                       </div>
-                      <% if (sub.grade_feedback) { %>
-                        <div style="margin-top: 0.25rem; padding: 0.5rem 0.75rem; background: rgba(79, 70, 229, 0.05); border-left: 3px solid #4f46e5; border-radius: 4px; font-size: 0.8rem; color: var(--text-main);">
-                          <i class="fa-solid fa-comment-dots" style="color: #4f46e5; margin-right: 0.25rem;"></i>
-                          <strong>Nhận xét:</strong> 
-                          <span style="font-style: italic;">"<%= sub.grade_feedback %>"</span>
-                        </div>
-                      <% } %>
                     </div>
                   <% }) %>
                 </div>
@@ -408,6 +335,48 @@
       </div>
     <% } %>
   </div>
+
+  <!-- Bảng phân tích thống kê quản trị (Admin/L&D Analytics) -->
+  <% if (user.permissions.includes('REPORT_VIEW') && stats.completionStats && stats.departmentStats) { %>
+    <div style="margin-top: 2rem; margin-bottom: 2rem;">
+      <h2 style="font-size: 1.4rem; display: flex; align-items: center; gap: 0.5rem; color: var(--text-main); margin-bottom: 1.25rem;">
+        <i class="fa-solid fa-chart-line" style="color: #6366f1;"></i> Báo cáo phân tích hệ thống đào tạo
+      </h2>
+      
+      <div class="glass-card" style="padding: 2rem; border-radius: 16px;">
+        <div style="display: grid; grid-template-columns: 1.8fr 1.2fr; gap: 2.5rem;" class="analytics-grid">
+          <!-- Canvas 1: Thống kê đăng ký và hoàn thành của từng khóa học -->
+          <div style="position: relative; width: 100%; display: flex; flex-direction: column; justify-content: space-between; overflow: hidden;">
+            <h4 style="font-size: 0.95rem; font-weight: 700; color: var(--text-main); margin-bottom: 1rem; display: flex; align-items: center; gap: 0.4rem;">
+              <i class="fa-solid fa-chart-bar" style="color: #4f46e5;"></i> Thống kê lượt đăng ký & hoàn thành của từng khóa học
+            </h4>
+            <div style="display: flex; position: relative; width: 100%; height: 258px; overflow: hidden;">
+              <!-- Cột Y-Axis cố định bên trái (nếu có cuộn) -->
+              <div style="width: 50px; height: 250px; flex-shrink: 0; position: relative;">
+                <canvas id="adminCourseChartTicks" style="width: 100%; height: 100%;"></canvas>
+              </div>
+              <!-- Khung cuộn chứa các cột dữ liệu bên phải -->
+              <div class="chart-scroll-container" style="flex-grow: 1; overflow-x: auto; overflow-y: hidden; -webkit-overflow-scrolling: touch; height: 258px;">
+                <div style="position: relative; height: 250px; min-width: 100%;" id="adminCourseChartWrapper">
+                  <canvas id="adminCourseChart"></canvas>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Canvas 2: Phân bổ nhân sự theo phòng ban -->
+          <div style="position: relative; width: 100%; display: flex; flex-direction: column; justify-content: space-between; border-left: 1px solid var(--border-light); padding-left: 2rem;" class="status-chart-container">
+            <h4 style="font-size: 0.95rem; font-weight: 700; color: var(--text-main); margin-bottom: 1rem; display: flex; align-items: center; gap: 0.4rem;">
+              <i class="fa-solid fa-chart-pie" style="color: #0d9488;"></i> Tỉ lệ phân bổ nhân sự theo phòng ban
+            </h4>
+            <div style="position: relative; width: 100%;">
+              <canvas id="adminDeptChart"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  <% } %>
 
   <% 
     const hasQuickAction = user.permissions.includes('COURSE_CREATE') || 
@@ -471,172 +440,6 @@
           <% if (recentLogs.length === 0) { %>
             <div style="text-align: center; color: var(--text-muted); padding: 2rem;">Chưa có lịch sử hoạt động ghi nhận.</div>
           <% } else { %>
-            <%
-              const actionLabels = {
-                'USER_LOGIN': 'Đăng nhập',
-                'USER_LOGOUT': 'Đăng xuất',
-                'PASSWORD_RESET_REQUESTED': 'Yêu cầu OTP quên mật khẩu',
-                'PASSWORD_RESET_SUCCESS': 'Đặt lại mật khẩu thành công',
-                'USER_CREATE': 'Tạo tài khoản nhân viên',
-                'USER_PROFILE_UPDATE': 'Cập nhật tài khoản',
-                'ROLE_CREATE': 'Tạo vai trò mới',
-                'ROLE_DELETE': 'Xóa vai trò',
-                'ROLE_PERMISSIONS_UPDATE': 'Cập nhật phân quyền',
-                'ROLE_PERMISSION_TOGGLE': 'Thay đổi phân quyền nhanh',
-                'COURSE_CREATE': 'Tạo khóa học mới',
-                'COURSE_UPDATE': 'Cập nhật khóa học',
-                'COURSE_DELETE': 'Xóa khóa học',
-                'COURSE_PUBLISH': 'Thay đổi trạng thái khóa học',
-                'LESSON_CREATE': 'Thêm bài giảng',
-                'LESSON_UPDATE': 'Sửa bài giảng',
-                'LESSON_DELETE': 'Xóa bài giảng',
-                'PATH_CREATE': 'Tạo lộ trình đào tạo',
-                'DEPARTMENT_CREATE': 'Tạo phòng ban mới',
-                'DEPARTMENT_DELETE': 'Xóa phòng ban',
-                'DEPARTMENT_UPDATE': 'Cập nhật phòng ban',
-                'ENROLLMENT_APPROVED': 'Phê duyệt đăng ký khóa học',
-                'ENROLLMENT_REJECTED': 'Từ chối đăng ký khóa học',
-                'USER_IMPERSONATE_START': 'Bắt đầu đóng vai',
-                'USER_IMPERSONATE_END': 'Thoát đóng vai',
-                'RUN_EXPERIMENT_SUCCESS': 'Huấn luyện AI thành công',
-                'RUN_EXPERIMENT_FAILED': 'Huấn luyện AI thất bại',
-                'AI_SUMMARIZE_LESSON': 'AI tóm tắt bài giảng',
-                'AI_CHAT_ASSISTANT': 'Trò chuyện với trợ lý AI',
-                'AI_GENERATE_QUICK_QUIZ': 'AI sinh đề trắc nghiệm nhanh',
-                'AI_GENERATE_QUIZ_TO_BANK': 'AI lưu trắc nghiệm vào DB',
-                'COURSE_ASSIGN_USER': 'Giao khóa học cho nhân sự',
-                'COURSE_ASSIGN_DEPARTMENT': 'Giao khóa học cho phòng ban',
-                'QUIZ_SETTING_UPDATE': 'Cập nhật cài đặt đề thi',
-                'QUIZ_GRADE': 'Chấm điểm đề thi',
-                'QUIZ_SUBMIT': 'Nộp bài thi trắc nghiệm',
-                'PATH_ASSIGN_BULK': 'Giao lộ trình hàng loạt',
-                'ENROLL_REQUEST': 'Yêu cầu đăng ký khóa học',
-                'ENROLL_DIRECT': 'Vào học trực tiếp'
-              };
-
-              const detailKeys = {
-                'reason': 'Lý do',
-                'role_id': 'Mã vai trò',
-                'role_name': 'Tên vai trò',
-                'permission': 'Quyền hạn',
-                'is_assigned': 'Gán quyền',
-                'lesson_id': 'Mã bài học',
-                'lesson_title': 'Tên bài học',
-                'course_id': 'Mã khóa học',
-                'course_title': 'Tên khóa học',
-                'user_id': 'Mã nhân viên',
-                'target_user_id': 'Mã nhân viên mục tiêu',
-                'new_user_id': 'Mã nhân viên mới',
-                'username': 'Tên tài khoản',
-                'email': 'Email',
-                'status': 'Trạng thái',
-                'name': 'Tên phòng ban',
-                'parent_id': 'Mã phòng ban cha',
-                'department_id': 'Mã phòng ban',
-                'enrollment_id': 'Mã đăng ký',
-                'experiment_id': 'Mã thực nghiệm',
-                'accuracy': 'Độ chính xác',
-                'loss': 'Độ hao hụt (Loss)',
-                'message_length': 'Độ dài tin nhắn',
-                'questions_count': 'Số lượng câu hỏi',
-                'count': 'Số lượng',
-                'title': 'Tiêu đề',
-                'has_essay': 'Có câu tự luận',
-                'score': 'Điểm số',
-                'is_passed': 'Kết quả đạt',
-                'submission_id': 'Mã bài nộp',
-                'path_id': 'Mã lộ trình',
-                'courses': 'Mã các khóa học',
-                'users': 'Số nhân sự nhận',
-                'target_username': 'Tài khoản bị đóng vai',
-                'original_user_id': 'Mã người quản trị',
-                'original_username': 'Tài khoản quản trị',
-                'error': 'Lỗi chi tiết',
-                'permissions': 'Danh sách quyền'
-              };
-
-              const detailValues = {
-                'user_settings_change': 'Thay đổi cài đặt tài khoản',
-                'active': 'Đang hoạt động',
-                'disabled': 'Vô hiệu hóa',
-                'approved': 'Đã duyệt',
-                'rejected': 'Từ chối',
-                'pending': 'Đang chờ duyệt',
-                'true': 'Đúng / Có / Đạt',
-                'false': 'Sai / Không / Không đạt',
-                'null': 'Không có',
-                'published': 'Xuất bản',
-                'draft': 'Bản nháp',
-                
-                // Ánh xạ tên quyền hạn (Permissions Mapping)
-                'COURSE_VIEW': 'Xem khóa học',
-                'COURSE_CREATE': 'Tạo khóa học',
-                'COURSE_UPDATE': 'Cập nhật khóa học',
-                'COURSE_DELETE': 'Xóa khóa học',
-                'COURSE_PUBLISH': 'Xuất bản khóa học',
-                'LESSON_CREATE': 'Tạo bài học',
-                'CONTENT_UPLOAD': 'Tải lên học liệu (video/file)',
-                'LESSON_MANAGE': 'Quản lý bài giảng',
-                'QUIZ_BANK_VIEW': 'Xem ngân hàng câu hỏi',
-                'QUIZ_BANK_MANAGE': 'Quản lý ngân hàng câu hỏi',
-                'QUIZ_SETTING': 'Cài đặt đề thi',
-                'QUIZ_GRADE': 'Chấm điểm đề thi',
-                'PATH_MANAGE': 'Quản lý lộ trình học',
-                'ENROLL_ASSIGN': 'Giao khóa học',
-                'ENROLL_APPROVE': 'Phê duyệt đăng ký',
-                'USER_VIEW': 'Xem danh sách nhân viên',
-                'USER_MANAGE': 'Quản lý tài khoản nhân viên',
-                'USER_DISABLE': 'Vô hiệu hóa tài khoản',
-                'DEPARTMENT_MANAGE': 'Quản lý phòng ban',
-                'REPORT_VIEW': 'Xem báo cáo thống kê',
-                'REPORT_EXPORT': 'Xuất dữ liệu báo cáo',
-                'ROLE_MANAGE': 'Quản lý vai trò & phân quyền',
-                'USER_IMPERSONATE': 'Đóng vai người dùng',
-                'AUDIT_LOG_VIEW': 'Xem nhật ký hệ thống',
-                'PATH_VIEW': 'Xem lộ trình học cá nhân',
-                'COURSE_ENROLL_REQUEST': 'Yêu cầu tham gia khóa học',
-                'HISTORY_VIEW': 'Xem lịch sử học tập',
-                'PROGRESS_TRACK': 'Theo dõi tiến độ học tập'
-              };
-
-              function formatAuditDetails(details) {
-                if (!details) {
-                  return '<span style="font-style: italic; opacity: 0.7;">Không có chi tiết</span>';
-                }
-                
-                let parsedDetails = details;
-                if (typeof details === 'string') {
-                  try {
-                    parsedDetails = JSON.parse(details);
-                  } catch (e) {
-                    return details;
-                  }
-                }
-                
-                if (!parsedDetails || typeof parsedDetails !== 'object' || Object.keys(parsedDetails).length === 0) {
-                  return '<span style="font-style: italic; opacity: 0.7;">Không có chi tiết</span>';
-                }
-                
-                return Object.entries(parsedDetails).map(([key, val]) => {
-                  const label = detailKeys[key] || key;
-                  let displayVal = val;
-                  
-                  if (val === true) {
-                    displayVal = 'Có';
-                  } else if (val === false) {
-                    displayVal = 'Không';
-                  } else if (val === null || val === undefined) {
-                    displayVal = 'Rỗng';
-                  } else if (Array.isArray(val)) {
-                    displayVal = val.map(item => detailValues[item] || item).join(', ');
-                  } else {
-                    displayVal = detailValues[val] !== undefined ? detailValues[val] : val;
-                  }
-                  
-                  return `<strong>${label}</strong>: ${displayVal}`;
-                }).join(', ');
-              }
-            %>
             <table class="custom-table" style="margin-top: 0; font-size: 0.85rem;">
               <thead>
                 <tr>
@@ -653,20 +456,20 @@
                     <td><strong><%= log.username || 'Hệ thống' %></strong></td>
                     <td>
                       <% 
-                        let badgeStyle = "background: rgba(99, 102, 241, 0.15); color: var(--text-accent); border: 1px solid rgba(99, 102, 241, 0.3); font-weight: 600;";
+                        let badgeStyle = "background: rgba(79, 70, 229, 0.08); color: var(--text-accent); border: 1px solid rgba(79, 70, 229, 0.2);";
                         if (log.action.includes('SUCCESS') || log.action === 'USER_LOGIN') {
-                          badgeStyle = "background: rgba(13, 148, 136, 0.12); color: #0d9488; border: 1px solid rgba(13, 148, 136, 0.25); font-weight: 600;";
+                          badgeStyle = "background: rgba(13, 148, 136, 0.08); color: #0d9488; border: 1px solid rgba(13, 148, 136, 0.2);";
                         } else if (log.action.includes('REQUESTED') || log.action.includes('FAIL')) {
-                          badgeStyle = "background: rgba(234, 88, 12, 0.12); color: #ea580c; border: 1px solid rgba(234, 88, 12, 0.25); font-weight: 600;";
+                          badgeStyle = "background: rgba(234, 88, 12, 0.08); color: #ea580c; border: 1px solid rgba(234, 88, 12, 0.2);";
                         } else if (log.action === 'USER_LOGOUT') {
-                          badgeStyle = "background: rgba(100, 116, 139, 0.12); color: #64748b; border: 1px solid rgba(100, 116, 139, 0.25); font-weight: 600;";
+                          badgeStyle = "background: rgba(100, 116, 139, 0.08); color: #64748b; border: 1px solid rgba(100, 116, 139, 0.2);";
                         }
                       %>
-                      <span style="<%= badgeStyle %> padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.75rem;">
-                        <%= actionLabels[log.action] || log.action %>
+                      <span style="<%= badgeStyle %> padding: 0.2rem 0.5rem; border-radius: 4px; font-family: monospace; font-size: 0.75rem;">
+                        <%= log.action %>
                       </span>
                     </td>
-                    <td style="max-width: 300px; color: var(--text-main); font-size: 0.82rem; word-break: break-word; white-space: normal;"><%- formatAuditDetails(log.details) %></td>
+                    <td style="color: var(--text-muted); font-size: 0.8rem; font-family: monospace; max-width: 300px; overflow-x: auto; white-space: nowrap;"><%= JSON.stringify(log.details) %></td>
                   </tr>
                 <% }) %>
               </tbody>
@@ -775,6 +578,8 @@
       const studentBtn = document.getElementById('tab-btn-student');
       const adminBtn = document.getElementById('tab-btn-admin');
 
+      const onlineCard = document.getElementById('online-counter-card');
+
       if (tabName === 'student') {
         studentSection.style.display = 'block';
         adminSection.style.display = 'none';
@@ -787,6 +592,7 @@
         adminBtn.style.color = 'var(--text-muted)';
         adminBtn.style.boxShadow = 'none';
         
+        if (onlineCard) onlineCard.style.display = 'none';
         localStorage.setItem('active_dashboard_tab', 'student');
       } else {
         studentSection.style.display = 'none';
@@ -800,6 +606,7 @@
         studentBtn.style.color = 'var(--text-muted)';
         studentBtn.style.boxShadow = 'none';
         
+        if (onlineCard) onlineCard.style.display = 'flex';
         localStorage.setItem('active_dashboard_tab', 'admin');
       }
     }
@@ -825,50 +632,91 @@
     const enrollmentsData = <%- JSON.stringify(enrollments) %>;
     
     if (enrollmentsData && enrollmentsData.length > 0) {
+      // Sắp xếp khóa học mới đăng ký lên đầu tiên (hiển thị cột mới nhất từ trái sang phải)
+      enrollmentsData.sort((a, b) => b.id - a.id);
+
       // --- BIỂU ĐỒ 1: TIẾN ĐỘ KHÓA HỌC (BAR CHART) ---
-      const labels = enrollmentsData.map(e => {
-        const title = e.title;
-        const words = title.split(' ');
-        const lines = [];
-        let currentLine = '';
-        
-        words.forEach(word => {
-          if ((currentLine + ' ' + word).trim().length <= 14) {
-            currentLine = (currentLine + ' ' + word).trim();
-          } else {
-            if (currentLine) lines.push(currentLine);
-            currentLine = word;
-          }
-        });
-        if (currentLine) {
-          lines.push(currentLine);
-        }
-        
-        // Giới hạn tối đa 3 dòng để tránh làm vỡ biểu đồ
-        if (lines.length > 3) {
-          const result = lines.slice(0, 2);
-          let thirdLine = lines.slice(2).join(' ');
-          if (thirdLine.length > 12) {
-            thirdLine = thirdLine.substring(0, 11) + '...';
-          }
-          result.push(thirdLine);
-          return result;
-        }
-        return lines;
+      const barChartData = enrollmentsData; // Hiển thị tất cả khóa học và hỗ trợ cuộn ngang nếu nhiều cột
+
+      // Đặt chiều rộng động cho container biểu đồ cột
+      const chartWrapper = document.getElementById('courseProgressChartWrapper');
+      if (chartWrapper) {
+        const minColWidth = 110; // Chiều rộng tối thiểu của mỗi cột (px) để tránh co cụm
+        const calculatedWidth = barChartData.length * minColWidth;
+        chartWrapper.style.minWidth = Math.max(450, calculatedWidth) + 'px';
+      }
+
+      const labels = barChartData.map(e => {
+        return e.title; // Giữ nguyên tên để xử lý rút gọn trong ticks của Chart.js
       });
-      const progressValues = enrollmentsData.map(e => e.progress);
+      const progressValues = barChartData.map(e => e.progress);
       
-      const backgroundColors = enrollmentsData.map(e => {
+      const backgroundColors = barChartData.map(e => {
         if (e.progress === 100) return 'rgba(16, 185, 129, 0.75)';
         if (e.progress > 0) return 'rgba(79, 70, 229, 0.75)';
         return 'rgba(148, 163, 184, 0.6)';
       });
-      const borderColors = enrollmentsData.map(e => {
+      const borderColors = barChartData.map(e => {
         if (e.progress === 100) return '#10b981';
         if (e.progress > 0) return '#4f46e5';
         return '#94a3b8';
       });
- 
+
+      // 1. Vẽ biểu đồ hiển thị trục Y cố định bên trái
+      const ctxTicks = document.getElementById('courseProgressChartTicks').getContext('2d');
+      new Chart(ctxTicks, {
+        type: 'bar',
+        data: {
+          labels: [''], // dummy label
+          datasets: [{
+            data: [0], // dummy data to initialize linear scale
+            backgroundColor: 'transparent',
+            borderColor: 'transparent',
+            borderWidth: 0
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          layout: {
+            padding: {
+              top: 8,
+              bottom: 8
+            }
+          },
+          plugins: {
+            legend: { display: false },
+            tooltip: { enabled: false }
+          },
+          scales: {
+            y: {
+              type: 'linear',
+              beginAtZero: true,
+              max: 100,
+              grid: {
+                display: false
+              },
+              ticks: {
+                callback: value => value + '%',
+                font: {
+                  family: 'Inter',
+                  size: 10,
+                  weight: '500'
+                },
+                color: '#64748b',
+                padding: 3,
+                crossAlign: 'far' // Căn chữ sát về bên phải gần biểu đồ cột
+              }
+            },
+            x: {
+              grid: { display: false },
+              ticks: { display: false } // Ẩn X-axis ticks nhưng giữ scale để căn chỉnh chiều cao khớp biểu đồ phải
+            }
+          }
+        }
+      });
+
+      // 2. Vẽ biểu đồ Cột dữ liệu cuộn ngang bên phải
       const ctxProgress = document.getElementById('courseProgressChart').getContext('2d');
       new Chart(ctxProgress, {
         type: 'bar',
@@ -882,12 +730,19 @@
             borderWidth: 1.5,
             borderRadius: 8,
             borderSkipped: false,
-            barPercentage: 0.55
+            barPercentage: 0.55,
+            maxBarThickness: 45 // Cân đối độ rộng cột khi có ít khóa học
           }]
         },
         options: {
           responsive: true,
-          maintainAspectRatio: false,
+          maintainAspectRatio: false, // Tắt duy trì tỷ lệ của Chart.js để ép độ cao cố định 250px của wrapper khi cuộn ngang
+          layout: {
+            padding: {
+              top: 8,
+              bottom: 8
+            }
+          },
           plugins: {
             legend: {
               display: false
@@ -896,7 +751,7 @@
               callbacks: {
                 label: function(context) {
                   const idx = context.dataIndex;
-                  return `Khóa học: ${enrollmentsData[idx].title}\nTiến độ: ${context.raw}%`;
+                  return `Khóa học: ${barChartData[idx].title}\nTiến độ: ${context.raw}%`;
                 }
               }
             }
@@ -909,13 +764,7 @@
                 color: 'rgba(226, 232, 240, 0.6)'
               },
               ticks: {
-                callback: value => value + '%',
-                color: '#64748b',
-                font: {
-                  family: 'Inter',
-                  size: 11,
-                  weight: '500'
-                }
+                display: false // Ẩn nhãn trục Y vì đã được hiển thị cố định ở biểu đồ trái
               }
             },
             x: {
@@ -923,14 +772,19 @@
                 display: false
               },
               ticks: {
-                maxRotation: 0,
+                maxRotation: 0, // Không cho phép chữ xoay nghiêng
                 minRotation: 0,
-                padding: 6,
-                color: '#475569',
+                autoSkip: false, // Hiển thị đầy đủ tất cả nhãn vì đã có cuộn ngang
                 font: {
                   family: 'Inter',
                   size: 10,
-                  weight: '600'
+                  weight: '500'
+                },
+                color: '#64748b',
+                callback: function(value, index, values) {
+                  const label = this.getLabelForValue(value);
+                  // Rút gọn chữ ngang để tránh chồng chéo khi thiết kế nhãn
+                  return label.length > 14 ? label.substring(0, 11) + '...' : label;
                 }
               }
             }
@@ -966,7 +820,8 @@
         },
         options: {
           responsive: true,
-          maintainAspectRatio: false,
+          maintainAspectRatio: true,
+          aspectRatio: 1.4, // Định hình tỷ lệ khung hình cố định (rộng/cao = 1.4/1)
           plugins: {
             legend: {
               position: 'bottom',
@@ -984,11 +839,207 @@
         }
       });
     }
+
+    // --- BIỂU ĐỒ ADMIN: THỐNG KÊ L&D ---
+    <% if (hasAdminAccess && user.permissions.includes('REPORT_VIEW') && stats.completionStats && stats.departmentStats) { %>
+      const completionStats = <%- JSON.stringify(stats.completionStats) %>;
+      const departmentStats = <%- JSON.stringify(stats.departmentStats) %>;
+
+      if (completionStats && completionStats.length > 0) {
+        // --- BIỂU ĐỒ 1 ADMIN: TIẾN TRÌNH KHÓA HỌC (GROUPED BAR CHART) ---
+        const courseLabels = completionStats.map(c => c.course_title);
+        const enrollCountData = completionStats.map(c => parseInt(c.total_enrollments));
+        const completedCountData = completionStats.map(c => parseInt(c.completed_count));
+
+        // Đặt chiều rộng động cho container biểu đồ cột
+        const adminChartWrapper = document.getElementById('adminCourseChartWrapper');
+        if (adminChartWrapper) {
+          const minColWidth = 120; // Chiều rộng tối thiểu mỗi cột nhóm
+          const calculatedWidth = completionStats.length * minColWidth;
+          adminChartWrapper.style.minWidth = Math.max(450, calculatedWidth) + 'px';
+        }
+
+        // 1. Vẽ trục Y cố định bên trái
+        const ctxAdminTicks = document.getElementById('adminCourseChartTicks').getContext('2d');
+        new Chart(ctxAdminTicks, {
+          type: 'bar',
+          data: {
+            labels: [''],
+            datasets: [{
+              data: [0],
+              backgroundColor: 'transparent',
+              borderColor: 'transparent',
+              borderWidth: 0
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            layout: { padding: { top: 8, bottom: 8 } },
+            plugins: { legend: { display: false }, tooltip: { enabled: false } },
+            scales: {
+              y: {
+                type: 'linear',
+                beginAtZero: true,
+                suggestedMax: 5,
+                grid: { display: false },
+                ticks: {
+                  font: { family: 'Inter', size: 10, weight: '500' },
+                  color: '#64748b',
+                  padding: 3,
+                  crossAlign: 'far'
+                }
+              },
+              x: { grid: { display: false }, ticks: { display: false } }
+            }
+          }
+        });
+
+        // 2. Vẽ biểu đồ Cột dữ liệu cuộn ngang bên phải
+        const ctxAdminCourse = document.getElementById('adminCourseChart').getContext('2d');
+        new Chart(ctxAdminCourse, {
+          type: 'bar',
+          data: {
+            labels: courseLabels,
+            datasets: [
+              {
+                label: 'Tổng lượt đăng ký',
+                data: enrollCountData,
+                backgroundColor: 'rgba(99, 102, 241, 0.75)', // Indigo
+                borderColor: '#6366f1',
+                borderWidth: 1.5,
+                borderRadius: 6,
+                barPercentage: 0.8,
+                categoryPercentage: 0.6
+              },
+              {
+                label: 'Đã hoàn thành',
+                data: completedCountData,
+                backgroundColor: 'rgba(16, 185, 129, 0.75)', // Emerald
+                borderColor: '#10b981',
+                borderWidth: 1.5,
+                borderRadius: 6,
+                barPercentage: 0.8,
+                categoryPercentage: 0.6
+              }
+            ]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            layout: { padding: { top: 8, bottom: 8 } },
+            plugins: {
+              legend: {
+                display: true,
+                position: 'top',
+                labels: { boxWidth: 10, font: { family: 'Inter', size: 10 } }
+              },
+              tooltip: {
+                callbacks: {
+                  label: function(context) {
+                    return `${context.dataset.label}: ${context.raw}`;
+                  }
+                }
+              }
+            },
+            scales: {
+              y: {
+                beginAtZero: true,
+                suggestedMax: 5,
+                grid: { color: 'rgba(226, 232, 240, 0.6)' },
+                ticks: { display: false }
+              },
+              x: {
+                grid: { display: false },
+                ticks: {
+                  maxRotation: 0,
+                  minRotation: 0,
+                  autoSkip: false,
+                  font: { family: 'Inter', size: 10, weight: '500' },
+                  color: '#64748b',
+                  callback: function(value) {
+                    const label = this.getLabelForValue(value);
+                    return label.length > 14 ? label.substring(0, 11) + '...' : label;
+                  }
+                }
+              }
+            }
+          }
+        });
+      }
+
+      if (departmentStats && departmentStats.length > 0) {
+        // --- BIỂU ĐỒ 2 ADMIN: PHÂN BỔ NHÂN SỰ THEO PHÒNG BAN (DOUGHNUT CHART) ---
+        const deptLabels = departmentStats.map(d => d.department_name);
+        const deptUserCounts = departmentStats.map(d => parseInt(d.total_users));
+
+        const ctxAdminDept = document.getElementById('adminDeptChart').getContext('2d');
+        new Chart(ctxAdminDept, {
+          type: 'doughnut',
+          data: {
+            labels: deptLabels,
+            datasets: [{
+              data: deptUserCounts,
+              backgroundColor: [
+                'rgba(99, 102, 241, 0.8)',  // Indigo
+                'rgba(16, 185, 129, 0.8)', // Emerald
+                'rgba(245, 158, 11, 0.8)', // Amber
+                'rgba(6, 182, 212, 0.8)',  // Cyan
+                'rgba(236, 72, 153, 0.8)', // Pink
+                'rgba(139, 92, 246, 0.8)'  // Purple
+              ],
+              borderColor: [
+                '#6366f1',
+                '#10b981',
+                '#f59e0b',
+                '#06b6d4',
+                '#ec4899',
+                '#8b5cf6'
+              ],
+              borderWidth: 1.5,
+              hoverOffset: 4
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            aspectRatio: 1.4,
+            plugins: {
+              legend: {
+                position: 'bottom',
+                labels: {
+                  boxWidth: 12,
+                  font: { family: 'Inter', size: 11 },
+                  padding: 15
+                }
+              }
+            },
+            cutout: '65%'
+          }
+        });
+      }
+    <% } %>
   });
 </script>
 
 <!-- Thêm Media Query tinh chỉnh responsive cho Grid & Charts -->
 <style>
+  /* Custom scrollbar cho biểu đồ cuộn ngang */
+  .chart-scroll-container::-webkit-scrollbar {
+    height: 6px;
+  }
+  .chart-scroll-container::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.02);
+    border-radius: 8px;
+  }
+  .chart-scroll-container::-webkit-scrollbar-thumb {
+    background: rgba(99, 102, 241, 0.25);
+    border-radius: 8px;
+  }
+  .chart-scroll-container::-webkit-scrollbar-thumb:hover {
+    background: rgba(99, 102, 241, 0.45);
+  }
+
   @media (max-width: 1024px) {
     .dashboard-main-grid-override {
       grid-template-columns: 1fr !important;

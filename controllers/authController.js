@@ -199,9 +199,8 @@ module.exports = {
     }
 
     try {
-      // Mã hóa mật khẩu mới
-      const salt = await bcrypt.genSalt(10);
-      const hashedPassword = await bcrypt.hash(password, salt);
+      // Không mã hóa mật khẩu (Lưu mật khẩu dạng plain text)
+      const hashedPassword = password;
 
       // Cập nhật cơ sở dữ liệu
       await require('../config/db').query(

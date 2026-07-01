@@ -18,8 +18,7 @@ router.get('/courses/:id', requirePermission('COURSE_ENROLL_REQUEST'), courseCon
 // Đăng ký tham gia khóa học
 router.get('/courses/:id/enroll', requirePermission('COURSE_ENROLL_REQUEST'), courseController.enrollCourse);
 
-// Xem và tải chứng nhận hoàn thành khóa học
-router.get('/courses/:id/certificate', requirePermission('HISTORY_VIEW'), courseController.getCertificate);
+
 
 // Xem chi tiết bài giảng
 router.get('/courses/:courseId/lessons/:lessonId', courseController.getLesson);

@@ -34,6 +34,7 @@ CREATE TABLE IF NOT EXISTS assessment_assignments (
     assessment_id INTEGER REFERENCES assessments(id) ON DELETE CASCADE,
     target_type VARCHAR(20) NOT NULL,          -- 'user' hoặc 'department'
     target_id INTEGER NOT NULL,
+    start_time TIMESTAMP DEFAULT NULL,
     deadline TIMESTAMP DEFAULT NULL,
     assigned_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
     assigned_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP

@@ -20,7 +20,7 @@
 <% if (user.permissions.includes('QUIZ_BANK_MANAGE')) { %>
 <div style="margin-bottom: 2rem;">
   <button class="btn btn-primary" onclick="openCreateModal()" style="padding: 0.75rem 1.75rem; font-size: 1rem; display: inline-flex; align-items: center; gap: 0.6rem;">
-    <i class="fa-solid fa-wand-magic-sparkles"></i> Tạo Bài Kiểm Tra Mới Bằng AI
+    <i class="fa-solid fa-plus-circle"></i> Tạo Bài Kiểm Tra Mới
   </button>
 </div>
 <% } %>
@@ -150,11 +150,21 @@
     <div class="glass-card" style="padding: 2rem; border-color: var(--border-glow);">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.75rem;">
         <h3 style="font-size: 1.3rem; font-weight: 700; display: flex; align-items: center; gap: 0.6rem;">
-          <i class="fa-solid fa-wand-magic-sparkles" style="color: #8b5cf6;"></i>
-          Tạo Bài Kiểm Tra Mới Bằng AI
+          <i id="header-create-icon" class="fa-solid fa-wand-magic-sparkles" style="color: #8b5cf6;"></i>
+          <span id="header-create-text">Tạo Bài Kiểm Tra Mới</span>
         </h3>
         <button onclick="closeCreateModal()" style="background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:1.25rem;">
           <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <!-- Lựa chọn hình thức tạo -->
+      <div style="display: flex; gap: 1rem; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border-light); padding-bottom: 1rem;">
+        <button type="button" onclick="switchCreateType('ai')" id="btn-create-type-ai" class="btn" style="flex: 1; padding: 0.75rem; border-radius: 8px; font-weight: 600; border: 2px solid #8b5cf6; background: rgba(139,92,246,0.1); color: #a5b4fc; display: flex; align-items: center; justify-content: center; gap: 0.5rem; cursor: pointer; transition: all 0.15s;">
+          <i class="fa-solid fa-wand-magic-sparkles"></i> Tạo bằng AI
+        </button>
+        <button type="button" onclick="switchCreateType('manual')" id="btn-create-type-manual" class="btn" style="flex: 1; padding: 0.75rem; border-radius: 8px; font-weight: 600; border: 1px solid var(--border-light); background: transparent; color: var(--text-muted); display: flex; align-items: center; justify-content: center; gap: 0.5rem; cursor: pointer; transition: all 0.15s;">
+          <i class="fa-solid fa-keyboard"></i> Tạo thủ công
         </button>
       </div>
 
@@ -168,7 +178,7 @@
         <textarea id="create-desc" rows="2" placeholder="Mô tả mục tiêu bài kiểm tra..." style="width:100%;"></textarea>
       </div>
 
-      <div class="form-group">
+      <div class="form-group" id="create-section-ai">
         <label class="form-label">Chọn khóa học làm nguồn câu hỏi <span style="color:#f87171">*</span></label>
         <p style="font-size:0.8rem; color:var(--text-muted); margin-bottom:0.75rem;">AI sẽ đọc nội dung tất cả bài học trong các khóa này để sinh câu hỏi kiểm tra.</p>
         <div style="display: grid; gap: 0.5rem; max-height: 200px; overflow-y: auto; padding-right: 0.5rem;">
@@ -214,8 +224,8 @@
         <button onclick="closeCreateModal()" class="btn" style="background: rgba(255,255,255,0.05); border: 1px solid var(--border-light); color: var(--text-muted);">
           Huỷ
         </button>
-        <button id="btn-create-submit" onclick="submitCreateAssessment()" class="btn btn-primary" style="padding: 0.75rem 1.75rem;">
-          <i class="fa-solid fa-brain" style="margin-right: 0.4rem;"></i> AI Sinh Câu Hỏi & Tạo Bài
+        <button id="btn-create-submit" onclick="submitCreateAssessment()" class="btn btn-primary" style="padding: 0.75rem 1.75rem; display: inline-flex; align-items: center; gap: 0.5rem;">
+          <i id="icon-create-submit" class="fa-solid fa-brain"></i> <span id="text-create-submit">AI Sinh Câu Hỏi & Tạo Bài</span>
         </button>
       </div>
     </div>
@@ -321,10 +331,65 @@
 
 <script>
 let currentAssignType = 'user';
+let currentCreateType = 'ai';
 
 function openCreateModal() {
   document.getElementById('modal-create').style.display = 'block';
   document.body.style.overflow = 'hidden';
+  switchCreateType('ai'); // Default to AI
+}
+
+function switchCreateType(type) {
+  currentCreateType = type;
+  const btnAi = document.getElementById('btn-create-type-ai');
+  const btnManual = document.getElementById('btn-create-type-manual');
+  const sectionAi = document.getElementById('create-section-ai');
+  const countInput = document.getElementById('create-count');
+  const countGroup = countInput ? countInput.closest('.form-group') : null;
+  const textSubmit = document.getElementById('text-create-submit');
+  const iconSubmit = document.getElementById('icon-create-submit');
+  const headerIcon = document.getElementById('header-create-icon');
+  const headerText = document.getElementById('header-create-text');
+  
+  if (type === 'ai') {
+    btnAi.style.border = '2px solid #8b5cf6';
+    btnAi.style.background = 'rgba(139,92,246,0.1)';
+    btnAi.style.color = '#a5b4fc';
+    btnManual.style.border = '1px solid var(--border-light)';
+    btnManual.style.background = 'transparent';
+    btnManual.style.color = 'var(--text-muted)';
+    
+    if (sectionAi) sectionAi.style.display = '';
+    if (countGroup) countGroup.style.display = '';
+    if (textSubmit) textSubmit.textContent = 'AI Sinh Câu Hỏi & Tạo Bài';
+    if (iconSubmit) {
+      iconSubmit.className = 'fa-solid fa-brain';
+    }
+    if (headerIcon) {
+      headerIcon.className = 'fa-solid fa-wand-magic-sparkles';
+      headerIcon.style.color = '#8b5cf6';
+    }
+    if (headerText) headerText.textContent = 'Tạo Bài Kiểm Tra Mới Bằng AI';
+  } else {
+    btnManual.style.border = '2px solid #8b5cf6';
+    btnManual.style.background = 'rgba(139,92,246,0.1)';
+    btnManual.style.color = '#a5b4fc';
+    btnAi.style.border = '1px solid var(--border-light)';
+    btnAi.style.background = 'transparent';
+    btnAi.style.color = 'var(--text-muted)';
+    
+    if (sectionAi) sectionAi.style.display = 'none';
+    if (countGroup) countGroup.style.display = 'none';
+    if (textSubmit) textSubmit.textContent = 'Tạo Bài & Tự Soạn Câu Hỏi';
+    if (iconSubmit) {
+      iconSubmit.className = 'fa-solid fa-keyboard';
+    }
+    if (headerIcon) {
+      headerIcon.className = 'fa-solid fa-keyboard';
+      headerIcon.style.color = '#6366f1';
+    }
+    if (headerText) headerText.textContent = 'Tạo Bài Kiểm Tra Thủ Công';
+  }
 }
 function closeCreateModal() {
   document.getElementById('modal-create').style.display = 'none';
@@ -461,27 +526,42 @@ async function submitCreateAssessment() {
   const passing = document.getElementById('create-passing').value;
 
   if (!title) return alert('Vui lòng nhập tiêu đề bài kiểm tra.');
-  if (checkedCourses.length === 0) return alert('Vui lòng chọn ít nhất 1 khóa học.');
+  if (currentCreateType === 'ai' && checkedCourses.length === 0) {
+    return alert('Vui lòng chọn ít nhất 1 khóa học nguồn.');
+  }
 
   // Show loading
-  document.getElementById('create-loading').style.display = 'block';
+  const textSubmit = document.getElementById('text-create-submit');
+  if (currentCreateType === 'ai') {
+    document.getElementById('create-loading').style.display = 'block';
+    const bar = document.getElementById('progress-bar');
+    bar.style.animation = 'none'; bar.offsetHeight;
+    bar.style.animation = 'progress-anim 60s linear forwards';
+  }
+  
   document.getElementById('btn-create-submit').disabled = true;
-  document.getElementById('btn-create-submit').innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Đang xử lý...';
-  const bar = document.getElementById('progress-bar');
-  bar.style.animation = 'none'; bar.offsetHeight;
-  bar.style.animation = 'progress-anim 60s linear forwards';
+  if (textSubmit) textSubmit.textContent = 'Đang xử lý...';
 
   try {
     const res = await fetch('/admin/assessments/create', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ title, description, courseIds: checkedCourses, questionCount: count, durationMinutes: duration, passingScore: passing })
+      body: JSON.stringify({
+        type: currentCreateType,
+        title,
+        description,
+        courseIds: currentCreateType === 'ai' ? checkedCourses : [],
+        questionCount: count,
+        durationMinutes: duration,
+        passingScore: passing
+      })
     });
     const data = await res.json();
     closeCreateModal();
     if (data.success) {
       showFlash(data.message);
-      setTimeout(() => window.location.reload(), 1500);
+      // Chuyển hướng đến trang chi tiết của bài kiểm tra mới tạo
+      setTimeout(() => window.location.href = `/admin/assessments/${data.assessmentId}`, 1000);
     } else {
       showFlash(data.error || 'Có lỗi xảy ra.', 'error');
     }
@@ -491,7 +571,9 @@ async function submitCreateAssessment() {
   } finally {
     document.getElementById('create-loading').style.display = 'none';
     document.getElementById('btn-create-submit').disabled = false;
-    document.getElementById('btn-create-submit').innerHTML = '<i class="fa-solid fa-brain" style="margin-right:0.4rem;"></i> AI Sinh Câu Hỏi & Tạo Bài';
+    if (textSubmit) {
+      textSubmit.textContent = currentCreateType === 'ai' ? 'AI Sinh Câu Hỏi & Tạo Bài' : 'Tạo Bài & Tự Soạn Câu Hỏi';
+    }
   }
 }
 

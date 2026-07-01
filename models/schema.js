@@ -143,6 +143,11 @@ module.exports = {
       `;
       const res = await db.query(sql);
       return res.rows;
+    },
+
+    delete: async (id) => {
+      const sql = `DELETE FROM users WHERE id = $1`;
+      await db.query(sql, [id]);
     }
   },
 
@@ -909,6 +914,12 @@ module.exports = {
       return res.rows[0];
     },
 
+    updateQuestionCount: async (id, count) => {
+      const sql = `UPDATE assessments SET question_count = $1 WHERE id = $2 RETURNING *`;
+      const res = await db.query(sql, [count, id]);
+      return res.rows[0];
+    },
+
     findAll: async () => {
       const sql = `
         SELECT a.*, u.username as creator_name,
@@ -1006,6 +1017,16 @@ module.exports = {
     deleteOne: async (id) => {
       const sql = `DELETE FROM assessment_questions WHERE id = $1`;
       await db.query(sql, [id]);
+    },
+
+    createOne: async (assessmentId, questionText, options, correctAnswer, orderIndex) => {
+      const sql = `
+        INSERT INTO assessment_questions (assessment_id, question_text, options, correct_answer, order_index)
+        VALUES ($1, $2, $3, $4, $5)
+        RETURNING *
+      `;
+      const res = await db.query(sql, [assessmentId, questionText, JSON.stringify(options), correctAnswer, orderIndex]);
+      return res.rows[0];
     }
   },
 
