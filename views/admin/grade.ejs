@@ -1,112 +1,487 @@
 <%- include('../partials/header') %>
 
-<div style="margin-bottom: 2rem;">
-  <h1 style="font-size: 2.2rem; font-weight: 800; background: var(--primary-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
-    Chấm Điểm & Đánh Giá Bài Làm
-  </h1>
-  <p style="color: var(--text-muted); margin-top: 0.25rem;">Chấm thi các bài làm tự luận hoặc bài thực hành, viết nhận xét cải thiện năng lực.</p>
-</div>
+<div class="grade-page">
 
-<div class="glass-card" style="padding: 1.5rem; overflow-x: auto;">
-  <h3 style="font-size: 1.2rem; margin-bottom: 1.25rem;"><i class="fa-solid fa-list-check" style="color: #6366f1;"></i> Danh sách bài làm chờ chấm điểm</h3>
-  
-  <table class="custom-table" style="margin-top: 0; font-size: 0.85rem;">
-    <thead>
-      <tr>
-        <th>Mã bài làm</th>
-        <th>Học viên</th>
-        <th>Khóa học</th>
-        <th>Đề thi</th>
-        <th>Thời gian nộp</th>
-        <th>Nội dung tự luận</th>
-        <th style="text-align: center;">Thao tác</th>
-      </tr>
-    </thead>
-    <tbody>
-      <% if (submissions.length === 0) { %>
-        <tr>
-          <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 2rem;">Hiện không có bài làm tự luận nào chờ chấm điểm. Tất cả bài trắc nghiệm đã được tự động chấm điểm tức thì.</td>
-        </tr>
-      <% } else { %>
-        <% submissions.forEach(sub => { %>
-          <tr>
-            <td><strong>#<%= sub.id %></strong></td>
-            <td><strong><%= sub.username %></strong> (<%= sub.email %>)</td>
-            <td><%= sub.course_title %></td>
-            <td><%= sub.quiz_title %></td>
-            <td><%= new Date(sub.created_at).toLocaleString() %></td>
-            <td style="max-width: 200px; color: var(--text-muted); display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden;">
-              <%= sub.essay_answer || '(Trống)' %>
-            </td>
-            <td>
-              <div style="display: flex; justify-content: center;">
-                <button class="btn btn-primary" style="padding: 0.3rem 0.6rem; font-size: 0.75rem;" onclick="openGradeModal('<%= sub.id %>', '<%= sub.username %>', `<%= sub.essay_answer %>`)">
-                  Chấm điểm
-                </button>
-              </div>
-            </td>
-          </tr>
-        <% }) %>
-      <% } %>
-    </tbody>
-  </table>
-</div>
-
-<!-- Modal chấm điểm -->
-<div id="grade-modal" class="glass-card" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 500px; max-width: 90%; z-index: 1000; box-shadow: 0 10px 50px rgba(0,0,0,0.8); border-color: var(--border-glow);">
-  <h3 style="font-size: 1.3rem; margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center;">
-    <span><i class="fa-solid fa-marker" style="color: #8b5cf6;"></i> Chấm Điểm Bài Tập</span>
-    <button class="btn btn-secondary" onclick="closeGradeModal()" style="padding: 0.25rem 0.5rem; font-size: 0.85rem;"><i class="fa-solid fa-xmark"></i></button>
-  </h3>
-  <h4 id="grade-student-name" style="margin-bottom: 1rem; color: var(--text-accent);">Học viên: Nguyễn Văn A</h4>
-  
-  <div class="form-group">
-    <label class="form-label">Nội dung bài làm tự luận của học viên:</label>
-    <div id="grade-essay-content" style="background: rgba(0,0,0,0.2); border: 1px solid var(--border-light); padding: 1rem; border-radius: 8px; font-size: 0.85rem; max-height: 150px; overflow-y: auto; white-space: pre-line;"></div>
+  <!-- Header -->
+  <div class="grade-header">
+    <div>
+      <h1>Kết quả thi</h1>
+      <p>Xem điểm và kết quả bài kiểm tra của học viên</p>
+    </div>
+    <span class="grade-total-badge"><%= totalCount %> lượt thi</span>
   </div>
 
-  <form id="grade-form" action="" method="POST">
-    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-      <div class="form-group">
-        <label class="form-label">Điểm số (Thang 100)</label>
-        <input type="number" name="score" min="0" max="100" value="80" required>
+  <!-- Bộ lọc -->
+  <div class="glass-card grade-filter-card">
+    <form action="/grade" method="GET" class="grade-filter-form">
+      <div class="filter-field">
+        <label>Tìm kiếm</label>
+        <div class="input-with-icon">
+          <i class="fa-solid fa-magnifying-glass"></i>
+          <input type="text" name="search" value="<%= filters.search %>" placeholder="Tên học viên, email, đề thi...">
+        </div>
       </div>
-      <div class="form-group">
-        <label class="form-label">Kết quả</label>
-        <select name="isPassed" required>
-          <option value="true">ĐẠT (Passed)</option>
-          <option value="false">CHƯA ĐẠT (Failed)</option>
+
+      <div class="filter-field">
+        <label>Khóa học</label>
+        <select name="courseId">
+          <option value="">Tất cả khóa học</option>
+          <% courses.forEach(c => { %>
+            <option value="<%= c.id %>" <%= filters.courseId == c.id ? 'selected' : '' %>><%= c.title %></option>
+          <% }) %>
         </select>
       </div>
+
+      <div class="filter-field">
+        <label>Kết quả</label>
+        <select name="status">
+          <option value="">Tất cả</option>
+          <option value="passed" <%= filters.status === 'passed' ? 'selected' : '' %>>Đạt yêu cầu</option>
+          <option value="failed" <%= filters.status === 'failed' ? 'selected' : '' %>>Chưa đạt</option>
+        </select>
+      </div>
+
+      <div class="filter-actions">
+        <button type="submit" class="btn btn-primary"><i class="fa-solid fa-filter"></i> Lọc</button>
+        <a href="/grade" class="btn btn-secondary" title="Xóa bộ lọc"><i class="fa-solid fa-xmark"></i></a>
+      </div>
+    </form>
+  </div>
+
+  <!-- Bảng dữ liệu -->
+  <div class="glass-card" style="padding: 0; overflow: hidden;">
+    <div style="overflow-x: auto;">
+      <table class="grade-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Học viên</th>
+            <th>Khóa học</th>
+            <th>Đề thi</th>
+            <th style="text-align: center;">Điểm</th>
+            <th style="text-align: center;">Kết quả</th>
+            <th>Thời gian nộp</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <% if (submissions.length === 0) { %>
+            <tr>
+              <td colspan="8" class="grade-empty">
+                <i class="fa-regular fa-folder-open"></i>
+                <span>Không có dữ liệu phù hợp với bộ lọc</span>
+              </td>
+            </tr>
+          <% } else { %>
+            <% submissions.forEach(sub => { %>
+              <tr class="grade-row">
+                <td class="grade-id">#<%= sub.id %></td>
+                <td>
+                  <div class="grade-user-name"><%= sub.username %></div>
+                  <div class="grade-user-email"><%= sub.email %></div>
+                </td>
+                <td class="grade-truncate"><%= sub.course_title %></td>
+                <td class="grade-truncate"><%= sub.quiz_title %></td>
+                <td style="text-align: center;">
+                  <span class="grade-score <%= sub.is_passed ? 'score-pass' : 'score-fail' %>">
+                    <%= sub.score %><span class="score-denom">/100</span>
+                  </span>
+                </td>
+                <td style="text-align: center;">
+                  <% if (sub.is_passed) { %>
+                    <span class="status-tag tag-pass"><i class="fa-solid fa-check"></i> Đạt</span>
+                  <% } else { %>
+                    <span class="status-tag tag-fail"><i class="fa-solid fa-xmark"></i> Chưa đạt</span>
+                  <% } %>
+                </td>
+                <td class="grade-date"><%= new Date(sub.created_at).toLocaleString('vi-VN') %></td>
+                <td>
+                  <button class="btn-detail" onclick="openDetailModal(<%= JSON.stringify(sub) %>)">
+                    Chi tiết
+                  </button>
+                </td>
+              </tr>
+            <% }) %>
+          <% } %>
+        </tbody>
+      </table>
     </div>
 
-    <div class="form-group">
-      <label class="form-label">Nhận xét chi tiết cho nhân viên</label>
-      <textarea name="feedback" rows="3" placeholder="Viết đánh giá, góp ý chỉnh sửa cho học viên..." required></textarea>
-    </div>
+    <!-- Phân trang -->
+    <% if (totalPages > 1) { %>
+      <div class="grade-pagination">
+        <span class="pagination-info">
+          <%= (currentPage - 1) * limit + 1 %>–<%= Math.min(currentPage * limit, totalCount) %> trong số <%= totalCount %> kết quả
+        </span>
+        <div class="pagination-controls">
+          <% if (currentPage > 1) { %>
+            <a href="/grade?page=1&search=<%= filters.search %>&status=<%= filters.status %>&courseId=<%= filters.courseId %>" class="page-btn"><i class="fa-solid fa-angles-left"></i></a>
+            <a href="/grade?page=<%= currentPage - 1 %>&search=<%= filters.search %>&status=<%= filters.status %>&courseId=<%= filters.courseId %>" class="page-btn">Trước</a>
+          <% } else { %>
+            <span class="page-btn disabled"><i class="fa-solid fa-angles-left"></i></span>
+            <span class="page-btn disabled">Trước</span>
+          <% } %>
 
-    <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
-      <button type="submit" class="btn btn-primary">Lưu điểm số</button>
-      <button type="button" class="btn btn-secondary" onclick="closeGradeModal()">Hủy</button>
-    </div>
-  </form>
+          <%
+            let startPage = Math.max(1, currentPage - 2);
+            let endPage = Math.min(totalPages, currentPage + 2);
+            for (let i = startPage; i <= endPage; i++) {
+          %>
+            <a href="/grade?page=<%= i %>&search=<%= filters.search %>&status=<%= filters.status %>&courseId=<%= filters.courseId %>"
+               class="page-btn <%= currentPage === i ? 'active' : '' %>">
+              <%= i %>
+            </a>
+          <% } %>
+
+          <% if (currentPage < totalPages) { %>
+            <a href="/grade?page=<%= currentPage + 1 %>&search=<%= filters.search %>&status=<%= filters.status %>&courseId=<%= filters.courseId %>" class="page-btn">Sau</a>
+            <a href="/grade?page=<%= totalPages %>&search=<%= filters.search %>&status=<%= filters.status %>&courseId=<%= filters.courseId %>" class="page-btn"><i class="fa-solid fa-angles-right"></i></a>
+          <% } else { %>
+            <span class="page-btn disabled">Sau</span>
+            <span class="page-btn disabled"><i class="fa-solid fa-angles-right"></i></span>
+          <% } %>
+        </div>
+      </div>
+    <% } %>
+  </div>
 </div>
-<!-- Lớp phủ modal -->
-<div id="modal-overlay-grade" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); z-index: 999;" onclick="closeGradeModal()"></div>
+
+<!-- Modal chi tiết -->
+<div id="modal-overlay-detail" class="modal-overlay" onclick="closeDetailModal()"></div>
+<div id="detail-modal" class="detail-modal">
+  <div class="detail-modal-header">
+    <h3>Chi tiết bài làm</h3>
+    <button class="modal-close-btn" onclick="closeDetailModal()"><i class="fa-solid fa-xmark"></i></button>
+  </div>
+
+  <div class="detail-modal-body">
+    <div class="detail-section">
+      <label>Học viên</label>
+      <div id="det-username" class="detail-value-primary"></div>
+      <div id="det-email" class="detail-value-secondary"></div>
+    </div>
+
+    <div class="detail-row-2">
+      <div class="detail-section">
+        <label>Khóa học</label>
+        <div id="det-course" class="detail-value"></div>
+      </div>
+      <div class="detail-section">
+        <label>Đề thi</label>
+        <div id="det-quiz" class="detail-value"></div>
+      </div>
+    </div>
+
+    <div class="detail-score-block">
+      <div>
+        <label>Điểm số</label>
+        <div class="detail-score-display">
+          <span id="det-score"></span><span class="score-denom"> / 100</span>
+        </div>
+      </div>
+      <div id="det-status-badge"></div>
+    </div>
+
+    <div class="detail-section">
+      <label>Thời gian nộp bài</label>
+      <div id="det-date" class="detail-value"></div>
+    </div>
+
+    <div id="det-essay-area" class="detail-section" style="display: none;">
+      <label>Câu trả lời tự luận</label>
+      <div id="det-essay-content" class="essay-box"></div>
+    </div>
+  </div>
+
+  <div class="detail-modal-footer">
+    <button class="btn btn-secondary" onclick="closeDetailModal()">Đóng</button>
+  </div>
+</div>
+
+<style>
+/* ===== GRADE PAGE STYLES ===== */
+.grade-page { display: flex; flex-direction: column; gap: 1.5rem; }
+
+.grade-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+.grade-header h1 { font-size: 1.6rem; font-weight: 700; color: var(--text-main); margin-bottom: 0.2rem; }
+.grade-header p { font-size: 0.9rem; color: var(--text-muted); }
+.grade-total-badge {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #4f46e5;
+  background: #eef2ff;
+  padding: 0.35rem 0.85rem;
+  border-radius: 6px;
+  border: 1px solid #e0e7ff;
+  white-space: nowrap;
+  align-self: flex-start;
+  margin-top: 0.25rem;
+}
+
+/* Filter */
+.grade-filter-card { padding: 1.25rem 1.5rem; }
+.grade-filter-form {
+  display: grid;
+  grid-template-columns: 2fr 1.5fr 1fr auto;
+  gap: 1rem;
+  align-items: end;
+}
+@media (max-width: 900px) {
+  .grade-filter-form { grid-template-columns: 1fr 1fr; }
+  .filter-actions { grid-column: 1 / -1; }
+}
+.filter-field label {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  margin-bottom: 0.35rem;
+}
+.input-with-icon { position: relative; }
+.input-with-icon i {
+  position: absolute;
+  left: 0.85rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #94a3b8;
+  font-size: 0.85rem;
+  pointer-events: none;
+}
+.input-with-icon input { padding-left: 2.25rem; }
+.filter-field input, .filter-field select { height: 40px; font-size: 0.875rem; }
+.filter-actions { display: flex; gap: 0.5rem; }
+.filter-actions .btn { height: 40px; font-size: 0.875rem; }
+
+/* Table */
+.grade-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+.grade-table thead tr {
+  background: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
+}
+.grade-table th {
+  padding: 0.75rem 1rem;
+  font-weight: 600;
+  font-size: 0.78rem;
+  color: #64748b;
+  text-align: left;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+.grade-table td { padding: 0.875rem 1rem; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
+.grade-row:last-child td { border-bottom: none; }
+.grade-row:hover td { background: #fafafa; }
+
+.grade-id { color: #94a3b8; font-size: 0.8rem; font-weight: 500; }
+.grade-user-name { font-weight: 600; color: var(--text-main); line-height: 1.3; }
+.grade-user-email { font-size: 0.78rem; color: #94a3b8; margin-top: 1px; }
+.grade-truncate { max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text-main); }
+.grade-date { font-size: 0.8rem; color: #94a3b8; white-space: nowrap; }
+
+.grade-score { font-weight: 700; font-size: 0.95rem; }
+.grade-score .score-denom { font-size: 0.72rem; font-weight: 400; color: #94a3b8; }
+.score-pass { color: #0d9488; }
+.score-fail { color: #dc2626; }
+
+.status-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.2rem 0.55rem;
+  border-radius: 4px;
+}
+.tag-pass { background: #f0fdf4; color: #16a34a; border: 1px solid #bbf7d0; }
+.tag-fail { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }
+
+.btn-detail {
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: #4f46e5;
+  background: transparent;
+  border: 1px solid #e0e7ff;
+  border-radius: 5px;
+  padding: 0.3rem 0.65rem;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+.btn-detail:hover { background: #eef2ff; border-color: #c7d2fe; }
+
+.grade-empty { text-align: center; padding: 3.5rem 1rem; color: #94a3b8; }
+.grade-empty i { font-size: 2rem; display: block; margin-bottom: 0.6rem; opacity: 0.4; }
+.grade-empty span { font-size: 0.9rem; }
+
+/* Pagination */
+.grade-pagination {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.5rem;
+  border-top: 1px solid #f1f5f9;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+.pagination-info { font-size: 0.82rem; color: #94a3b8; }
+.pagination-controls { display: flex; gap: 0.25rem; }
+.page-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  height: 32px;
+  padding: 0 0.5rem;
+  font-size: 0.82rem;
+  font-weight: 500;
+  font-family: inherit;
+  color: #475569;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 5px;
+  text-decoration: none;
+  transition: all 0.15s;
+  cursor: pointer;
+}
+.page-btn:hover { background: #f8fafc; border-color: #cbd5e1; color: #1e293b; }
+.page-btn.active { background: #4f46e5; color: #fff; border-color: #4f46e5; font-weight: 600; }
+.page-btn.disabled { opacity: 0.4; pointer-events: none; cursor: default; }
+
+/* Modal */
+.modal-overlay {
+  display: none;
+  position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+  background: rgba(15, 23, 42, 0.3);
+  backdrop-filter: blur(2px);
+  z-index: 999;
+}
+.detail-modal {
+  display: none;
+  position: fixed;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: 520px;
+  max-width: 92vw;
+  max-height: 88vh;
+  overflow-y: auto;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(15, 23, 42, 0.12);
+  z-index: 1000;
+}
+.detail-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid #f1f5f9;
+}
+.detail-modal-header h3 { font-size: 1.05rem; font-weight: 600; color: var(--text-main); }
+.modal-close-btn {
+  background: none; border: none; cursor: pointer;
+  color: #94a3b8; font-size: 1rem;
+  width: 28px; height: 28px;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 4px;
+  transition: all 0.15s;
+}
+.modal-close-btn:hover { background: #f1f5f9; color: #475569; }
+
+.detail-modal-body { padding: 1.5rem; display: flex; flex-direction: column; gap: 1.25rem; }
+.detail-section label {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.25rem;
+}
+.detail-value-primary { font-size: 1rem; font-weight: 600; color: var(--text-main); }
+.detail-value-secondary { font-size: 0.82rem; color: #94a3b8; margin-top: 2px; }
+.detail-value { font-size: 0.9rem; color: var(--text-main); font-weight: 500; }
+
+.detail-row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+
+.detail-score-block {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 1rem 1.25rem;
+}
+.detail-score-block label {
+  font-size: 0.75rem; font-weight: 500; color: #94a3b8;
+  text-transform: uppercase; letter-spacing: 0.05em; display: block; margin-bottom: 0.2rem;
+}
+.detail-score-display { font-size: 2rem; font-weight: 700; color: var(--text-main); }
+
+.essay-box {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  padding: 0.875rem;
+  font-size: 0.875rem;
+  color: var(--text-main);
+  max-height: 140px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  line-height: 1.6;
+}
+
+.detail-modal-footer {
+  padding: 1rem 1.5rem;
+  border-top: 1px solid #f1f5f9;
+  display: flex;
+  justify-content: flex-end;
+}
+</style>
 
 <script>
-  function openGradeModal(id, studentName, essayContent) {
-    document.getElementById('grade-form').action = `/grade/${id}`;
-    document.getElementById('grade-student-name').textContent = `Học viên: ${studentName}`;
-    document.getElementById('grade-essay-content').textContent = essayContent || '(Học viên không nộp bài viết tự luận)';
-    
-    document.getElementById('grade-modal').style.display = 'block';
-    document.getElementById('modal-overlay-grade').style.display = 'block';
+  function openDetailModal(sub) {
+    document.getElementById('det-username').textContent = sub.username;
+    document.getElementById('det-email').textContent = sub.email;
+    document.getElementById('det-course').textContent = sub.course_title;
+    document.getElementById('det-quiz').textContent = sub.quiz_title;
+    document.getElementById('det-score').textContent = sub.score !== null ? sub.score : '—';
+    document.getElementById('det-date').textContent = new Date(sub.created_at).toLocaleString('vi-VN');
+
+    const badge = document.getElementById('det-status-badge');
+    if (sub.is_passed) {
+      badge.innerHTML = '<span class="status-tag tag-pass"><i class="fa-solid fa-check"></i> Đạt yêu cầu</span>';
+    } else {
+      badge.innerHTML = '<span class="status-tag tag-fail"><i class="fa-solid fa-xmark"></i> Chưa đạt</span>';
+    }
+
+    const essayArea = document.getElementById('det-essay-area');
+    if (sub.essay_answer) {
+      document.getElementById('det-essay-content').textContent = sub.essay_answer;
+      essayArea.style.display = 'block';
+    } else {
+      essayArea.style.display = 'none';
+    }
+
+    document.getElementById('detail-modal').style.display = 'block';
+    document.getElementById('modal-overlay-detail').style.display = 'block';
   }
 
-  function closeGradeModal() {
-    document.getElementById('grade-modal').style.display = 'none';
-    document.getElementById('modal-overlay-grade').style.display = 'none';
+  function closeDetailModal() {
+    document.getElementById('detail-modal').style.display = 'none';
+    document.getElementById('modal-overlay-detail').style.display = 'none';
   }
 </script>
 

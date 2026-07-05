@@ -309,62 +309,47 @@ module.exports = {
 
   getGradeList: async (req, res) => {
     if (!req.session.permissions.includes('QUIZ_GRADE')) {
-      return res.status(403).render('error', { message: 'Không có quyền chấm thi.' });
+      return res.status(403).render('error', { message: 'Không có quyền xem kết quả thi.' });
     }
     try {
-      // Vì là trắc nghiệm tự chấm điểm ở Client, ở đây ta lấy danh sách các bài làm để giám sát hoặc tự luận (nếu có)
-      const submissions = await QuizSubmission.findAllToGrade();
-      res.render('admin/grade', { submissions });
-    } catch (err) {
-      res.render('error', { message: 'Lỗi tải danh sách chấm thi.' });
-    }
-  },
-
-  postGrade: async (req, res) => {
-    if (!req.session.permissions.includes('QUIZ_GRADE')) {
-      return res.status(403).json({ error: 'Không có quyền chấm thi.' });
-    }
-    const submissionId = parseInt(req.params.id);
-    const { score, isPassed, feedback } = req.body;
-    const gradedBy = req.session.userId;
-    try {
-      // 1. Cập nhật điểm số & nhận xét
-      const updatedSub = await QuizSubmission.grade(
-        submissionId,
-        parseInt(score),
-        isPassed === 'true',
-        feedback,
-        gradedBy
-      );
-
-      // 2. Nếu đạt (isPassed = true), tự động cập nhật tiến độ học tập khóa này lên 100% (Hoàn thành)
-      if (updatedSub && updatedSub.is_passed) {
-        const subDetails = await require('../config/db').query(
-          'SELECT q.course_id, qs.user_id FROM quiz_submissions qs JOIN quizzes q ON qs.quiz_id = q.id WHERE qs.id = $1',
-          [submissionId]
-        );
-        if (subDetails.rows.length > 0) {
-          const { course_id, user_id } = subDetails.rows[0];
-          await Enrollment.updateProgress(user_id, course_id, 100);
+      const page = parseInt(req.query.page) || 1;
+      const limit = parseInt(req.query.limit) || 20;
+      const offset = (page - 1) * limit;
+      
+      const search = req.query.search || '';
+      const status = req.query.status || ''; // 'passed', 'failed', or '' (all)
+      const courseId = req.query.courseId || ''; // specific course or '' (all)
+      
+      // Lấy danh sách bài làm phân trang và tối ưu bằng index
+      const { total, submissions } = await QuizSubmission.findPagedSubmissions({
+        search,
+        status,
+        courseId,
+        limit,
+        offset
+      });
+      
+      // Lấy toàn bộ khóa học để hiển thị trong bộ lọc Dropdown
+      const courses = await Course.findAll();
+      
+      const totalPages = Math.ceil(total / limit) || 1;
+      
+      res.render('admin/grade', {
+        submissions,
+        courses,
+        totalCount: total,
+        currentPage: page,
+        totalPages,
+        limit,
+        filters: {
+          search,
+          status,
+          courseId
         }
-      }
-
-      // 3. Ghi nhật ký hệ thống (Audit Log)
-      await AuditLog.create(gradedBy, 'QUIZ_GRADE', { submission_id: submissionId, score, is_passed: isPassed === 'true' });
-
-      // 4. Gửi thông báo real-time qua Socket cho học viên nếu họ online
-      try {
-        const { getIO } = require('../config/socket');
-        const io = getIO();
-        io.emit('quiz_graded_notification', { submissionId, userId: updatedSub.user_id, score, isPassed: isPassed === 'true' });
-      } catch (socketErr) {
-        console.warn('[Admin Controller] Lỗi gửi Socket notification chấm thi:', socketErr.message);
-      }
-
-      res.redirect('/grade');
+      });
     } catch (err) {
-      console.error('[Admin Controller] Lỗi chấm điểm tự luận:', err);
-      res.render('error', { message: 'Lỗi chấm điểm bài thi.' });
+      console.error('[Admin Controller] Lỗi tải kết quả thi:', err);
+      res.render('error', { message: 'Lỗi tải danh sách kết quả thi.' });
     }
   },
 

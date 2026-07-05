@@ -1,342 +1,855 @@
 <%- include('../partials/header') %>
 
+<style>
+  /* ===== PAGE HEADER ===== */
+  .cm-page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 2rem;
+  }
+  .cm-page-title {
+    font-size: 1.6rem;
+    font-weight: 800;
+    color: var(--text-main);
+    letter-spacing: -0.03em;
+    margin: 0;
+  }
+  .cm-page-subtitle {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    margin-top: 0.3rem;
+  }
+
+  /* ===== ALERT BANNERS ===== */
+  .cm-alert {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.9rem 1.25rem;
+    border-radius: 12px;
+    font-size: 0.88rem;
+    font-weight: 500;
+    margin-bottom: 1.5rem;
+  }
+  .cm-alert-success {
+    background: rgba(16, 185, 129, 0.08);
+    border: 1px solid rgba(16, 185, 129, 0.25);
+    color: #059669;
+  }
+  .cm-alert-error {
+    background: rgba(239, 68, 68, 0.08);
+    border: 1px solid rgba(239, 68, 68, 0.25);
+    color: #dc2626;
+  }
+
+  /* ===== CREATE FORM ===== */
+  .cm-create-form {
+    background: #fff;
+    border: 1px solid var(--border-light);
+    border-radius: 16px;
+    padding: 1.75rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 4px 20px rgba(79, 70, 229, 0.06);
+    animation: cmSlideDown 0.3s ease;
+  }
+  .cm-create-form-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin-bottom: 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--text-main);
+  }
+  @keyframes cmSlideDown {
+    from { opacity: 0; transform: translateY(-12px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ===== COURSES TABLE WRAPPER ===== */
+  .cm-table-card {
+    background: #fff;
+    border: 1px solid var(--border-light);
+    border-radius: 18px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  }
+
+  /* ===== TABLE ===== */
+  .cm-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  .cm-table thead {
+    background: #f8fafc;
+    border-bottom: 1px solid var(--border-light);
+  }
+  .cm-table th {
+    padding: 0.85rem 1rem;
+    text-align: left;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: #94a3b8;
+    white-space: nowrap;
+  }
+  .cm-table th:last-child {
+    text-align: center;
+  }
+  .cm-table td {
+    padding: 1rem;
+    border-bottom: 1px solid #f1f5f9;
+    vertical-align: middle;
+  }
+  .cm-table tbody tr:last-child td {
+    border-bottom: none;
+  }
+  .cm-table tbody tr {
+    transition: background 0.18s;
+  }
+  .cm-table tbody tr:hover {
+    background: #fafbff;
+  }
+
+  /* ===== COURSE IMAGE ===== */
+  .cm-course-img {
+    width: 72px;
+    height: 46px;
+    object-fit: cover;
+    border-radius: 8px;
+    border: 1px solid var(--border-light);
+    display: block;
+    background: #f1f5f9;
+  }
+
+  /* ===== COURSE TITLE CELL ===== */
+  .cm-course-title {
+    font-weight: 700;
+    font-size: 0.92rem;
+    color: var(--text-main);
+    line-height: 1.4;
+    max-width: 220px;
+  }
+
+  /* ===== DESCRIPTION CELL (FIXED!) ===== */
+  .cm-course-desc {
+    color: var(--text-muted);
+    font-size: 0.82rem;
+    line-height: 1.5;
+    max-width: 260px;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+  }
+
+  /* ===== BADGES ===== */
+  .cm-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.3rem 0.7rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+  .cm-badge-open {
+    background: rgba(13, 148, 136, 0.1);
+    color: #0d9488;
+    border: 1px solid rgba(13, 148, 136, 0.2);
+  }
+  .cm-badge-restricted {
+    background: rgba(245, 158, 11, 0.1);
+    color: #d97706;
+    border: 1px solid rgba(245, 158, 11, 0.2);
+  }
+  .cm-badge-published {
+    background: rgba(16, 185, 129, 0.1);
+    color: #059669;
+    border: 1px solid rgba(16, 185, 129, 0.2);
+  }
+  .cm-badge-draft {
+    background: rgba(100, 116, 139, 0.08);
+    color: #64748b;
+    border: 1px solid rgba(100, 116, 139, 0.18);
+  }
+
+  /* ===== ACTION BUTTONS ===== */
+  .cm-actions {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.4rem;
+    flex-wrap: nowrap;
+  }
+  .cm-btn-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.3rem;
+    padding: 0.4rem 0.7rem;
+    border-radius: 8px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    font-family: var(--font-body);
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    white-space: nowrap;
+    text-decoration: none;
+  }
+  .cm-btn-lessons {
+    background: #f1f5f9;
+    color: #475569;
+    border: 1px solid #e2e8f0;
+  }
+  .cm-btn-lessons:hover {
+    background: #e2e8f0;
+    color: #1e293b;
+    transform: translateY(-1px);
+  }
+  .cm-btn-assign {
+    background: linear-gradient(135deg, #4f46e5, #6366f1);
+    color: #fff;
+    box-shadow: 0 2px 8px rgba(79, 70, 229, 0.25);
+  }
+  .cm-btn-assign:hover {
+    box-shadow: 0 4px 14px rgba(79, 70, 229, 0.4);
+    transform: translateY(-1px);
+    color: #fff;
+  }
+  .cm-btn-toggle {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    color: #64748b;
+  }
+  .cm-btn-toggle:hover {
+    border-color: #94a3b8;
+    background: #f8fafc;
+    transform: translateY(-1px);
+  }
+  .cm-btn-toggle.is-published {
+    color: #d97706;
+  }
+  .cm-btn-toggle.is-draft {
+    color: #059669;
+  }
+  .cm-btn-edit {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    color: #6366f1;
+  }
+  .cm-btn-edit:hover {
+    background: rgba(99, 102, 241, 0.06);
+    border-color: #a5b4fc;
+    transform: translateY(-1px);
+  }
+  .cm-btn-delete {
+    background: #fff;
+    border: 1px solid #fecaca;
+    color: #ef4444;
+  }
+  .cm-btn-delete:hover {
+    background: rgba(239, 68, 68, 0.06);
+    border-color: #f87171;
+    transform: translateY(-1px);
+  }
+
+  /* ===== EMPTY STATE ===== */
+  .cm-empty {
+    text-align: center;
+    padding: 4rem 2rem;
+    color: var(--text-muted);
+  }
+  .cm-empty i {
+    font-size: 2.5rem;
+    opacity: 0.25;
+    display: block;
+    margin-bottom: 1rem;
+  }
+
+  /* ===== PAGINATION ===== */
+  .cm-pagination {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+    padding: 1.25rem 1.5rem;
+    border-top: 1px solid var(--border-light);
+    background: #fafbff;
+  }
+  .cm-pagination-info {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+  }
+  .cm-pagination-pages {
+    display: flex;
+    gap: 0.35rem;
+    align-items: center;
+  }
+  .cm-page-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.3rem;
+    min-width: 36px;
+    height: 36px;
+    padding: 0 0.6rem;
+    border-radius: 8px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    border: 1px solid var(--border-light);
+    background: #fff;
+    color: var(--text-muted);
+    transition: all 0.2s;
+    text-decoration: none;
+  }
+  .cm-page-btn:hover {
+    border-color: #a5b4fc;
+    color: #4f46e5;
+    background: rgba(99,102,241,0.05);
+  }
+  .cm-page-btn.active {
+    background: linear-gradient(135deg, #4f46e5, #6366f1);
+    color: #fff;
+    border-color: transparent;
+    box-shadow: 0 4px 12px rgba(79,70,229,0.3);
+    cursor: default;
+  }
+  .cm-page-btn[disabled] {
+    opacity: 0.4;
+    cursor: not-allowed;
+    pointer-events: none;
+  }
+  .cm-page-sep {
+    color: var(--text-muted);
+    padding: 0 0.15rem;
+    font-size: 0.85rem;
+  }
+
+  /* ===== MODAL ===== */
+  .cm-modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.45);
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+    z-index: 999;
+  }
+  .cm-modal {
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 520px;
+    max-width: 92vw;
+    max-height: 90vh;
+    overflow-y: auto;
+    z-index: 1000;
+    background: #fff;
+    border-radius: 20px;
+    padding: 2rem;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.18);
+    border: 1px solid rgba(226, 232, 240, 0.8);
+  }
+  .cm-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border-light);
+  }
+  .cm-modal-title {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--text-main);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .cm-modal-close {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
+    border: 1px solid var(--border-light);
+    background: #fff;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: all 0.2s;
+  }
+  .cm-modal-close:hover {
+    background: #f1f5f9;
+    color: var(--text-main);
+  }
+
+  /* ===== ASSIGN MODAL (wide) ===== */
+  .cm-assign-modal {
+    width: 660px;
+  }
+  .cm-assign-panel {
+    background: #f8fafc;
+    border: 1px solid var(--border-light);
+    border-radius: 10px;
+    padding: 0.75rem;
+    max-height: 250px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+  }
+  .cm-assign-panel::-webkit-scrollbar { width: 4px; }
+  .cm-assign-panel::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+  .cm-assign-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.85rem;
+    cursor: pointer;
+    color: var(--text-main);
+    padding: 0.2rem 0.3rem;
+    border-radius: 6px;
+    transition: background 0.15s;
+  }
+  .cm-assign-label:hover {
+    background: rgba(99, 102, 241, 0.05);
+  }
+  .cm-assign-group-header {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #6366f1;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border-bottom: 1px solid rgba(99, 102, 241, 0.12);
+    padding-bottom: 0.25rem;
+    margin-top: 0.25rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .cm-assign-group-btn {
+    background: none;
+    border: none;
+    font-size: 0.7rem;
+    color: var(--text-accent);
+    cursor: pointer;
+    font-weight: 600;
+    font-family: var(--font-body);
+  }
+  .cm-search-box {
+    position: relative;
+    margin-bottom: 0.5rem;
+  }
+  .cm-search-box i {
+    position: absolute;
+    left: 0.7rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-muted);
+    font-size: 0.8rem;
+  }
+  .cm-search-box input {
+    padding-left: 2rem !important;
+    font-size: 0.82rem !important;
+    padding-top: 0.5rem !important;
+    padding-bottom: 0.5rem !important;
+  }
+
+  /* ===== SCROLLBAR for modals ===== */
+  .cm-modal::-webkit-scrollbar { width: 6px; }
+  .cm-modal::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 6px; }
+</style>
+
+<%- /* ====== ALERTS ====== */ '' %>
 <% if (typeof success !== 'undefined' && success) { %>
-  <div class="alert-banner alert-success" style="margin-bottom: 1.5rem; padding: 1rem 1.5rem; border-radius: 12px; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); color: #10b981; display: flex; align-items: center; gap: 0.75rem; font-size: 0.9rem;">
+  <div class="cm-alert cm-alert-success">
     <i class="fa-solid fa-circle-check"></i>
     <span><%= success %></span>
   </div>
 <% } %>
 <% if (typeof error !== 'undefined' && error) { %>
-  <div class="alert-banner alert-error" style="margin-bottom: 1.5rem; padding: 1rem 1.5rem; border-radius: 12px; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); color: #f87171; display: flex; align-items: center; gap: 0.75rem; font-size: 0.9rem;">
+  <div class="cm-alert cm-alert-error">
     <i class="fa-solid fa-circle-exclamation"></i>
     <span><%= error %></span>
   </div>
 <% } %>
 
-<div style="margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+<%- /* ====== PAGE HEADER ====== */ '' %>
+<div class="cm-page-header">
   <div>
-    <h1 style="font-size: 2.2rem; font-weight: 800; background: var(--primary-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
-      Quản Lý Khóa Học
-    </h1>
-    <p style="color: var(--text-muted); margin-top: 0.25rem;">Thêm mới khóa đào tạo, cập nhật học liệu và xuất bản cho nhân viên học tập.</p>
+    <h1 class="cm-page-title">Quản Lý Khóa Học</h1>
+    <p class="cm-page-subtitle">Thêm mới khóa đào tạo, cập nhật học liệu và xuất bản cho nhân viên học tập.</p>
   </div>
-  
   <% if (user.permissions.includes('COURSE_CREATE')) { %>
-    <button class="btn btn-primary" onclick="toggleCreateForm()">
+    <button class="btn btn-primary" onclick="toggleCreateForm()" id="btn-toggle-create">
       <i class="fa-solid fa-plus"></i> Tạo khóa học mới
     </button>
   <% } %>
 </div>
 
-<!-- Form tạo khóa học ẩn/hiện mờ kính -->
-<div id="create-course-form" class="glass-card" style="display: none; margin-bottom: 2.5rem; animation: slideDown 0.3s ease;">
-  <h3 style="font-size: 1.3rem; margin-bottom: 1.5rem;"><i class="fa-solid fa-plus-circle" style="color: #6366f1;"></i> Thêm Khóa Học Mới</h3>
+<%- /* ====== CREATE FORM ====== */ '' %>
+<div id="create-course-form" class="cm-create-form" style="display: none;">
+  <div class="cm-create-form-title">
+    <i class="fa-solid fa-plus-circle" style="color: #6366f1;"></i> Thêm Khóa Học Mới
+  </div>
   <form action="/course-management" method="POST">
-    <div class="form-group">
-      <label class="form-label">Tiêu đề khóa học</label>
-      <input type="text" name="title" placeholder="Ví dụ: Kỹ năng Quản lý thời gian" required>
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+      <div class="form-group" style="margin-bottom: 0;">
+        <label class="form-label">Tiêu đề khóa học</label>
+        <input type="text" name="title" placeholder="Ví dụ: Kỹ năng Quản lý thời gian" required>
+      </div>
+      <div class="form-group" style="margin-bottom: 0;">
+        <label class="form-label">Đường dẫn ảnh đại diện</label>
+        <input type="text" name="image_url" placeholder="/images/default_course.svg">
+      </div>
     </div>
-    
-    <div class="form-group">
+    <div class="form-group" style="margin-top: 1rem;">
       <label class="form-label">Mô tả tóm tắt</label>
-      <textarea name="description" rows="3" placeholder="Nhập mô tả chi tiết khóa học tại đây..." required></textarea>
+      <textarea name="description" rows="2" placeholder="Nhập mô tả chi tiết khóa học..." required></textarea>
     </div>
-
-    <div class="form-group">
-      <label class="form-label">Đường dẫn ảnh đại diện (Ảnh URL)</label>
-      <input type="text" name="image_url" placeholder="/images/default_course.svg">
-    </div>
-
     <div class="form-group">
       <label class="form-label">Hình thức đăng ký học</label>
-      <select name="enrollment_type" style="width: 100%; padding: 0.65rem 1rem; background: rgba(15, 23, 42, 0.5); border: 1px solid var(--border-light); border-radius: 8px; color: var(--text-main); font-size: 0.9rem; outline: none;">
+      <select name="enrollment_type">
         <option value="open">Tự học (Học ngay, không cần xét duyệt)</option>
         <option value="restricted">Cần phê duyệt (Gửi yêu cầu, đợi HR/Admin duyệt)</option>
       </select>
     </div>
-
-    <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
-      <button type="submit" class="btn btn-primary">Lưu khóa học</button>
+    <div style="display: flex; gap: 0.75rem; margin-top: 0.5rem;">
+      <button type="submit" class="btn btn-primary"><i class="fa-solid fa-floppy-disk"></i> Lưu khóa học</button>
       <button type="button" class="btn btn-secondary" onclick="toggleCreateForm()">Hủy</button>
     </div>
   </form>
 </div>
 
-<!-- Bảng danh sách tất cả các khóa học -->
-<div class="glass-card" style="padding: 1.5rem; overflow-x: auto;">
-  <table class="custom-table" style="margin-top: 0;">
-    <thead>
-      <tr>
-        <th>Ảnh</th>
-        <th>Tên khóa học</th>
-        <th>Mô tả</th>
-        <th>Hình thức học</th>
-        <th>Trạng thái</th>
-        <th style="text-align: center;">Hành động</th>
-      </tr>
-    </thead>
-    <tbody>
-      <% courses.forEach(course => { %>
-        <tr>
-          <td style="width: 100px;">
-            <% 
-              // Lấy ảnh mặc định nếu course.image_url rỗng, null hoặc trỏ tới ảnh .jpg không tồn tại
+<%- /* ====== TABLE CARD ====== */ '' %>
+<div class="cm-table-card">
+  <% if (courses.length === 0) { %>
+    <div class="cm-empty">
+      <i class="fa-solid fa-graduation-cap"></i>
+      <span style="font-size: 0.95rem;">Chưa có khóa học nào trong hệ thống.</span>
+    </div>
+  <% } else { %>
+    <div style="overflow-x: auto;">
+      <table class="cm-table">
+        <thead>
+          <tr>
+            <th style="width: 90px;">Ảnh</th>
+            <th>Tên khóa học</th>
+            <th>Mô tả</th>
+            <th>Hình thức học</th>
+            <th>Trạng thái</th>
+            <th style="min-width: 220px;">Hành động</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% courses.forEach(course => { %>
+            <%
               let displayImg = course.image_url;
               if (!displayImg || !displayImg.trim() || displayImg === '/images/default_course.jpg') {
                 displayImg = '/images/default_course.svg';
               }
             %>
-            <img src="<%= displayImg %>" onerror="this.onerror=null; this.src='/images/default_course.svg';" alt="" style="width: 80px; height: 50px; object-fit: cover; border-radius: 6px; border: 1px solid var(--border-light);">
-          </td>
-          <td>
-            <strong style="font-size: 1.05rem;"><%= course.title %></strong>
-          </td>
-          <td style="max-width: 300px; color: var(--text-muted); font-size: 0.85rem; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; height: 3.2em;">
-            <%= course.description %>
-          </td>
-          <td>
-            <% if (course.enrollment_type === 'restricted') { %>
-              <span style="color: #fbbf24; font-weight: 600;"><i class="fa-solid fa-shield-halved"></i> Cần phê duyệt</span>
-            <% } else { %>
-              <span style="color: #34d399; font-weight: 600;"><i class="fa-solid fa-globe"></i> Tự học tự do</span>
-            <% } %>
-          </td>
-          <td>
-            <span class="btn" style="padding: 0.2rem 0.5rem; font-size: 0.75rem; cursor: default; <%= course.status === 'published' ? 'background: rgba(16,185,129,0.1); color: #10b981; border: 1px solid #10b981;' : 'background: rgba(255,255,255,0.05); color: var(--text-muted); border: 1px solid var(--border-light);' %>">
-              <%= course.status === 'published' ? 'Công khai' : 'Bản nháp' %>
-            </span>
-          </td>
-          <td>
-            <div style="display: flex; justify-content: center; gap: 0.5rem;">
-              
-              <!-- Xem/quản lý bài học -->
-              <a href="/course-management/<%= course.id %>/lessons" class="btn btn-secondary" style="padding: 0.35rem 0.75rem; font-size: 0.80rem;" title="Quản lý bài giảng">
-                <i class="fa-solid fa-list"></i> Bài học
+            <tr>
+              <td>
+                <img
+                  src="<%= displayImg %>"
+                  onerror="this.onerror=null; this.src='/images/default_course.svg';"
+                  alt="<%= course.title %>"
+                  class="cm-course-img"
+                >
+              </td>
+              <td>
+                <div class="cm-course-title"><%= course.title %></div>
+              </td>
+              <td>
+                <div class="cm-course-desc"><%= course.description %></div>
+              </td>
+              <td>
+                <% if (course.enrollment_type === 'restricted') { %>
+                  <span class="cm-badge cm-badge-restricted">
+                    <i class="fa-solid fa-shield-halved"></i> Cần duyệt
+                  </span>
+                <% } else { %>
+                  <span class="cm-badge cm-badge-open">
+                    <i class="fa-solid fa-globe"></i> Tự học
+                  </span>
+                <% } %>
+              </td>
+              <td>
+                <% if (course.status === 'published') { %>
+                  <span class="cm-badge cm-badge-published">
+                    <i class="fa-solid fa-circle" style="font-size:0.5rem;"></i> Công khai
+                  </span>
+                <% } else { %>
+                  <span class="cm-badge cm-badge-draft">
+                    <i class="fa-solid fa-circle" style="font-size:0.5rem;"></i> Bản nháp
+                  </span>
+                <% } %>
+              </td>
+              <td>
+                <div class="cm-actions">
+
+                  <%- /* Quản lý bài học */ '' %>
+                  <a href="/course-management/<%= course.id %>/lessons"
+                     class="cm-btn-icon cm-btn-lessons"
+                     title="Quản lý bài giảng">
+                    <i class="fa-solid fa-list"></i> Bài học
+                  </a>
+
+                  <% if (user.permissions.includes('ENROLL_ASSIGN')) { %>
+                    <%- /* Giao khóa học */ '' %>
+                    <button
+                      type="button"
+                      class="cm-btn-icon cm-btn-assign"
+                      onclick="openAssignCourseModal(<%= course.id %>)"
+                      title="Giao khóa học">
+                      <i class="fa-solid fa-user-plus"></i> Giao học
+                    </button>
+                  <% } %>
+
+                  <% if (user.permissions.includes('COURSE_PUBLISH')) { %>
+                    <%- /* Toggle xuất bản */ '' %>
+                    <form action="/course-management/<%= course.id %>/publish" method="POST" style="display:inline;">
+                      <input type="hidden" name="status" value="<%= course.status === 'published' ? 'draft' : 'published' %>">
+                      <button
+                        type="submit"
+                        class="cm-btn-icon cm-btn-toggle <%= course.status === 'published' ? 'is-published' : 'is-draft' %>"
+                        title="<%= course.status === 'published' ? 'Chuyển thành Nháp' : 'Xuất bản khóa học' %>">
+                        <i class="fa-solid <%= course.status === 'published' ? 'fa-eye-slash' : 'fa-share-from-square' %>"></i>
+                      </button>
+                    </form>
+                  <% } %>
+
+                  <% if (user.permissions.includes('COURSE_UPDATE')) { %>
+                    <%- /* Sửa */ '' %>
+                    <button
+                      class="cm-btn-icon cm-btn-edit"
+                      onclick="openEditForm('<%= course.id %>', '<%= course.title %>', `<%= course.description %>`, '<%= course.image_url %>', '<%= course.status %>', '<%= course.enrollment_type %>')"
+                      title="Sửa khóa học">
+                      <i class="fa-solid fa-pen"></i>
+                    </button>
+                  <% } %>
+
+                  <% if (user.permissions.includes('COURSE_DELETE')) { %>
+                    <%- /* Xóa */ '' %>
+                    <form action="/course-management/<%= course.id %>/delete" method="POST" style="display:inline;"
+                          onsubmit="return confirm('Bạn có chắc chắn muốn xóa khóa học này cùng toàn bộ bài học kèm theo?')">
+                      <button type="submit" class="cm-btn-icon cm-btn-delete" title="Xóa khóa học">
+                        <i class="fa-solid fa-trash-can"></i>
+                      </button>
+                    </form>
+                  <% } %>
+
+                </div>
+              </td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+
+    <%- /* ====== PAGINATION ====== */ '' %>
+    <% if (totalCourses > 0) { %>
+      <div class="cm-pagination">
+        <div class="cm-pagination-info">
+          Hiển thị <strong><%= (currentPage - 1) * 15 + 1 %></strong> –
+          <strong><%= Math.min(currentPage * 15, totalCourses) %></strong>
+          trong <strong><%= totalCourses %></strong> khóa học
+        </div>
+
+        <% if (totalPages > 1) { %>
+          <div class="cm-pagination-pages">
+            <% if (currentPage > 1) { %>
+              <a href="/course-management?page=<%= currentPage - 1 %>" class="cm-page-btn" title="Trang trước">
+                <i class="fa-solid fa-chevron-left" style="font-size:0.7rem;"></i> Trước
               </a>
- 
-              <% if (user.permissions.includes('ENROLL_ASSIGN')) { %>
-                <!-- Giao khóa học trực tiếp -->
-                <button type="button" class="btn btn-primary" onclick="openAssignCourseModal(<%= course.id %>)" style="padding: 0.35rem 0.75rem; font-size: 0.80rem; border-radius: 6px;" title="Giao khóa học">
-                  <i class="fa-solid fa-user-plus"></i> Giao học
-                </button>
-              <% } %>
-              <% if (user.permissions.includes('COURSE_PUBLISH')) { %>
-                <!-- Form bật/tắt xuất bản -->
-                <form action="/course-management/<%= course.id %>/publish" method="POST" style="display: inline;">
-                  <input type="hidden" name="status" value="<%= course.status === 'published' ? 'draft' : 'published' %>">
-                  <button type="submit" class="btn btn-secondary" style="padding: 0.35rem 0.75rem; font-size: 0.8rem; <%= course.status === 'published' ? 'color: #f59e0b;' : 'color: #10b981;' %>" title="<%= course.status === 'published' ? 'Chuyển thành Nháp' : 'Xuất bản khóa học' %>">
-                    <i class="fa-solid <%= course.status === 'published' ? 'fa-eye-slash' : 'fa-share-from-square' %>"></i>
-                  </button>
-                </form>
-              <% } %>
- 
-              <% if (user.permissions.includes('COURSE_UPDATE')) { %>
-                <!-- Nút sửa mở rộng -->
-                <button class="btn btn-secondary" onclick="openEditForm('<%= course.id %>', '<%= course.title %>', `<%= course.description %>`, '<%= course.image_url %>', '<%= course.status %>', '<%= course.enrollment_type %>')" style="padding: 0.35rem 0.75rem; font-size: 0.8rem;" title="Sửa khóa học">
-                  <i class="fa-solid fa-pen"></i>
-                </button>
-              <% } %>
- 
-              <% if (user.permissions.includes('COURSE_DELETE')) { %>
-                <!-- Xóa khóa học -->
-                <form action="/course-management/<%= course.id %>/delete" method="POST" style="display: inline;" onsubmit="return confirm('Bạn có chắc chắn muốn xóa khóa học này cùng toàn bộ bài học kèm theo?')">
-                  <button type="submit" class="btn btn-danger" style="padding: 0.35rem 0.75rem; font-size: 0.8rem;" title="Xóa khóa học">
-                    <i class="fa-solid fa-trash-can"></i>
-                  </button>
-                </form>
-              <% } %>
-            </div>
-          </td>
-        </tr>
-      <% }) %>
-    </tbody>
-  </table>
+            <% } else { %>
+              <button class="cm-page-btn" disabled>
+                <i class="fa-solid fa-chevron-left" style="font-size:0.7rem;"></i> Trước
+              </button>
+            <% } %>
 
-  <!-- Bộ điều hướng phân trang (Pagination UI) -->
-  <% if (totalCourses > 0) { %>
-    <div style="margin-top: 1.5rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; border-top: 1px solid var(--border-light); padding-top: 1.25rem;">
-      <div style="color: var(--text-muted); font-size: 0.88rem;">
-        Hiển thị từ <strong><%= (currentPage - 1) * 15 + 1 %></strong> đến <strong><%= Math.min(currentPage * 15, totalCourses) %></strong> trong tổng số <strong><%= totalCourses %></strong> khóa học
-      </div>
-      
-      <% if (totalPages > 1) { %>
-        <div style="display: flex; gap: 0.4rem; align-items: center;">
-          <!-- Nút về trang trước -->
-          <% if (currentPage > 1) { %>
-            <a href="/course-management?page=<%= currentPage - 1 %>" class="btn btn-secondary btn-pagination" style="padding: 0.45rem 0.85rem; font-size: 0.82rem; border-radius: 8px; display: flex; align-items: center; gap: 0.35rem;" title="Trang trước">
-              <i class="fa-solid fa-chevron-left" style="font-size: 0.75rem;"></i> Trước
-            </a>
-          <% } else { %>
-            <button class="btn btn-secondary btn-pagination" disabled style="padding: 0.45rem 0.85rem; font-size: 0.82rem; border-radius: 8px; display: flex; align-items: center; gap: 0.35rem; opacity: 0.4; cursor: not-allowed;" title="Trang trước">
-              <i class="fa-solid fa-chevron-left" style="font-size: 0.75rem;"></i> Trước
-            </button>
-          <% } %>
-
-          <!-- Danh sách các trang -->
-          <% 
-            let startPage = Math.max(1, currentPage - 2);
-            let endPage = Math.min(totalPages, currentPage + 2);
-            
-            if (startPage > 1) { %>
-              <a href="/course-management?page=1" class="btn btn-secondary btn-pagination" style="padding: 0.45rem 0.85rem; font-size: 0.82rem; border-radius: 8px;">1</a>
-              <% if (startPage > 2) { %>
-                <span style="color: var(--text-muted); padding: 0 0.25rem;">...</span>
-              <% } %>
+            <%
+              let startPage = Math.max(1, currentPage - 2);
+              let endPage   = Math.min(totalPages, currentPage + 2);
+            %>
+            <% if (startPage > 1) { %>
+              <a href="/course-management?page=1" class="cm-page-btn">1</a>
+              <% if (startPage > 2) { %><span class="cm-page-sep">…</span><% } %>
             <% } %>
 
             <% for (let i = startPage; i <= endPage; i++) { %>
               <% if (i === currentPage) { %>
-                <span class="btn btn-primary" style="padding: 0.45rem 0.85rem; font-size: 0.82rem; border-radius: 8px; font-weight: 700; cursor: default; background: var(--primary-gradient); border: none; box-shadow: 0 4px 15px rgba(99, 102, 241, 0.35);"><%= i %></span>
+                <span class="cm-page-btn active"><%= i %></span>
               <% } else { %>
-                <a href="/course-management?page=<%= i %>" class="btn btn-secondary btn-pagination" style="padding: 0.45rem 0.85rem; font-size: 0.82rem; border-radius: 8px;"><%= i %></a>
+                <a href="/course-management?page=<%= i %>" class="cm-page-btn"><%= i %></a>
               <% } %>
             <% } %>
 
             <% if (endPage < totalPages) { %>
-              <% if (endPage < totalPages - 1) { %>
-                <span style="color: var(--text-muted); padding: 0 0.25rem;">...</span>
-              <% } %>
-              <a href="/course-management?page=<%= totalPages %>" class="btn btn-secondary btn-pagination" style="padding: 0.45rem 0.85rem; font-size: 0.82rem; border-radius: 8px;"><%= totalPages %></a>
-            <% } 
-          %>
+              <% if (endPage < totalPages - 1) { %><span class="cm-page-sep">…</span><% } %>
+              <a href="/course-management?page=<%= totalPages %>" class="cm-page-btn"><%= totalPages %></a>
+            <% } %>
 
-          <!-- Nút sang trang sau -->
-          <% if (currentPage < totalPages) { %>
-            <a href="/course-management?page=<%= currentPage + 1 %>" class="btn btn-secondary btn-pagination" style="padding: 0.45rem 0.85rem; font-size: 0.82rem; border-radius: 8px; display: flex; align-items: center; gap: 0.35rem;" title="Trang sau">
-              Sau <i class="fa-solid fa-chevron-right" style="font-size: 0.75rem;"></i>
-            </a>
-          <% } else { %>
-            <button class="btn btn-secondary btn-pagination" disabled style="padding: 0.45rem 0.85rem; font-size: 0.82rem; border-radius: 8px; display: flex; align-items: center; gap: 0.35rem; opacity: 0.4; cursor: not-allowed;" title="Trang sau">
-              Sau <i class="fa-solid fa-chevron-right" style="font-size: 0.75rem;"></i>
-            </button>
-          <% } %>
-        </div>
-      <% } %>
-    </div>
-  <% } else { %>
-    <div style="text-align: center; padding: 3.5rem 1.5rem; color: var(--text-muted);">
-      <i class="fa-solid fa-graduation-cap" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.3; display: block;"></i>
-      <span style="font-size: 0.95rem;">Chưa có khóa học nào trong hệ thống.</span>
-    </div>
+            <% if (currentPage < totalPages) { %>
+              <a href="/course-management?page=<%= currentPage + 1 %>" class="cm-page-btn" title="Trang sau">
+                Sau <i class="fa-solid fa-chevron-right" style="font-size:0.7rem;"></i>
+              </a>
+            <% } else { %>
+              <button class="cm-page-btn" disabled>
+                Sau <i class="fa-solid fa-chevron-right" style="font-size:0.7rem;"></i>
+              </button>
+            <% } %>
+          </div>
+        <% } %>
+      </div>
+    <% } %>
+
   <% } %>
 </div>
- 
-<!-- Modal Sửa Khóa Học Mờ Kính -->
-<div id="edit-course-modal" class="glass-card" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 500px; max-width: 90%; z-index: 1000; box-shadow: 0 10px 50px rgba(0,0,0,0.8); border-color: var(--border-glow);">
-  <h3 style="font-size: 1.3rem; margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center;">
-    <span><i class="fa-solid fa-pen-to-square" style="color: #8b5cf6;"></i> Sửa Thông Tin Khóa Học</span>
-    <button class="btn btn-secondary" onclick="closeEditForm()" style="padding: 0.25rem 0.5rem; font-size: 0.85rem;"><i class="fa-solid fa-xmark"></i></button>
-  </h3>
-  <form id="edit-course-form-element" action="" method="POST">
-    <div class="form-group">
-      <label class="form-label">Tiêu đề khóa học</label>
-      <input type="text" id="edit-title" name="title" required>
+
+<%- /* ====== MODAL OVERLAY ====== */ '' %>
+<div id="cm-modal-overlay" class="cm-modal-overlay" onclick="closeAllModals()"></div>
+
+<%- /* ====== EDIT MODAL ====== */ '' %>
+<div id="edit-course-modal" class="cm-modal">
+  <div class="cm-modal-header">
+    <div class="cm-modal-title">
+      <i class="fa-solid fa-pen-to-square" style="color: #6366f1;"></i> Sửa Thông Tin Khóa Học
     </div>
-    
-    <div class="form-group">
+    <button class="cm-modal-close" onclick="closeEditForm()"><i class="fa-solid fa-xmark"></i></button>
+  </div>
+  <form id="edit-course-form-element" action="" method="POST">
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+      <div class="form-group" style="margin-bottom: 0;">
+        <label class="form-label">Tiêu đề khóa học</label>
+        <input type="text" id="edit-title" name="title" required>
+      </div>
+      <div class="form-group" style="margin-bottom: 0;">
+        <label class="form-label">Đường dẫn ảnh đại diện</label>
+        <input type="text" id="edit-image-url" name="image_url">
+      </div>
+    </div>
+    <div class="form-group" style="margin-top: 1rem;">
       <label class="form-label">Mô tả tóm tắt</label>
       <textarea id="edit-description" name="description" rows="3" required></textarea>
     </div>
- 
-    <div class="form-group">
-      <label class="form-label">Đường dẫn ảnh đại diện (Ảnh URL)</label>
-      <input type="text" id="edit-image-url" name="image_url">
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+      <div class="form-group" style="margin-bottom: 0;">
+        <label class="form-label">Hình thức đăng ký học</label>
+        <select id="edit-enrollment-type" name="enrollment_type">
+          <option value="open">Tự học (Không cần duyệt)</option>
+          <option value="restricted">Cần phê duyệt</option>
+        </select>
+      </div>
+      <div class="form-group" style="margin-bottom: 0;">
+        <label class="form-label">Trạng thái xuất bản</label>
+        <select id="edit-status" name="status">
+          <option value="draft">Bản nháp</option>
+          <option value="published">Công khai</option>
+        </select>
+      </div>
     </div>
- 
-    <div class="form-group">
-      <label class="form-label">Hình thức đăng ký học</label>
-      <select id="edit-enrollment-type" name="enrollment_type" style="width: 100%; padding: 0.65rem 1rem; background: rgba(15, 23, 42, 0.5); border: 1px solid var(--border-light); border-radius: 8px; color: var(--text-main); font-size: 0.9rem; outline: none;">
-        <option value="open">Tự học (Học ngay, không cần xét duyệt)</option>
-        <option value="restricted">Cần phê duyệt (Gửi yêu cầu, đợi HR/Admin duyệt)</option>
-      </select>
-    </div>
-
-    <div class="form-group">
-      <label class="form-label">Trạng thái xuất bản</label>
-      <select id="edit-status" name="status">
-        <option value="draft">Bản nháp (Draft)</option>
-        <option value="published">Công khai (Published)</option>
-      </select>
-    </div>
- 
-    <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
-      <button type="submit" class="btn btn-primary">Cập nhật</button>
+    <div style="display: flex; gap: 0.75rem; margin-top: 1.5rem; justify-content: flex-end;">
       <button type="button" class="btn btn-secondary" onclick="closeEditForm()">Hủy</button>
+      <button type="submit" class="btn btn-primary"><i class="fa-solid fa-floppy-disk"></i> Cập nhật</button>
     </div>
   </form>
 </div>
-<!-- Lớp phủ modal -->
-<div id="modal-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); z-index: 999;"></div>
 
-<!-- Render các Modal Giao Khóa Học ở cấp độ gốc -->
+<%- /* ====== ASSIGN COURSE MODALS ====== */ '' %>
 <% if (user.permissions.includes('ENROLL_ASSIGN') && courses.length > 0) { %>
   <% courses.forEach(course => { %>
-    <div id="assignCourseModal-<%= course.id %>" class="glass-card" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 640px; max-width: 95%; max-height: 85vh; overflow-y: auto; z-index: 2050; box-shadow: 0 10px 50px rgba(0,0,0,0.9); border-color: var(--border-glow); padding: 1.75rem;">
-      <h3 style="font-size: 1.3rem; margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-light); padding-bottom: 0.75rem;">
-        <span><i class="fa-solid fa-user-plus" style="color: #10b981; margin-right: 0.5rem;"></i>Giao Khóa Học: <%= course.title %></span>
-        <button type="button" class="btn btn-secondary" onclick="closeAssignCourseModal(<%= course.id %>)" style="padding: 0.25rem 0.5rem; font-size: 0.85rem;"><i class="fa-solid fa-xmark"></i></button>
-      </h3>
-      
+    <div id="assignCourseModal-<%= course.id %>" class="cm-modal cm-assign-modal">
+      <div class="cm-modal-header">
+        <div class="cm-modal-title">
+          <i class="fa-solid fa-user-plus" style="color: #10b981;"></i>
+          Giao Khóa Học: <span style="color: #6366f1; margin-left: 0.3rem;"><%= course.title %></span>
+        </div>
+        <button class="cm-modal-close" onclick="closeAssignCourseModal(<%= course.id %>)">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
       <form action="/course-management/<%= course.id %>/assign" method="POST">
-        <div style="display: grid; grid-template-columns: 1fr 1.3fr; gap: 1.5rem; margin-bottom: 1.5rem; text-align: left;">
-          
-          <!-- Cột trái: Chọn Phòng ban -->
+        <div style="display: grid; grid-template-columns: 1fr 1.3fr; gap: 1.25rem; margin-bottom: 1.25rem;">
+
+          <%- /* Cột trái: Phòng ban */ '' %>
           <div>
-            <h4 style="font-size: 0.92rem; margin-bottom: 0.75rem; color: #06b6d4; display: flex; justify-content: space-between; align-items: center;">
-              <span><i class="fa-solid fa-building"></i> Chọn Phòng ban</span>
-              <button type="button" onclick="selectAllDeptsForCourse(<%= course.id %>)" style="background: none; border: none; color: var(--text-accent); font-size: 0.72rem; cursor: pointer; font-weight: 600;">Chọn hết</button>
-            </h4>
-            <div style="background: rgba(0,0,0,0.4); border: 1px solid var(--border-light); border-radius: 8px; padding: 0.75rem; max-height: 270px; overflow-y: auto; display: flex; flex-direction: column; gap: 0.5rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.6rem;">
+              <label style="font-size: 0.82rem; font-weight: 700; color: #06b6d4;">
+                <i class="fa-solid fa-building"></i> Phòng ban
+              </label>
+              <button type="button" onclick="selectAllDeptsForCourse(<%= course.id %>)"
+                      class="cm-assign-group-btn">Chọn hết</button>
+            </div>
+            <div class="cm-assign-panel">
               <% departments.forEach(d => { %>
-                <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; cursor: pointer; color: #cbd5e1;">
-                  <input type="checkbox" name="departmentIds" value="<%= d.id %>" class="course-dept-check-<%= course.id %>">
-                  <%= d.name %>
+                <label class="cm-assign-label">
+                  <input type="checkbox" name="departmentIds" value="<%= d.id %>"
+                         class="course-dept-check-<%= course.id %>" style="accent-color:#6366f1; width:14px; height:14px;">
+                  <span><%= d.name %></span>
                 </label>
               <% }) %>
             </div>
           </div>
 
-          <!-- Cột phải: Chọn Cá nhân -->
+          <%- /* Cột phải: Cá nhân */ '' %>
           <div>
-            <h4 style="font-size: 0.92rem; margin-bottom: 0.75rem; color: #a78bfa; display: flex; justify-content: space-between; align-items: center;">
-              <span><i class="fa-solid fa-users"></i> Chọn Cá nhân</span>
-              <button type="button" onclick="selectAllUsersForCourse(<%= course.id %>)" style="background: none; border: none; color: var(--text-accent); font-size: 0.72rem; cursor: pointer; font-weight: 600;">Chọn hết</button>
-            </h4>
-
-            <!-- Ô tìm kiếm nhân sự thời gian thực -->
-            <div style="margin-bottom: 0.5rem; position: relative;">
-              <i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 0.6rem; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 0.8rem;"></i>
-              <input type="text" id="courseUserSearch-<%= course.id %>" placeholder="Tìm tên nhân sự..." oninput="filterCourseUsersList(<%= course.id %>)" style="width: 100%; padding: 0.45rem 0.6rem 0.45rem 1.8rem; background: rgba(255,255,255,0.05); border: 1px solid var(--border-light); border-radius: 6px; color: var(--text-main); font-size: 0.8rem; outline: none; box-sizing: border-box;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.6rem;">
+              <label style="font-size: 0.82rem; font-weight: 700; color: #8b5cf6;">
+                <i class="fa-solid fa-users"></i> Cá nhân
+              </label>
+              <button type="button" onclick="selectAllUsersForCourse(<%= course.id %>)"
+                      class="cm-assign-group-btn">Chọn hết</button>
             </div>
-
-            <!-- Container danh sách nhân sự phân nhóm -->
-            <div id="courseUsersListContainer-<%= course.id %>" style="background: rgba(0,0,0,0.4); border: 1px solid var(--border-light); border-radius: 8px; padding: 0.75rem; max-height: 220px; overflow-y: auto; display: flex; flex-direction: column; gap: 0.75rem;">
-              <% 
+            <div class="cm-search-box">
+              <i class="fa-solid fa-magnifying-glass"></i>
+              <input type="text"
+                     id="courseUserSearch-<%= course.id %>"
+                     placeholder="Tìm tên nhân sự..."
+                     oninput="filterCourseUsersList(<%= course.id %>)">
+            </div>
+            <div id="courseUsersListContainer-<%= course.id %>" class="cm-assign-panel" style="max-height: 200px;">
+              <%
                 const groupedUsers = {};
-                departments.forEach(d => {
-                  groupedUsers[d.id] = { name: d.name, list: [] };
-                });
+                departments.forEach(d => { groupedUsers[d.id] = { name: d.name, list: [] }; });
                 groupedUsers['none'] = { name: 'Không thuộc phòng ban', list: [] };
-
                 users.forEach(u => {
                   const dId = u.department_id || 'none';
-                  if (!groupedUsers[dId]) {
-                    groupedUsers[dId] = { name: u.department_name || 'Không thuộc phòng ban', list: [] };
-                  }
+                  if (!groupedUsers[dId]) groupedUsers[dId] = { name: u.department_name || 'Không thuộc phòng ban', list: [] };
                   groupedUsers[dId].list.push(u);
                 });
               %>
               <% Object.keys(groupedUsers).forEach(dId => { %>
                 <% if (groupedUsers[dId].list.length > 0) { %>
                   <div class="course-user-group-container-<%= course.id %>" data-dept-id="<%= dId %>">
-                    <div class="user-group-header" style="font-size: 0.78rem; font-weight: 700; color: #a78bfa; margin-bottom: 0.35rem; border-bottom: 1px solid rgba(167, 139, 250, 0.15); padding-bottom: 0.15rem; display: flex; justify-content: space-between; align-items: center;">
-                      <span><i class="fa-solid fa-folder-open" style="font-size: 0.7rem; margin-right: 0.25rem;"></i> <%= groupedUsers[dId].name %></span>
-                      <button type="button" onclick="selectCourseGroupUsers(<%= course.id %>, '<%= dId %>')" style="background: none; border: none; color: var(--text-accent); font-size: 0.65rem; cursor: pointer; font-weight: 600; padding: 0;">Chọn nhóm</button>
+                    <div class="cm-assign-group-header">
+                      <span><i class="fa-solid fa-folder-open" style="font-size:0.68rem; margin-right:0.2rem;"></i> <%= groupedUsers[dId].name %></span>
+                      <button type="button" onclick="selectCourseGroupUsers(<%= course.id %>, '<%= dId %>')"
+                              class="cm-assign-group-btn">Chọn nhóm</button>
                     </div>
-                    <div style="display: flex; flex-direction: column; gap: 0.4rem; padding-left: 0.4rem;">
+                    <div style="display: flex; flex-direction: column; gap: 0.2rem; padding-left: 0.35rem; margin-top: 0.25rem;">
                       <% groupedUsers[dId].list.forEach(u => { %>
-                        <label class="course-user-item-label-<%= course.id %>" data-search-name="<%= u.username.toLowerCase() %>" style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; cursor: pointer; color: #cbd5e1;">
-                          <input type="checkbox" name="userIds" value="<%= u.id %>" class="course-user-check-<%= course.id %>" data-dept-id="<%= dId %>">
+                        <label class="cm-assign-label course-user-item-label-<%= course.id %>"
+                               data-search-name="<%= u.username.toLowerCase() %>">
+                          <input type="checkbox" name="userIds" value="<%= u.id %>"
+                                 class="course-user-check-<%= course.id %>"
+                                 data-dept-id="<%= dId %>"
+                                 style="accent-color:#6366f1; width:14px; height:14px;">
                           <span><%= u.username %></span>
                         </label>
                       <% }) %>
@@ -345,17 +858,16 @@
                 <% } %>
               <% }) %>
             </div>
-
           </div>
 
         </div>
 
-        <div style="margin-top: 1rem; margin-bottom: 1.5rem; text-align: left;">
-          <label class="form-label" style="font-size: 0.85rem; margin-bottom: 0.4rem; display: block;">Thời hạn hoàn thành (ngày)</label>
-          <input type="number" name="timeLimitDays" min="1" placeholder="Ví dụ: 30 (Bỏ trống nếu không giới hạn)" style="width: 100%; padding: 0.65rem 1rem; background: rgba(255,255,255,0.05); border: 1px solid var(--border-light); border-radius: 10px; color: var(--text-main); font-size: 0.9rem; outline: none; box-sizing: border-box;">
+        <div class="form-group">
+          <label class="form-label">Thời hạn hoàn thành (ngày)</label>
+          <input type="number" name="timeLimitDays" min="1" placeholder="Bỏ trống nếu không giới hạn">
         </div>
 
-        <div style="display: flex; gap: 1rem; justify-content: flex-end; border-top: 1px solid var(--border-light); padding-top: 1.25rem;">
+        <div style="display: flex; gap: 0.75rem; justify-content: flex-end; border-top: 1px solid var(--border-light); padding-top: 1.25rem; margin-top: 0.5rem;">
           <button type="button" class="btn btn-secondary" onclick="closeAssignCourseModal(<%= course.id %>)">Hủy</button>
           <button type="submit" class="btn btn-primary"><i class="fa-solid fa-check"></i> Xác nhận giao</button>
         </div>
@@ -365,133 +877,84 @@
 <% } %>
 
 <script>
+  /* ---- Toggle create form ---- */
   function toggleCreateForm() {
     const form = document.getElementById('create-course-form');
-    form.style.display = form.style.display === 'none' ? 'block' : 'none';
+    const isHidden = form.style.display === 'none' || form.style.display === '';
+    form.style.display = isHidden ? 'block' : 'none';
   }
- 
+
+  /* ---- Edit modal ---- */
   function openEditForm(id, title, desc, imageUrl, status, enrollmentType) {
     document.getElementById('edit-course-form-element').action = `/course-management/${id}/update`;
     document.getElementById('edit-title').value = title;
     document.getElementById('edit-description').value = desc;
-    document.getElementById('edit-image-url').value = imageUrl;
+    document.getElementById('edit-image-url').value = imageUrl || '';
     document.getElementById('edit-status').value = status;
     document.getElementById('edit-enrollment-type').value = enrollmentType || 'open';
-    
-    document.getElementById('edit-course-modal').style.display = 'block';
-    document.getElementById('modal-overlay').style.display = 'block';
+    showModal('edit-course-modal');
   }
+  function closeEditForm() { hideModal('edit-course-modal'); }
 
-  function closeEditForm() {
-    document.getElementById('edit-course-modal').style.display = 'none';
-    document.getElementById('modal-overlay').style.display = 'none';
-  }
-
+  /* ---- Assign modal ---- */
   function openAssignCourseModal(courseId) {
-    document.getElementById(`assignCourseModal-${courseId}`).style.display = 'block';
-    document.getElementById('modal-overlay').style.display = 'block';
+    showModal(`assignCourseModal-${courseId}`);
   }
-
   function closeAssignCourseModal(courseId) {
-    document.getElementById(`assignCourseModal-${courseId}`).style.display = 'none';
-    document.getElementById('modal-overlay').style.display = 'none';
+    hideModal(`assignCourseModal-${courseId}`);
   }
 
+  /* ---- Core modal helpers ---- */
+  function showModal(id) {
+    document.getElementById(id).style.display = 'block';
+    document.getElementById('cm-modal-overlay').style.display = 'block';
+    document.body.style.overflow = 'hidden';
+  }
+  function hideModal(id) {
+    document.getElementById(id).style.display = 'none';
+    const anyOpen = document.querySelectorAll('.cm-modal[style*="display: block"]').length > 0;
+    if (!anyOpen) {
+      document.getElementById('cm-modal-overlay').style.display = 'none';
+      document.body.style.overflow = '';
+    }
+  }
+  function closeAllModals() {
+    document.querySelectorAll('.cm-modal').forEach(m => m.style.display = 'none');
+    document.getElementById('cm-modal-overlay').style.display = 'none';
+    document.body.style.overflow = '';
+  }
+
+  /* ---- Select helpers ---- */
   function selectAllDeptsForCourse(courseId) {
-    const checkboxes = document.querySelectorAll(`.course-dept-check-${courseId}`);
-    const allChecked = Array.from(checkboxes).every(cb => cb.checked);
-    checkboxes.forEach(cb => cb.checked = !allChecked);
+    const cbs = document.querySelectorAll(`.course-dept-check-${courseId}`);
+    const allChecked = Array.from(cbs).every(cb => cb.checked);
+    cbs.forEach(cb => cb.checked = !allChecked);
   }
-
   function selectAllUsersForCourse(courseId) {
-    const checkboxes = document.querySelectorAll(`.course-user-check-${courseId}`);
-    const visibleCheckboxes = Array.from(checkboxes).filter(cb => {
-      const parentLabel = cb.closest(`.course-user-item-label-${courseId}`);
-      return parentLabel && parentLabel.style.display !== 'none';
-    });
-    const allChecked = visibleCheckboxes.every(cb => cb.checked);
-    visibleCheckboxes.forEach(cb => cb.checked = !allChecked);
+    const cbs = Array.from(document.querySelectorAll(`.course-user-check-${courseId}`))
+                     .filter(cb => cb.closest(`.course-user-item-label-${courseId}`)?.style.display !== 'none');
+    const allChecked = cbs.every(cb => cb.checked);
+    cbs.forEach(cb => cb.checked = !allChecked);
   }
-
   function selectCourseGroupUsers(courseId, deptId) {
-    const checkboxes = document.querySelectorAll(`.course-user-check-${courseId}[data-dept-id="${deptId}"]`);
-    const visibleCheckboxes = Array.from(checkboxes).filter(cb => {
-      const parentLabel = cb.closest(`.course-user-item-label-${courseId}`);
-      return parentLabel && parentLabel.style.display !== 'none';
-    });
-    const allChecked = visibleCheckboxes.every(cb => cb.checked);
-    visibleCheckboxes.forEach(cb => cb.checked = !allChecked);
+    const cbs = Array.from(document.querySelectorAll(`.course-user-check-${courseId}[data-dept-id="${deptId}"]`))
+                     .filter(cb => cb.closest(`.course-user-item-label-${courseId}`)?.style.display !== 'none');
+    const allChecked = cbs.every(cb => cb.checked);
+    cbs.forEach(cb => cb.checked = !allChecked);
   }
-
   function filterCourseUsersList(courseId) {
     const query = document.getElementById(`courseUserSearch-${courseId}`).value.toLowerCase().trim();
     const container = document.getElementById(`courseUsersListContainer-${courseId}`);
-    const groups = container.querySelectorAll(`.course-user-group-container-${courseId}`);
-
-    groups.forEach(group => {
-      let visibleInGroup = 0;
-      const items = group.querySelectorAll(`.course-user-item-label-${courseId}`);
-      
-      items.forEach(item => {
-        const name = item.getAttribute('data-search-name');
-        if (name.includes(query)) {
-          item.style.display = 'flex';
-          visibleInGroup++;
-        } else {
-          item.style.display = 'none';
-        }
+    container.querySelectorAll(`.course-user-group-container-${courseId}`).forEach(group => {
+      let visible = 0;
+      group.querySelectorAll(`.course-user-item-label-${courseId}`).forEach(item => {
+        const match = item.getAttribute('data-search-name').includes(query);
+        item.style.display = match ? 'flex' : 'none';
+        if (match) visible++;
       });
-
-      if (visibleInGroup > 0) {
-        group.style.display = 'block';
-      } else {
-        group.style.display = 'none';
-      }
+      group.style.display = visible > 0 ? 'block' : 'none';
     });
   }
-
-  // Đóng modal khi nhấp ra ngoài (lớp phủ)
-  document.addEventListener('DOMContentLoaded', () => {
-    const overlay = document.getElementById('modal-overlay');
-    if (overlay) {
-      overlay.addEventListener('click', () => {
-        const editModal = document.getElementById('edit-course-modal');
-        if (editModal) editModal.style.display = 'none';
-        
-        const assignModals = document.querySelectorAll('[id^="assignCourseModal-"]');
-        assignModals.forEach(m => m.style.display = 'none');
-        
-        overlay.style.display = 'none';
-      });
-    }
-  });
 </script>
-
-<style>
-  @keyframes slideDown {
-    from { opacity: 0; transform: translateY(-10px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-
-  .btn-pagination {
-    background: rgba(255, 255, 255, 0.05) !important;
-    color: var(--text-muted) !important;
-    border: 1px solid var(--border-light) !important;
-    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-  }
-  .btn-pagination:hover:not([disabled]) {
-    background: rgba(255, 255, 255, 0.1) !important;
-    color: #fff !important;
-    border-color: rgba(99, 102, 241, 0.5) !important;
-    box-shadow: 0 0 12px rgba(99, 102, 241, 0.3) !important;
-    transform: translateY(-1px);
-  }
-  .btn-pagination:active:not([disabled]) {
-    transform: translateY(1px);
-  }
-</style>
 
 <%- include('../partials/footer') %>

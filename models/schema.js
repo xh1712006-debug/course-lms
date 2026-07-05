@@ -587,6 +587,64 @@ module.exports = {
       return res.rows;
     },
 
+    findPagedSubmissions: async ({ search, status, courseId, limit = 20, offset = 0 }) => {
+      let whereClauses = [];
+      let params = [];
+      
+      if (search) {
+        params.push(`%${search}%`);
+        whereClauses.push(`(u.username ILIKE $${params.length} OR u.email ILIKE $${params.length} OR q.title ILIKE $${params.length})`);
+      }
+      
+      if (status) {
+        if (status === 'passed') {
+          whereClauses.push(`qs.is_passed = true`);
+        } else if (status === 'failed') {
+          whereClauses.push(`qs.is_passed = false`);
+        }
+      }
+      
+      if (courseId) {
+        params.push(parseInt(courseId));
+        whereClauses.push(`q.course_id = $${params.length}`);
+      }
+      
+      const whereSQL = whereClauses.length > 0 ? `WHERE ${whereClauses.join(' AND ')}` : '';
+      
+      const countSql = `
+        SELECT COUNT(*)::integer as total
+        FROM quiz_submissions qs
+        JOIN users u ON qs.user_id = u.id
+        JOIN quizzes q ON qs.quiz_id = q.id
+        JOIN courses c ON q.course_id = c.id
+        ${whereSQL}
+      `;
+      const countRes = await db.query(countSql, params);
+      const total = countRes.rows[0] ? countRes.rows[0].total : 0;
+      
+      params.push(limit);
+      const limitParamIndex = params.length;
+      params.push(offset);
+      const offsetParamIndex = params.length;
+      
+      const dataSql = `
+        SELECT qs.*, u.username, u.email, q.title as quiz_title, c.title as course_title
+        FROM quiz_submissions qs
+        JOIN users u ON qs.user_id = u.id
+        JOIN quizzes q ON qs.quiz_id = q.id
+        JOIN courses c ON q.course_id = c.id
+        ${whereSQL}
+        ORDER BY qs.created_at DESC
+        LIMIT $${limitParamIndex} OFFSET $${offsetParamIndex}
+      `;
+      
+      const dataRes = await db.query(dataSql, params);
+      return {
+        total,
+        submissions: dataRes.rows
+      };
+    },
+
     grade: async (id, score, isPassed, feedback, gradedBy) => {
       const sql = `
         UPDATE quiz_submissions 

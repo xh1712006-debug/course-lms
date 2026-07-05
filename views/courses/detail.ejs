@@ -1,4 +1,4 @@
-<%- include('../partials/header') %>
+﻿<%- include('../partials/header') %>
 
 <style>
   /* ========================================== */
@@ -130,7 +130,7 @@
   .lesson-number {
     font-size: 1.2rem;
     font-weight: 800;
-    font-family: var(--font-title);
+    
     color: var(--text-accent);
     background: rgba(79, 70, 229, 0.06);
     width: 42px;
@@ -165,7 +165,7 @@
       <% } %>
     </div>
     
-    <h1 style="font-size: 2rem; font-weight: 800; font-family: var(--font-title); margin-top: 0.25rem; margin-bottom: 0.75rem; line-height: 1.3;">
+    <h1 style="font-size: 1.5rem; font-weight: 700; margin-top: 0.25rem; margin-bottom: 0.75rem; line-height: 1.3;">
       <%= course.title %>
     </h1>
     <p style="color: var(--text-muted); font-size: 0.95rem; line-height: 1.6; margin-bottom: 0;"><%= course.description %></p>
@@ -253,7 +253,7 @@
   
   <!-- Cột bên trái: Danh sách các bài giảng -->
   <div>
-    <h2 style="font-size: 1.35rem; font-weight: 700; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 0.5rem; font-family: var(--font-title); color: var(--text-main);">
+    <h2 style="font-size: 1.35rem; font-weight: 700; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 0.5rem;  color: var(--text-main);">
       <i class="fa-solid fa-list-check" style="color: #6366f1;"></i> Nội dung chi tiết bài học
     </h2>
     
@@ -311,7 +311,7 @@
 
   <!-- Cột bên phải: Đề kiểm tra đánh giá -->
   <div>
-    <h2 style="font-size: 1.35rem; font-weight: 700; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 0.5rem; font-family: var(--font-title); color: var(--text-main);">
+    <h2 style="font-size: 1.35rem; font-weight: 700; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 0.5rem;  color: var(--text-main);">
       <i class="fa-solid fa-award" style="color: #0d9488;"></i> Đánh giá & Điều kiện đạt
     </h2>
     
@@ -322,7 +322,7 @@
           <p style="color: var(--text-muted); font-size: 0.85rem; margin: 0; line-height: 1.5;">Khóa học này chưa được thiết lập bài kiểm tra trắc nghiệm cuối khóa.</p>
         </div>
       <% } else { %>
-        <h4 style="font-weight: 700; font-size: 1.05rem; margin-bottom: 0.75rem; color: var(--text-main); font-family: var(--font-title);"><%= quiz.title %></h4>
+        <h4 style="font-weight: 700; font-size: 1.05rem; margin-bottom: 0.75rem; color: var(--text-main); "><%= quiz.title %></h4>
         
         <ul style="list-style: none; font-size: 0.85rem; color: var(--text-muted); display: flex; flex-direction: column; gap: 0.75rem; margin-bottom: 1.5rem; padding: 0;">
           <li style="display: flex; align-items: center; gap: 0.5rem;">

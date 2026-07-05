@@ -1,208 +1,727 @@
 <%- include('../partials/header') %>
 
-<div style="margin-bottom: 2rem;">
-  <h1 style="font-size: 2.2rem; font-weight: 800; background: var(--primary-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
-    Lộ Trình Đào Tạo (Learning Paths)
-  </h1>
-  <p style="color: var(--text-muted); margin-top: 0.25rem;">Gom nhóm nhiều khóa học riêng lẻ thành một chuỗi lộ trình bắt buộc cho từng vai trò nhân sự.</p>
-</div>
-
-<% if (typeof success !== 'undefined' && success) { %>
-  <div class="alert-banner alert-success" style="margin-bottom: 1.5rem; padding: 1rem 1.5rem; border-radius: 12px; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); color: #10b981; display: flex; align-items: center; gap: 0.75rem; font-size: 0.9rem;">
-    <i class="fa-solid fa-circle-check"></i>
-    <span><%= success %></span>
-  </div>
-<% } %>
-<% if (typeof error !== 'undefined' && error) { %>
-  <div class="alert-banner alert-error" style="margin-bottom: 1.5rem; padding: 1rem 1.5rem; border-radius: 12px; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); color: #f87171; display: flex; align-items: center; gap: 0.75rem; font-size: 0.9rem;">
-    <i class="fa-solid fa-circle-exclamation"></i>
-    <span><%= error %></span>
-  </div>
-<% } %>
+<%
+const canManagePath  = user.permissions.includes('PATH_MANAGE');
+const canAssignPath  = user.permissions.includes('ENROLL_ASSIGN');
+%>
 
 <style>
-  .path-item-card {
-    background: var(--bg-card);
-    border: 1px solid var(--border-light);
-    padding: 1.25rem;
+  /* ── Page ─────────────────────────────── */
+  .lp-layout {
+    display: grid;
+    gap: 1.75rem;
+    align-items: start;
+  }
+  .lp-layout.has-form {
+    grid-template-columns: 380px 1fr;
+  }
+  @media (max-width: 900px) {
+    .lp-layout.has-form { grid-template-columns: 1fr; }
+  }
+
+  /* ── Alerts ──────────────────────────── */
+  .lp-alert {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.85rem 1.2rem;
     border-radius: 12px;
-    transition: var(--transition-smooth);
-    box-shadow: var(--shadow-card);
+    font-size: 0.88rem;
+    font-weight: 500;
+    margin-bottom: 1.5rem;
   }
-  .path-item-card:hover {
-    transform: translateY(-2px);
-    border-color: var(--border-glow);
-    box-shadow: var(--shadow-hover);
-    background: rgba(255, 255, 255, 0.98);
+  .lp-alert-ok  { background:rgba(16,185,129,.08); border:1px solid rgba(16,185,129,.25); color:#059669; }
+  .lp-alert-err { background:rgba(239,68,68,.08);  border:1px solid rgba(239,68,68,.25);  color:#dc2626; }
+
+  /* ── Create form card ────────────────── */
+  .lp-form-card {
+    background: #fff;
+    border: 1px solid var(--border-light);
+    border-radius: 16px;
+    padding: 1.5rem;
+    box-shadow: 0 1px 4px rgba(0,0,0,.04);
+    position: sticky;
+    top: 1.5rem;
   }
-  .step-badge {
-    font-weight: 800; 
-    color: #06b6d4;
-    background: rgba(6, 182, 212, 0.08);
-    padding: 0.15rem 0.45rem;
+  .lp-form-title {
+    font-size: 0.97rem;
+    font-weight: 700;
+    color: var(--text-main);
+    margin: 0 0 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+  }
+
+  /* ── Course checkbox list ────────────── */
+  .lp-course-panel {
+    background: #f8fafc;
+    border: 1px solid var(--border-light);
+    border-radius: 9px;
+    padding: 0.6rem;
+    max-height: 168px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+  }
+  .lp-course-panel::-webkit-scrollbar { width: 4px; }
+  .lp-course-panel::-webkit-scrollbar-thumb { background:#cbd5e1; border-radius:4px; }
+  .lp-check-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.84rem;
+    cursor: pointer;
+    color: var(--text-main);
+    padding: 0.22rem 0.4rem;
     border-radius: 6px;
+    transition: background .14s;
+    user-select: none;
+  }
+  .lp-check-label:hover { background: rgba(99,102,241,.06); }
+  .lp-check-label input { accent-color: #6366f1; width:14px; height:14px; flex-shrink:0; }
+  .lp-select-all-btn {
+    background: none;
+    border: none;
     font-size: 0.72rem;
+    font-weight: 700;
+    color: #6366f1;
+    cursor: pointer;
+    font-family: var(--font-body);
+    padding: 0;
+    transition: color .15s;
   }
-  .virtual-scroll-container {
-    padding: 0 0.75rem !important;
-    scrollbar-width: thin;
-    scrollbar-color: rgba(255,255,255,0.2) transparent;
+  .lp-select-all-btn:hover { color: #4338ca; }
+  .lp-search-wrap {
+    position: relative;
+    margin-bottom: 0.5rem;
   }
-  .virtual-scroll-container::-webkit-scrollbar {
-    width: 6px;
+  .lp-search-wrap i {
+    position: absolute;
+    left: 0.75rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #94a3b8;
+    font-size: 0.78rem;
+    pointer-events: none;
   }
-  .virtual-scroll-container::-webkit-scrollbar-thumb {
-    background: rgba(255,255,255,0.2);
-    border-radius: 3px;
+  .lp-search-wrap input { padding-left: 2.1rem !important; }
+
+  /* ── Right panel ─────────────────────── */
+  .lp-right-card {
+    background: #fff;
+    border: 1px solid var(--border-light);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 1px 4px rgba(0,0,0,.04);
   }
-  .virtual-item {
-    height: 32px !important;
-    box-sizing: border-box !important;
-    display: flex !important;
-    align-items: center !important;
-    margin: 0 !important;
-    padding: 0 !important;
+  .lp-right-head {
+    padding: 1.1rem 1.4rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--border-light);
+    background: #fafbff;
+    flex-wrap: wrap;
+    gap: 0.75rem;
   }
-  .path-virtual-item {
-    height: 280px !important;
-    box-sizing: border-box !important;
-    margin-bottom: 1rem !important;
+  .lp-right-title {
+    font-size: 0.97rem;
+    font-weight: 700;
+    color: var(--text-main);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0;
+  }
+  .lp-count-pill {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 22px;
+    height: 22px;
+    padding: 0 0.5rem;
+    border-radius: 20px;
+    background: linear-gradient(135deg, #0d9488, #14b8a6);
+    color: #fff;
+    font-size: 0.72rem;
+    font-weight: 700;
+  }
+  .lp-path-search-wrap {
+    position: relative;
+    width: 220px;
+  }
+  .lp-path-search-wrap i {
+    position: absolute;
+    left: 0.75rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #94a3b8;
+    font-size: 0.8rem;
+    pointer-events: none;
+  }
+  .lp-path-search-wrap input {
+    padding-left: 2.2rem !important;
+    padding-top: 0.5rem !important;
+    padding-bottom: 0.5rem !important;
+    font-size: 0.84rem !important;
+    border-radius: 9px !important;
+  }
+
+  /* ── Path cards list ─────────────────── */
+  .lp-paths-list {
+    padding: 1rem 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+    max-height: 78vh;
+    overflow-y: auto;
+  }
+  .lp-paths-list::-webkit-scrollbar { width: 5px; }
+  .lp-paths-list::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 4px; }
+
+  .lp-path-card {
+    border: 1px solid var(--border-light);
+    border-radius: 13px;
+    padding: 1.1rem 1.25rem;
+    background: #fff;
+    transition: box-shadow .2s, border-color .2s;
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+  }
+  .lp-path-card:hover {
+    box-shadow: 0 4px 16px rgba(0,0,0,.07);
+    border-color: #c7d2fe;
+  }
+  .lp-path-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+  .lp-path-name {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #4f46e5;
+    margin: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    flex: 1;
+  }
+  .lp-path-actions {
+    display: flex;
+    gap: 0.35rem;
+    flex-shrink: 0;
+  }
+  .lp-icon-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    border-radius: 7px;
+    border: 1px solid #e2e8f0;
+    background: #fff;
+    cursor: pointer;
+    font-size: 0.8rem;
+    transition: all .18s;
+    font-family: var(--font-body);
+  }
+  .lp-icon-btn:hover { background: #f1f5f9; border-color: #94a3b8; }
+  .lp-icon-btn.edit  { color: #8b5cf6; }
+  .lp-icon-btn.edit:hover  { background: rgba(139,92,246,.08); border-color: rgba(139,92,246,.3); }
+  .lp-icon-btn.trash { color: #ef4444; }
+  .lp-icon-btn.trash:hover { background: rgba(239,68,68,.07); border-color: rgba(239,68,68,.28); }
+
+  .lp-path-desc {
+    font-size: 0.83rem;
+    color: var(--text-muted);
+    line-height: 1.5;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    margin: 0;
+  }
+
+  /* ── Course steps ─────────────────────── */
+  .lp-steps-label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    color: #94a3b8;
+    margin-bottom: 0.35rem;
+  }
+  .lp-steps {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    max-height: 88px;
+    overflow-y: auto;
+    padding-right: 0.2rem;
+  }
+  .lp-steps::-webkit-scrollbar { width: 3px; }
+  .lp-steps::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 3px; }
+  .lp-step-row {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    font-size: 0.81rem;
+    color: var(--text-main);
+  }
+  .lp-step-num {
+    font-size: 0.68rem;
+    font-weight: 700;
+    color: #06b6d4;
+    background: rgba(6,182,212,.09);
+    border: 1px solid rgba(6,182,212,.18);
+    border-radius: 5px;
+    padding: 0.08rem 0.38rem;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .lp-step-title {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .lp-no-courses {
+    font-size: 0.8rem;
+    color: #94a3b8;
+    font-style: italic;
+  }
+
+  /* ── Assign button ────────────────────── */
+  .lp-assign-bar {
+    border-top: 1px dashed #e2e8f0;
+    padding-top: 0.7rem;
+    margin-top: 0.25rem;
+  }
+  .lp-assign-btn {
+    width: 100%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.45rem;
+    padding: 0.55rem;
+    border-radius: 9px;
+    background: linear-gradient(135deg, #4f46e5, #6366f1);
+    color: #fff;
+    font-size: 0.84rem;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    font-family: var(--font-body);
+    box-shadow: 0 3px 10px rgba(79,70,229,.2);
+    transition: all .2s;
+  }
+  .lp-assign-btn:hover {
+    box-shadow: 0 5px 16px rgba(79,70,229,.35);
+    transform: translateY(-1px);
+  }
+
+  /* ── Empty / no-match ────────────────── */
+  .lp-empty {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: var(--text-muted);
+  }
+  .lp-empty i { font-size: 2rem; opacity: .25; display: block; margin-bottom: .75rem; }
+
+  /* ── Modal overlay ───────────────────── */
+  .lp-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(15,23,42,.45);
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+    z-index: 999;
+  }
+  .lp-modal {
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 520px;
+    max-width: 92vw;
+    max-height: 88vh;
+    overflow-y: auto;
+    z-index: 1000;
+    background: #fff;
+    border-radius: 18px;
+    padding: 1.75rem;
+    box-shadow: 0 20px 60px rgba(0,0,0,.16);
+    border: 1px solid #e2e8f0;
+  }
+  .lp-assign-modal { width: 660px; }
+  .lp-modal::-webkit-scrollbar { width: 5px; }
+  .lp-modal::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 4px; }
+  .lp-modal-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.25rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border-light);
+  }
+  .lp-modal-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text-main);
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    margin: 0;
+  }
+  .lp-modal-close {
+    width: 28px;
+    height: 28px;
+    border-radius: 7px;
+    border: 1px solid #e2e8f0;
+    background: #fff;
+    color: #94a3b8;
+    cursor: pointer;
+    font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all .18s;
+    font-family: var(--font-body);
+  }
+  .lp-modal-close:hover { background: #f1f5f9; color: var(--text-main); }
+
+  /* assign modal panels */
+  .lp-assign-panel {
+    background: #f8fafc;
+    border: 1px solid var(--border-light);
+    border-radius: 9px;
+    padding: 0.6rem;
+    max-height: 240px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 0.28rem;
+  }
+  .lp-assign-panel::-webkit-scrollbar { width: 4px; }
+  .lp-assign-panel::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+  .lp-assign-group-label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: #8b5cf6;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    padding: 0.18rem 0.2rem;
+    border-bottom: 1px solid rgba(139,92,246,.12);
+    margin-top: 0.2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .lp-assign-group-btn {
+    background: none; border: none; font-size: .68rem;
+    color: #6366f1; cursor: pointer; font-weight: 700;
+    font-family: var(--font-body);
   }
 </style>
 
-<%
-const canManagePath = user.permissions.includes('PATH_MANAGE');
-%>
-<div style="display: grid; <%= canManagePath ? 'grid-template-columns: 1fr 1.8fr;' : 'grid-template-columns: 1fr;' %> gap: 2rem; align-items: start;">
-  
-  <!-- Cột bên trái: Thêm lộ trình mới -->
+<!-- ── Alerts ──────────────────────────────── -->
+<% if (typeof success !== 'undefined' && success) { %>
+  <div class="lp-alert lp-alert-ok"><i class="fa-solid fa-circle-check"></i> <span><%= success %></span></div>
+<% } %>
+<% if (typeof error !== 'undefined' && error) { %>
+  <div class="lp-alert lp-alert-err"><i class="fa-solid fa-circle-exclamation"></i> <span><%= error %></span></div>
+<% } %>
+
+<!-- ── Page header ─────────────────────────── -->
+<div style="margin-bottom:1.6rem;">
+  <h1 style="font-size:1.5rem; font-weight:800; color:var(--text-main); letter-spacing:-.025em; margin:0;">
+    Lộ Trình Đào Tạo
+  </h1>
+  <p style="color:var(--text-muted); font-size:.88rem; margin-top:.3rem;">
+    Gom nhóm nhiều khóa học riêng lẻ thành một chuỗi lộ trình bắt buộc cho từng vai trò nhân sự.
+  </p>
+</div>
+
+<!-- ── Two-column layout ───────────────────── -->
+<div class="lp-layout <%= canManagePath ? 'has-form' : '' %>">
+
+  <!-- LEFT: Create form -->
   <% if (canManagePath) { %>
-    <div class="glass-card" style="position: sticky; top: 2rem; z-index: 10;">
-      <h3 style="font-size: 1.2rem; margin-bottom: 1.5rem;"><i class="fa-solid fa-square-plus" style="color: #6366f1;"></i> Thêm lộ trình mới</h3>
-      <form action="/paths" method="POST">
+  <div class="lp-form-card">
+    <h3 class="lp-form-title">
+      <i class="fa-solid fa-square-plus" style="color:#6366f1;"></i> Thêm lộ trình mới
+    </h3>
+    <form action="/paths" method="POST">
+      <div class="form-group">
+        <label class="form-label">Tên lộ trình đào tạo</label>
+        <input type="text" name="name" placeholder="Ví dụ: Lộ trình Thử việc Backend Dev" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Mô tả mục tiêu lộ trình</label>
+        <textarea name="description" rows="3" placeholder="Nhập mục tiêu đào tạo..." required></textarea>
+      </div>
+      <div class="form-group">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:.45rem;">
+          <label class="form-label" style="margin:0; font-size:.84rem;">Chọn khóa học thuộc lộ trình</label>
+          <button type="button" class="lp-select-all-btn" onclick="selectAllCreateCourses()">Chọn tất cả</button>
+        </div>
+        <div class="lp-search-wrap">
+          <i class="fa-solid fa-magnifying-glass"></i>
+          <input type="text" id="courseSearchCreate" placeholder="Tìm tên khóa học..." oninput="filterCreateCourses()">
+        </div>
+        <div class="lp-course-panel" id="courseListCreate">
+          <% courses.forEach(course => { %>
+            <label class="lp-check-label course-item-label-create" data-search-title="<%= course.title.toLowerCase() %>">
+              <input type="checkbox" name="courseIds" value="<%= course.id %>" class="course-check-create">
+              <span><%= course.title %></span>
+            </label>
+          <% }) %>
+        </div>
+      </div>
+      <button type="submit" class="btn btn-primary" style="width:100%; margin-top:.75rem;">
+        <i class="fa-solid fa-plus"></i> Tạo lộ trình học
+      </button>
+    </form>
+  </div>
+  <% } %>
+
+  <!-- RIGHT: Paths list -->
+  <div class="lp-right-card">
+    <div class="lp-right-head">
+      <h3 class="lp-right-title">
+        <i class="fa-solid fa-route" style="color:#06b6d4;"></i>
+        Các lộ trình hiện tại
+        <span class="lp-count-pill" id="path-count-badge"><%= paths.length %></span>
+      </h3>
+      <div class="lp-path-search-wrap">
+        <i class="fa-solid fa-magnifying-glass"></i>
+        <input type="text" id="pathSearch" placeholder="Tìm kiếm lộ trình..." oninput="filterPathsList()">
+      </div>
+    </div>
+
+    <div class="lp-paths-list" id="pathsListContainer">
+      <% if (paths.length === 0) { %>
+        <div class="lp-empty">
+          <i class="fa-solid fa-route"></i>
+          <span style="font-size:.9rem;">Chưa có lộ trình nào được tạo.</span>
+        </div>
+      <% } else { %>
+        <% paths.forEach(path => { %>
+          <div class="lp-path-card path-card-item"
+               data-name="<%= path.name.toLowerCase() %>"
+               data-desc="<%= path.description.toLowerCase() %>"
+               data-courses="<%= path.courses.map(c => c.title).join(' ').toLowerCase() %>">
+
+            <!-- Top row: name + edit/delete -->
+            <div class="lp-path-top">
+              <h4 class="lp-path-name" title="<%= path.name %>"><%= path.name %></h4>
+              <div class="lp-path-actions">
+                <% if (canManagePath) { %>
+                  <button class="lp-icon-btn edit"
+                          onclick="openEditModal(<%= path.id %>)"
+                          title="Sửa lộ trình">
+                    <i class="fa-solid fa-pen-to-square"></i>
+                  </button>
+                  <form action="/paths/<%= path.id %>/delete" method="POST" style="margin:0;"
+                        onsubmit="return confirm('Bạn có chắc muốn xóa lộ trình này?')">
+                    <button type="submit" class="lp-icon-btn trash" title="Xóa lộ trình">
+                      <i class="fa-solid fa-trash-can"></i>
+                    </button>
+                  </form>
+                <% } %>
+              </div>
+            </div>
+
+            <!-- Description -->
+            <p class="lp-path-desc"><%= path.description %></p>
+
+            <!-- Course steps -->
+            <div>
+              <div class="lp-steps-label">Chuỗi khóa học trong lộ trình:</div>
+              <% if (path.courses.length === 0) { %>
+                <span class="lp-no-courses">(Chưa liên kết khóa học nào)</span>
+              <% } else { %>
+                <div class="lp-steps">
+                  <% path.courses.forEach((c, idx) => { %>
+                    <div class="lp-step-row">
+                      <span class="lp-step-num">Step <%= idx + 1 %></span>
+                      <span class="lp-step-title" title="<%= c.title %>"><%= c.title %></span>
+                    </div>
+                  <% }) %>
+                </div>
+              <% } %>
+            </div>
+
+            <!-- Assign button -->
+            <% if (canAssignPath) { %>
+              <div class="lp-assign-bar">
+                <button type="button" class="lp-assign-btn" onclick="openAssignModal(<%= path.id %>)">
+                  <i class="fa-solid fa-user-plus"></i> Giao lộ trình học tập
+                </button>
+              </div>
+            <% } %>
+          </div>
+        <% }) %>
+
+        <div id="no-paths-match-msg" class="lp-empty" style="display:none;">
+          <i class="fa-solid fa-magnifying-glass"></i>
+          <span>Không tìm thấy lộ trình nào khớp.</span>
+        </div>
+      <% } %>
+    </div>
+  </div>
+</div>
+
+<!-- ── Modal overlay ──────────────────────── -->
+<div id="lp-overlay" class="lp-overlay" onclick="closeAllModals()"></div>
+
+<!-- ── Edit modals ─────────────────────────── -->
+<% if (canManagePath && paths.length > 0) { %>
+  <% paths.forEach(path => { %>
+    <div id="editModal-<%= path.id %>" class="lp-modal">
+      <div class="lp-modal-head">
+        <h3 class="lp-modal-title">
+          <i class="fa-solid fa-pen-to-square" style="color:#8b5cf6;"></i>
+          Sửa: <span style="color:#6366f1; margin-left:.25rem;"><%= path.name %></span>
+        </h3>
+        <button class="lp-modal-close" onclick="closeEditModal(<%= path.id %>)"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <form action="/paths/<%= path.id %>/update" method="POST">
         <div class="form-group">
           <label class="form-label">Tên lộ trình đào tạo</label>
-          <input type="text" name="name" placeholder="Ví dụ: Lộ trình Thử việc Backend Dev" required>
+          <input type="text" name="name" value="<%= path.name %>" required>
         </div>
-
         <div class="form-group">
           <label class="form-label">Mô tả mục tiêu lộ trình</label>
-          <textarea name="description" rows="3" placeholder="Nhập mục tiêu đào tạo..." required></textarea>
+          <textarea name="description" rows="3" required><%= path.description %></textarea>
         </div>
-
         <div class="form-group">
-          <label class="form-label" style="display: flex; justify-content: space-between; align-items: center;">
-            <span>Chọn các khóa học thuộc lộ trình (Tích chọn nhiều)</span>
-            <button type="button" onclick="selectAllCreateCourses()" style="background: none; border: none; color: var(--text-accent); font-size: 0.72rem; cursor: pointer; font-weight: 600; padding: 0;">Chọn tất cả</button>
-          </label>
-          <!-- Ô tìm kiếm khóa học -->
-          <div style="margin-bottom: 0.5rem; position: relative;">
-            <i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 0.6rem; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 0.8rem;"></i>
-            <input type="text" id="courseSearchCreate" placeholder="Tìm tên khóa học..." oninput="filterCreateCourses()" style="width: 100%; padding: 0.45rem 0.6rem 0.45rem 1.8rem; background: rgba(255,255,255,0.05); border: 1px solid var(--border-light); border-radius: 6px; color: var(--text-main); font-size: 0.8rem; outline: none; box-sizing: border-box;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:.45rem;">
+            <label class="form-label" style="margin:0; font-size:.84rem;">Khóa học thuộc lộ trình</label>
+            <button type="button" class="lp-select-all-btn" onclick="selectAllEditCourses(<%= path.id %>)">Chọn tất cả</button>
           </div>
-          <div id="courseListCreate" style="display: flex; flex-direction: column; gap: 0.5rem; background: rgba(0,0,0,0.15); padding: 1rem; border-radius: 8px; max-height: 150px; overflow-y: auto; border: 1px solid var(--border-light);">
+          <div class="lp-search-wrap">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input type="text" id="courseSearchEdit-<%= path.id %>" placeholder="Tìm tên khóa học..."
+                   oninput="filterEditCourses(<%= path.id %>)">
+          </div>
+          <div class="lp-course-panel" id="courseListEdit-<%= path.id %>">
+            <% const associatedIds = path.courses.map(c => c.id); %>
             <% courses.forEach(course => { %>
-              <label class="course-item-label-create" data-search-title="<%= course.title.toLowerCase() %>" style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; cursor: pointer;">
-                <input type="checkbox" name="courseIds" value="<%= course.id %>" class="course-check-create"> <%= course.title %>
+              <label class="lp-check-label course-item-label-edit-<%= path.id %>"
+                     data-search-title="<%= course.title.toLowerCase() %>">
+                <input type="checkbox" name="courseIds" value="<%= course.id %>"
+                       class="course-check-edit-<%= path.id %>"
+                       <%= associatedIds.includes(course.id) ? 'checked' : '' %>>
+                <span><%= course.title %></span>
               </label>
             <% }) %>
           </div>
         </div>
-
-        <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">
-          Tạo lộ trình học
-        </button>
+        <div style="display:flex; gap:.75rem; justify-content:flex-end; border-top:1px solid var(--border-light); padding-top:1.1rem; margin-top:.5rem;">
+          <button type="button" class="btn btn-secondary" onclick="closeEditModal(<%= path.id %>)">Hủy</button>
+          <button type="submit" class="btn btn-primary"><i class="fa-solid fa-floppy-disk"></i> Lưu thay đổi</button>
+        </div>
       </form>
     </div>
-  <% } %>
+  <% }) %>
+<% } %>
 
-  <!-- Cột bên phải: Danh sách lộ trình đang vận hành -->
-  <div class="glass-card" style="padding: 1.5rem;">
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
-      <h3 style="font-size: 1.2rem; margin: 0; color: var(--text-main); font-weight: 700;">
-        <i class="fa-solid fa-route" style="color: #06b6d4;"></i> Các lộ trình hiện tại 
-        <span id="path-count-badge" style="font-size: 0.75rem; background: var(--secondary-gradient); color: #fff; padding: 0.15rem 0.5rem; border-radius: 20px; margin-left: 0.4rem; vertical-align: middle;"><%= paths.length %></span>
-      </h3>
-      
-      <!-- Search Input -->
-      <div style="position: relative; width: 250px; max-width: 100%;">
-        <i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 0.75rem; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 0.85rem;"></i>
-        <input type="text" id="pathSearch" placeholder="Tìm kiếm lộ trình..." oninput="filterPathsList()" style="width: 100%; padding: 0.45rem 0.75rem 0.45rem 2rem; background: rgba(255,255,255,0.05); border: 1px solid var(--border-light); border-radius: 8px; color: var(--text-main); font-size: 0.85rem; outline: none; box-sizing: border-box; transition: var(--transition-smooth);">
-      </div>
-    </div>
-    
-    <div id="pathsListContainer" class="virtual-scroll-container" style="max-height: 75vh; overflow-y: auto; position: relative; box-sizing: border-box; padding: 0 !important;">
-      <div class="top-spacer" style="height: 0px;"></div>
-      <div class="visible-items" style="display: flex; flex-direction: column;"></div>
-      <div class="bottom-spacer" style="height: 0px;"></div>
-      
-      <!-- Trạng thái không tìm thấy kết quả search -->
-      <div id="no-paths-match-msg" style="display: none; text-align: center; padding: 3rem 1rem; color: var(--text-muted);">
-        <i class="fa-solid fa-magnifying-glass fa-2x" style="margin-bottom: 1rem; color: var(--text-muted);"></i>
-        <p style="font-size: 0.95rem;">Không tìm thấy lộ trình đào tạo nào khớp với từ khóa tìm kiếm.</p>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- Lớp phủ modal dùng chung -->
-<div id="modal-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.6); backdrop-filter: blur(5px); z-index: 1999;"></div>
-
-<!-- Render các Modal Giao Lộ Trình ở cấp độ gốc (Root Level) để tránh lỗi Stacking Context của CSS -->
-<% if (user.permissions.includes('ENROLL_ASSIGN') && paths.length > 0) { %>
+<!-- ── Assign modals ────────────────────────── -->
+<% if (canAssignPath && paths.length > 0) { %>
   <% paths.forEach(path => { %>
-    <div id="assignModal-<%= path.id %>" class="glass-card" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 640px; max-width: 95%; max-height: 85vh; overflow-y: auto; z-index: 2050; box-shadow: 0 10px 50px rgba(0,0,0,0.9); border-color: var(--border-glow); padding: 1.75rem;">
-      <h3 style="font-size: 1.3rem; margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-light); padding-bottom: 0.75rem;">
-        <span><i class="fa-solid fa-user-plus" style="color: #10b981; margin-right: 0.5rem;"></i>Giao Lộ Trình: <%= path.name %></span>
-        <button class="btn btn-secondary" onclick="closeAssignModal(<%= path.id %>)" style="padding: 0.25rem 0.5rem; font-size: 0.85rem;"><i class="fa-solid fa-xmark"></i></button>
-      </h3>
-      
+    <div id="assignModal-<%= path.id %>" class="lp-modal lp-assign-modal">
+      <div class="lp-modal-head">
+        <h3 class="lp-modal-title">
+          <i class="fa-solid fa-user-plus" style="color:#10b981;"></i>
+          Giao lộ trình: <span style="color:#6366f1; margin-left:.25rem;"><%= path.name %></span>
+        </h3>
+        <button class="lp-modal-close" onclick="closeAssignModal(<%= path.id %>)"><i class="fa-solid fa-xmark"></i></button>
+      </div>
       <form action="/paths/<%= path.id %>/assign" method="POST">
-        <div style="display: grid; grid-template-columns: 1fr 1.3fr; gap: 1.5rem; margin-bottom: 1.5rem; text-align: left;">
-          
-          <!-- Cột trái: Danh sách Phòng ban -->
+        <div style="display:grid; grid-template-columns:1fr 1.3fr; gap:1.25rem; margin-bottom:1.25rem;">
+
+          <!-- Departments -->
           <div>
-            <h4 style="font-size: 0.92rem; margin-bottom: 0.75rem; color: #06b6d4; display: flex; justify-content: space-between; align-items: center;">
-              <span><i class="fa-solid fa-building"></i> Chọn Phòng ban</span>
-              <button type="button" onclick="selectAllDepts(<%= path.id %>)" style="background: none; border: none; color: var(--text-accent); font-size: 0.72rem; cursor: pointer; font-weight: 600;">Chọn hết</button>
-            </h4>
-            <div id="deptListContainer-<%= path.id %>" class="virtual-scroll-container" style="background: rgba(0,0,0,0.4); border: 1px solid var(--border-light); border-radius: 8px; max-height: 270px; overflow-y: auto; position: relative; box-sizing: border-box;">
-              <div class="top-spacer" style="height: 0px;"></div>
-              <div class="visible-items" style="display: flex; flex-direction: column;"></div>
-              <div class="bottom-spacer" style="height: 0px;"></div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:.5rem;">
+              <label style="font-size:.8rem; font-weight:700; color:#06b6d4;">
+                <i class="fa-solid fa-building"></i> Phòng ban
+              </label>
+              <button type="button" class="lp-assign-group-btn" onclick="selectAllDeptsModal(<%= path.id %>)">Chọn hết</button>
+            </div>
+            <div class="lp-assign-panel" id="deptListContainer-<%= path.id %>">
+              <% departments.forEach(d => { %>
+                <label class="lp-check-label dept-item-label-<%= path.id %>">
+                  <input type="checkbox" name="departmentIds" value="<%= d.id %>"
+                         class="dept-check-cb-<%= path.id %>"
+                         style="accent-color:#6366f1; width:14px; height:14px; flex-shrink:0;">
+                  <span><%= d.name %></span>
+                </label>
+              <% }) %>
             </div>
           </div>
 
-          <!-- Cột phải: Danh sách Nhân viên (Phân nhóm theo Phòng ban + Tìm kiếm) -->
+          <!-- Users -->
           <div>
-            <h4 style="font-size: 0.92rem; margin-bottom: 0.75rem; color: #a78bfa; display: flex; justify-content: space-between; align-items: center;">
-              <span><i class="fa-solid fa-users"></i> Chọn Cá nhân</span>
-              <button type="button" onclick="selectAllUsers(<%= path.id %>)" style="background: none; border: none; color: var(--text-accent); font-size: 0.72rem; cursor: pointer; font-weight: 600;">Chọn hết</button>
-            </h4>
-
-            <!-- Ô tìm kiếm nhân sự thời gian thực -->
-            <div style="margin-bottom: 0.5rem; position: relative;">
-              <i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 0.6rem; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 0.8rem;"></i>
-              <input type="text" id="userSearch-<%= path.id %>" placeholder="Tìm tên nhân sự..." oninput="filterUsersList(<%= path.id %>)" style="width: 100%; padding: 0.45rem 0.6rem 0.45rem 1.8rem; background: rgba(255,255,255,0.05); border: 1px solid var(--border-light); border-radius: 6px; color: var(--text-main); font-size: 0.8rem; outline: none; box-sizing: border-box;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:.5rem;">
+              <label style="font-size:.8rem; font-weight:700; color:#8b5cf6;">
+                <i class="fa-solid fa-users"></i> Cá nhân
+              </label>
+              <button type="button" class="lp-assign-group-btn" onclick="selectAllUsersModal(<%= path.id %>)">Chọn hết</button>
             </div>
-
-            <!-- Container danh sách nhân sự phân nhóm -->
-            <div id="usersListContainer-<%= path.id %>" class="virtual-scroll-container" style="background: rgba(0,0,0,0.4); border: 1px solid var(--border-light); border-radius: 8px; max-height: 220px; overflow-y: auto; position: relative; box-sizing: border-box;">
-              <div class="top-spacer" style="height: 0px;"></div>
-              <div class="visible-items" style="display: flex; flex-direction: column;"></div>
-              <div class="bottom-spacer" style="height: 0px;"></div>
+            <div class="lp-search-wrap" style="margin-bottom:.5rem;">
+              <i class="fa-solid fa-magnifying-glass"></i>
+              <input type="text" id="userSearch-<%= path.id %>" placeholder="Tìm tên nhân sự..."
+                     oninput="filterUsersModal(<%= path.id %>)">
             </div>
-
+            <div class="lp-assign-panel" id="usersListContainer-<%= path.id %>">
+              <%
+                const gu = {};
+                departments.forEach(d => { gu[d.id] = { name: d.name, list: [] }; });
+                gu['none'] = { name: 'Không thuộc phòng ban', list: [] };
+                users.forEach(u => {
+                  const dId = u.department_id || 'none';
+                  if (!gu[dId]) gu[dId] = { name: u.department_name || 'Không thuộc phòng ban', list: [] };
+                  gu[dId].list.push(u);
+                });
+              %>
+              <% Object.keys(gu).forEach(dId => { %>
+                <% if (gu[dId].list.length > 0) { %>
+                  <div class="user-group-block-<%= path.id %>" data-dept-id="<%= dId %>">
+                    <div class="lp-assign-group-label">
+                      <span><i class="fa-solid fa-folder-open" style="font-size:.65rem; margin-right:.2rem;"></i> <%= gu[dId].name %></span>
+                      <button type="button" class="lp-assign-group-btn" onclick="selectGroupUsersModal(<%= path.id %>, '<%= dId %>')">Chọn nhóm</button>
+                    </div>
+                    <% gu[dId].list.forEach(u => { %>
+                      <label class="lp-check-label user-item-label-<%= path.id %>"
+                             data-search-name="<%= u.username.toLowerCase() %>"
+                             style="padding-left:.6rem;">
+                        <input type="checkbox" name="userIds" value="<%= u.id %>"
+                               class="user-check-cb-<%= path.id %>"
+                               data-dept-id="<%= dId %>"
+                               style="accent-color:#6366f1; width:14px; height:14px; flex-shrink:0;">
+                        <span><%= u.username %></span>
+                      </label>
+                    <% }) %>
+                  </div>
+                <% } %>
+              <% }) %>
+            </div>
           </div>
-
         </div>
 
-        <div style="margin-top: 1rem; margin-bottom: 1.5rem; text-align: left;">
-          <label class="form-label" style="font-size: 0.85rem; margin-bottom: 0.4rem; display: block;">Thời hạn hoàn thành cho tất cả các khóa học (ngày)</label>
-          <input type="number" name="timeLimitDays" min="1" placeholder="Ví dụ: 30 (Bỏ trống nếu không giới hạn)" style="width: 100%; padding: 0.65rem 1rem; background: rgba(255,255,255,0.05); border: 1px solid var(--border-light); border-radius: 10px; color: var(--text-main); font-size: 0.9rem; outline: none; box-sizing: border-box;">
+        <div class="form-group">
+          <label class="form-label">Thời hạn hoàn thành (ngày)</label>
+          <input type="number" name="timeLimitDays" min="1" placeholder="Bỏ trống nếu không giới hạn">
         </div>
 
-        <div style="display: flex; gap: 1rem; justify-content: flex-end; border-top: 1px solid var(--border-light); padding-top: 1.25rem;">
+        <div style="display:flex; gap:.75rem; justify-content:flex-end; border-top:1px solid var(--border-light); padding-top:1.1rem; margin-top:.5rem;">
           <button type="button" class="btn btn-secondary" onclick="closeAssignModal(<%= path.id %>)">Hủy</button>
           <button type="submit" class="btn btn-primary"><i class="fa-solid fa-check"></i> Xác nhận giao</button>
         </div>
@@ -211,595 +730,106 @@ const canManagePath = user.permissions.includes('PATH_MANAGE');
   <% }) %>
 <% } %>
 
-<!-- Render các Modal Chỉnh Sửa Lộ Trình ở cấp độ gốc -->
-<% if (user.permissions.includes('PATH_MANAGE') && paths.length > 0) { %>
-  <% paths.forEach(path => { %>
-    <div id="editModal-<%= path.id %>" class="glass-card" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 500px; max-width: 95%; max-height: 85vh; overflow-y: auto; z-index: 2050; box-shadow: 0 10px 50px rgba(0,0,0,0.9); border-color: var(--border-glow); padding: 1.75rem;">
-      <h3 style="font-size: 1.3rem; margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-light); padding-bottom: 0.75rem;">
-        <span><i class="fa-solid fa-pen-to-square" style="color: #8b5cf6; margin-right: 0.5rem;"></i>Sửa Lộ Trình: <%= path.name %></span>
-        <button class="btn btn-secondary" onclick="closeEditModal(<%= path.id %>)" style="padding: 0.25rem 0.5rem; font-size: 0.85rem;"><i class="fa-solid fa-xmark"></i></button>
-      </h3>
-      
-      <form action="/paths/<%= path.id %>/update" method="POST">
-        <div class="form-group" style="text-align: left; margin-bottom: 1rem;">
-          <label class="form-label">Tên lộ trình đào tạo</label>
-          <input type="text" name="name" value="<%= path.name %>" required style="width: 100%; padding: 0.65rem 1rem; background: rgba(255,255,255,0.05); border: 1px solid var(--border-light); border-radius: 10px; color: var(--text-main); font-size: 0.9rem; outline: none; box-sizing: border-box;">
-        </div>
-
-        <div class="form-group" style="text-align: left; margin-bottom: 1rem;">
-          <label class="form-label">Mô tả mục tiêu lộ trình</label>
-          <textarea name="description" rows="3" required style="width: 100%; padding: 0.65rem 1rem; background: rgba(255,255,255,0.05); border: 1px solid var(--border-light); border-radius: 10px; color: var(--text-main); font-size: 0.9rem; outline: none; box-sizing: border-box;"><%= path.description %></textarea>
-        </div>
-
-        <div class="form-group" style="text-align: left; margin-bottom: 1.5rem;">
-          <label class="form-label" style="display: flex; justify-content: space-between; align-items: center;">
-            <span>Chọn các khóa học thuộc lộ trình (Tích chọn nhiều)</span>
-            <button type="button" onclick="selectAllEditCourses(<%= path.id %>)" style="background: none; border: none; color: var(--text-accent); font-size: 0.72rem; cursor: pointer; font-weight: 600; padding: 0;">Chọn tất cả</button>
-          </label>
-          <!-- Ô tìm kiếm khóa học -->
-          <div style="margin-bottom: 0.5rem; position: relative;">
-            <i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 0.6rem; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 0.8rem;"></i>
-            <input type="text" id="courseSearchEdit-<%= path.id %>" placeholder="Tìm tên khóa học..." oninput="filterEditCourses(<%= path.id %>)" style="width: 100%; padding: 0.45rem 0.6rem 0.45rem 1.8rem; background: rgba(255,255,255,0.05); border: 1px solid var(--border-light); border-radius: 6px; color: var(--text-main); font-size: 0.8rem; outline: none; box-sizing: border-box;">
-          </div>
-          <div id="courseListEdit-<%= path.id %>" style="display: flex; flex-direction: column; gap: 0.5rem; background: rgba(0,0,0,0.15); padding: 1rem; border-radius: 8px; max-height: 150px; overflow-y: auto; border: 1px solid var(--border-light);">
-            <% 
-              const associatedIds = path.courses.map(c => c.id);
-            %>
-            <% courses.forEach(course => { %>
-              <label class="course-item-label-edit-<%= path.id %>" data-search-title="<%= course.title.toLowerCase() %>" style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; cursor: pointer; color: #cbd5e1;">
-                <input type="checkbox" name="courseIds" value="<%= course.id %>" class="course-check-edit-<%= path.id %>" <%= associatedIds.includes(course.id) ? 'checked' : '' %>> <%= course.title %>
-              </label>
-            <% }) %>
-          </div>
-        </div>
-
-        <div style="display: flex; gap: 1rem; justify-content: flex-end; border-top: 1px solid var(--border-light); padding-top: 1.25rem;">
-          <button type="button" class="btn btn-secondary" onclick="closeEditModal(<%= path.id %>)">Hủy</button>
-          <button type="submit" class="btn btn-primary"><i class="fa-solid fa-check"></i> Lưu thay đổi</button>
-        </div>
-      </form>
-    </div>
-  <% }) %>
-<% } %>
-
 <script>
-  // Chuyển đổi dữ liệu EJS thành mảng JS ở client
-  const globalDepartments = <%- JSON.stringify(departments) %>;
-  const globalUsers = <%- JSON.stringify(users) %>;
-  const globalPaths = <%- JSON.stringify(paths) %>;
-  const canManagePath = <%= user.permissions.includes('PATH_MANAGE') %>;
-  const canEnrollAssign = <%= user.permissions.includes('ENROLL_ASSIGN') %>;
-
-  function escapeHtml(str) {
-    if (!str) return '';
-    return str
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;")
-      .replace(/'/g, "&#039;");
+  /* ── Modal helpers ── */
+  function showModal(id) {
+    document.getElementById(id).style.display = 'block';
+    document.getElementById('lp-overlay').style.display = 'block';
+    document.body.style.overflow = 'hidden';
   }
-
-  class VirtualList {
-    constructor({
-      container,
-      items,
-      itemHeight = 32,
-      windowSize = 20,
-      step = 10,
-      selectedSet,
-      renderItem,
-      onUpdate
-    }) {
-      this.container = container;
-      this.items = items;
-      this.itemHeight = itemHeight;
-      this.windowSize = windowSize;
-      this.step = step;
-      this.selectedSet = selectedSet;
-      this.renderItem = renderItem;
-      this.onUpdate = onUpdate;
-
-      this.startIndex = 0;
-
-      this.topSpacer = container.querySelector('.top-spacer');
-      this.bottomSpacer = container.querySelector('.bottom-spacer');
-      this.visibleItemsContainer = container.querySelector('.visible-items');
-
-      this.container.addEventListener('scroll', () => this.handleScroll());
-    }
-
-    setItems(newItems) {
-      this.items = newItems;
-      this.startIndex = 0;
-      this.container.scrollTop = 0;
-      this.render();
-    }
-
-    handleScroll() {
-      const scrollTop = this.container.scrollTop;
-      const rawStartIndex = Math.floor(scrollTop / this.itemHeight);
-      
-      let targetStartIndex = this.startIndex;
-
-      // Cuộn xuống: nếu đã cuộn qua startIndex + step, dịch cửa sổ trượt xuống
-      if (rawStartIndex > this.startIndex + this.step) {
-        targetStartIndex = Math.min(this.items.length - this.windowSize, this.startIndex + this.step);
-        targetStartIndex = Math.max(0, targetStartIndex);
-      }
-      // Cuộn lên: nếu đã cuộn ngược lên trước startIndex, dịch cửa sổ trượt lên
-      else if (rawStartIndex < this.startIndex) {
-        targetStartIndex = Math.max(0, this.startIndex - this.step);
-      }
-
-      if (targetStartIndex !== this.startIndex) {
-        this.startIndex = targetStartIndex;
-        this.render();
-      }
-    }
-
-    render() {
-      const total = this.items.length;
-      const end = Math.min(total, this.startIndex + this.windowSize);
-
-      // Cập nhật chiều cao các phần đệm
-      const topHeight = this.startIndex * this.itemHeight;
-      const bottomHeight = Math.max(0, (total - end) * this.itemHeight);
-
-      this.topSpacer.style.height = `${topHeight}px`;
-      this.bottomSpacer.style.height = `${bottomHeight}px`;
-
-      // Vẽ các phần tử hiển thị trong DOM
-      let html = '';
-      for (let i = this.startIndex; i < end; i++) {
-        const item = this.items[i];
-        const isChecked = (this.selectedSet && item.type === 'user') 
-          ? this.selectedSet.has(item.id) 
-          : ((this.selectedSet && item.type === 'dept') ? this.selectedSet.has(item.id) : false);
-        html += this.renderItem(item, isChecked);
-      }
-      this.visibleItemsContainer.innerHTML = html;
-
-      if (this.onUpdate) {
-        this.onUpdate();
-      }
+  function hideModal(id) {
+    document.getElementById(id).style.display = 'none';
+    if (!document.querySelector('.lp-modal[style*="display: block"]')) {
+      document.getElementById('lp-overlay').style.display = 'none';
+      document.body.style.overflow = '';
     }
   }
-
-  const deptVirtualLists = {};
-  const userVirtualLists = {};
-  const selectedDeptsMap = {};
-  const selectedUsersMap = {};
-  const allUserVirtualItems = {};
-  let pathsVirtualList;
-
-  function initVirtualScrollForPath(pathId) {
-    if (deptVirtualLists[pathId]) return; // Đã khởi tạo trước đó
-
-    selectedDeptsMap[pathId] = new Set();
-    selectedUsersMap[pathId] = new Set();
-
-    // 1. Thiết lập danh sách cuộn ảo cho Phòng ban
-    const deptContainer = document.getElementById(`deptListContainer-${pathId}`);
-    if (deptContainer) {
-      const deptItems = globalDepartments.map(d => ({
-        type: 'dept',
-        id: d.id,
-        name: d.name
-      }));
-
-      deptVirtualLists[pathId] = new VirtualList({
-        container: deptContainer,
-        items: deptItems,
-        itemHeight: 32,
-        windowSize: 20,
-        step: 10,
-        selectedSet: selectedDeptsMap[pathId],
-        renderItem: (item, isChecked) => {
-          return `
-            <label class="virtual-item dept-item-label" style="height: 32px; box-sizing: border-box; display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; cursor: pointer; color: #cbd5e1; margin: 0; user-select: none;">
-              <input type="checkbox" class="dept-check-cb" data-dept-id="${item.id}" ${isChecked ? 'checked' : ''}>
-              <span>${item.name}</span>
-            </label>
-          `;
-        }
-      });
-      deptVirtualLists[pathId].render();
-
-      // Ủy quyền sự kiện cho các thay đổi của checkbox
-      deptContainer.addEventListener('change', (e) => {
-        if (e.target.classList.contains('dept-check-cb')) {
-          const deptId = parseInt(e.target.dataset.deptId);
-          if (e.target.checked) {
-            selectedDeptsMap[pathId].add(deptId);
-          } else {
-            selectedDeptsMap[pathId].delete(deptId);
-          }
-        }
-      });
-    }
-
-    // 2. Thiết lập danh sách cuộn ảo cho Nhân viên
-    const userContainer = document.getElementById(`usersListContainer-${pathId}`);
-    if (userContainer) {
-      // Xây dựng danh sách phẳng chứa nhân viên phân nhóm theo phòng ban
-      const items = [];
-      const groupedUsers = {};
-      globalDepartments.forEach(d => {
-        groupedUsers[d.id] = { name: d.name, list: [] };
-      });
-      groupedUsers['none'] = { name: 'Không thuộc phòng ban', list: [] };
-
-      globalUsers.forEach(u => {
-        const dId = u.department_id || 'none';
-        if (!groupedUsers[dId]) {
-          groupedUsers[dId] = { name: u.department_name || 'Không thuộc phòng ban', list: [] };
-        }
-        groupedUsers[dId].list.push(u);
-      });
-
-      globalDepartments.forEach(d => {
-        if (groupedUsers[d.id].list.length > 0) {
-          items.push({ type: 'header', deptId: d.id, name: d.name });
-          groupedUsers[d.id].list.forEach(u => {
-            items.push({ type: 'user', id: u.id, username: u.username, deptId: d.id });
-          });
-        }
-      });
-      if (groupedUsers['none'].list.length > 0) {
-        items.push({ type: 'header', deptId: 'none', name: 'Không thuộc phòng ban' });
-        groupedUsers['none'].list.forEach(u => {
-          items.push({ type: 'user', id: u.id, username: u.username, deptId: 'none' });
-        });
-      }
-
-      allUserVirtualItems[pathId] = items;
-
-      userVirtualLists[pathId] = new VirtualList({
-        container: userContainer,
-        items: items,
-        itemHeight: 32,
-        windowSize: 20,
-        step: 10,
-        selectedSet: selectedUsersMap[pathId],
-        renderItem: (item, isChecked) => {
-          if (item.type === 'header') {
-            return `
-              <div class="virtual-item user-group-header" style="height: 32px; box-sizing: border-box; font-size: 0.78rem; font-weight: 700; color: #a78bfa; border-bottom: 1px solid rgba(167, 139, 250, 0.15); display: flex; justify-content: space-between; align-items: center; padding-right: 0.5rem; user-select: none;">
-                <span><i class="fa-solid fa-folder-open" style="font-size: 0.7rem; margin-right: 0.25rem;"></i> ${item.name}</span>
-                <button type="button" onclick="selectGroupUsers(${pathId}, '${item.deptId}')" style="background: none; border: none; color: var(--text-accent); font-size: 0.65rem; cursor: pointer; font-weight: 600; padding: 0;">Chọn nhóm</button>
-              </div>
-            `;
-          } else {
-            return `
-              <label class="virtual-item user-item-label" style="height: 32px; box-sizing: border-box; display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; cursor: pointer; color: #cbd5e1; padding-left: 0.4rem; margin: 0; user-select: none;">
-                <input type="checkbox" class="user-check-cb" data-user-id="${item.id}" data-dept-id="${item.deptId}" ${isChecked ? 'checked' : ''}>
-                <span>${item.username}</span>
-              </label>
-            `;
-          }
-        }
-      });
-      userVirtualLists[pathId].render();
-
-      // Ủy quyền sự kiện cho các thay đổi của checkbox
-      userContainer.addEventListener('change', (e) => {
-        if (e.target.classList.contains('user-check-cb')) {
-          const userId = parseInt(e.target.dataset.userId);
-          if (e.target.checked) {
-            selectedUsersMap[pathId].add(userId);
-          } else {
-            selectedUsersMap[pathId].delete(userId);
-          }
-        }
-      });
-    }
-
-    // 3. Chặn sự kiện gửi form để chèn các input ẩn
-    const modal = document.getElementById(`assignModal-${pathId}`);
-    const form = modal ? modal.querySelector('form') : null;
-    if (form) {
-      form.addEventListener('submit', (e) => {
-        // Xóa các input ẩn cũ nếu có
-        form.querySelectorAll('.temp-hidden-input').forEach(el => el.remove());
-
-        // Chèn danh sách nhân viên đã chọn
-        selectedUsersMap[pathId].forEach(userId => {
-          const input = document.createElement('input');
-          input.type = 'hidden';
-          input.name = 'userIds';
-          input.value = userId;
-          input.classList.add('temp-hidden-input');
-          form.appendChild(input);
-        });
-
-        // Chèn danh sách phòng ban đã chọn
-        selectedDeptsMap[pathId].forEach(deptId => {
-          const input = document.createElement('input');
-          input.type = 'hidden';
-          input.name = 'departmentIds';
-          input.value = deptId;
-          input.classList.add('temp-hidden-input');
-          form.appendChild(input);
-        });
-      });
-    }
+  function closeAllModals() {
+    document.querySelectorAll('.lp-modal').forEach(m => m.style.display = 'none');
+    document.getElementById('lp-overlay').style.display = 'none';
+    document.body.style.overflow = '';
   }
+  function openEditModal(id)   { showModal(`editModal-${id}`); }
+  function closeEditModal(id)  { hideModal(`editModal-${id}`); }
+  function openAssignModal(id)  { showModal(`assignModal-${id}`); }
+  function closeAssignModal(id) { hideModal(`assignModal-${id}`); }
 
-  function openAssignModal(pathId) {
-    document.getElementById(`assignModal-${pathId}`).style.display = 'block';
-    document.getElementById('modal-overlay').style.display = 'block';
-    initVirtualScrollForPath(pathId);
-  }
-
-  function closeAssignModal(pathId) {
-    document.getElementById(`assignModal-${pathId}`).style.display = 'none';
-    document.getElementById('modal-overlay').style.display = 'none';
-  }
-
-  function openEditModal(pathId) {
-    document.getElementById(`editModal-${pathId}`).style.display = 'block';
-    document.getElementById('modal-overlay').style.display = 'block';
-  }
-
-  function closeEditModal(pathId) {
-    document.getElementById(`editModal-${pathId}`).style.display = 'none';
-    document.getElementById('modal-overlay').style.display = 'none';
-  }
-
-  function selectAllDepts(pathId) {
-    const virtualList = deptVirtualLists[pathId];
-    if (!virtualList) return;
-    
-    const availableDepts = virtualList.items;
-    const allChecked = availableDepts.every(d => selectedDeptsMap[pathId].has(d.id));
-    
-    availableDepts.forEach(d => {
-      if (allChecked) {
-        selectedDeptsMap[pathId].delete(d.id);
-      } else {
-        selectedDeptsMap[pathId].add(d.id);
-      }
-    });
-    virtualList.render();
-  }
-
-  function selectAllUsers(pathId) {
-    const virtualList = userVirtualLists[pathId];
-    if (!virtualList) return;
-    
-    const availableUsers = virtualList.items.filter(item => item.type === 'user');
-    const allChecked = availableUsers.every(u => selectedUsersMap[pathId].has(u.id));
-    
-    availableUsers.forEach(u => {
-      if (allChecked) {
-        selectedUsersMap[pathId].delete(u.id);
-      } else {
-        selectedUsersMap[pathId].add(u.id);
-      }
-    });
-    virtualList.render();
-  }
-
-  function selectGroupUsers(pathId, deptId) {
-    const virtualList = userVirtualLists[pathId];
-    if (!virtualList) return;
-    
-    const deptIdInt = deptId === 'none' ? 'none' : parseInt(deptId);
-    const deptUsers = virtualList.items.filter(item => item.type === 'user' && item.deptId === deptIdInt);
-    
-    const allChecked = deptUsers.every(u => selectedUsersMap[pathId].has(u.id));
-    deptUsers.forEach(u => {
-      if (allChecked) {
-        selectedUsersMap[pathId].delete(u.id);
-      } else {
-        selectedUsersMap[pathId].add(u.id);
-      }
-    });
-    virtualList.render();
-  }
-
-  function filterUsersList(pathId) {
-    const query = document.getElementById(`userSearch-${pathId}`).value.toLowerCase().trim();
-    const virtualList = userVirtualLists[pathId];
-    if (!virtualList) return;
-    
-    if (!query) {
-      virtualList.setItems(allUserVirtualItems[pathId]);
-      return;
-    }
-    
-    const filtered = [];
-    let currentHeader = null;
-    let headerAdded = false;
-    
-    const allItems = allUserVirtualItems[pathId];
-    for (let item of allItems) {
-      if (item.type === 'header') {
-        currentHeader = item;
-        headerAdded = false;
-      } else if (item.type === 'user') {
-        if (item.username.toLowerCase().includes(query)) {
-          if (currentHeader && !headerAdded) {
-            filtered.push(currentHeader);
-            headerAdded = true;
-          }
-          filtered.push(item);
-        }
-      }
-    }
-    virtualList.setItems(filtered);
-  }
-
-  // Lọc danh sách khóa học ở form tạo mới
-  function filterCreateCourses() {
-    const query = document.getElementById('courseSearchCreate').value.toLowerCase().trim();
-    const items = document.querySelectorAll('.course-item-label-create');
-    items.forEach(item => {
-      const title = item.getAttribute('data-search-title');
-      if (title.includes(query)) {
-        item.style.display = 'flex';
-      } else {
-        item.style.display = 'none';
-      }
-    });
-  }
-
-  // Chọn/bỏ chọn tất cả khóa học đang hiển thị ở form tạo mới
-  function selectAllCreateCourses() {
-    const checkboxes = document.querySelectorAll('.course-check-create');
-    const visibleCheckboxes = Array.from(checkboxes).filter(cb => {
-      const parentLabel = cb.closest('.course-item-label-create');
-      return parentLabel && parentLabel.style.display !== 'none';
-    });
-    const allChecked = visibleCheckboxes.every(cb => cb.checked);
-    visibleCheckboxes.forEach(cb => cb.checked = !allChecked);
-  }
-
-  // Lọc danh sách khóa học ở modal sửa
-  function filterEditCourses(pathId) {
-    const query = document.getElementById(`courseSearchEdit-${pathId}`).value.toLowerCase().trim();
-    const items = document.querySelectorAll(`.course-item-label-edit-${pathId}`);
-    items.forEach(item => {
-      const title = item.getAttribute('data-search-title');
-      if (title.includes(query)) {
-        item.style.display = 'flex';
-      } else {
-        item.style.display = 'none';
-      }
-    });
-  }
-
-  // Chọn/bỏ chọn tất cả khóa học đang hiển thị ở modal sửa
-  function selectAllEditCourses(pathId) {
-    const checkboxes = document.querySelectorAll(`.course-check-edit-${pathId}`);
-    const visibleCheckboxes = Array.from(checkboxes).filter(cb => {
-      const parentLabel = cb.closest(`.course-item-label-edit-${pathId}`);
-      return parentLabel && parentLabel.style.display !== 'none';
-    });
-    const allChecked = visibleCheckboxes.every(cb => cb.checked);
-    visibleCheckboxes.forEach(cb => cb.checked = !allChecked);
-  }
-  
+  /* ── Path search ── */
   function filterPathsList() {
-    const query = document.getElementById('pathSearch').value.toLowerCase().trim();
-    if (!pathsVirtualList) return;
-
-    if (!query) {
-      pathsVirtualList.setItems(globalPaths);
-      document.getElementById('path-count-badge').textContent = globalPaths.length;
-      updatePathsEmptyState(globalPaths.length);
-      return;
-    }
-
-    const filtered = globalPaths.filter(path => {
-      const name = path.name.toLowerCase();
-      const desc = path.description.toLowerCase();
-      const courses = path.courses.map(c => c.title.toLowerCase()).join(', ');
-      return name.includes(query) || desc.includes(query) || courses.includes(query);
+    const q = document.getElementById('pathSearch').value.toLowerCase().trim();
+    const cards = document.querySelectorAll('.path-card-item');
+    let visible = 0;
+    cards.forEach(card => {
+      const match = !q
+        || card.dataset.name.includes(q)
+        || card.dataset.desc.includes(q)
+        || card.dataset.courses.includes(q);
+      card.style.display = match ? '' : 'none';
+      if (match) visible++;
     });
-
-    pathsVirtualList.setItems(filtered);
-    document.getElementById('path-count-badge').textContent = filtered.length;
-    updatePathsEmptyState(filtered.length);
+    document.getElementById('path-count-badge').textContent = visible;
+    const noMsg = document.getElementById('no-paths-match-msg');
+    if (noMsg) noMsg.style.display = visible === 0 ? 'block' : 'none';
   }
 
-  function updatePathsEmptyState(count) {
-    const noMatchMsg = document.getElementById('no-paths-match-msg');
-    if (noMatchMsg) {
-      noMatchMsg.style.display = count === 0 ? 'block' : 'none';
-    }
+  /* ── Create form course filter ── */
+  function filterCreateCourses() {
+    const q = document.getElementById('courseSearchCreate').value.toLowerCase().trim();
+    document.querySelectorAll('.course-item-label-create').forEach(el => {
+      el.style.display = el.dataset.searchTitle.includes(q) ? 'flex' : 'none';
+    });
+  }
+  function selectAllCreateCourses() {
+    const cbs = Array.from(document.querySelectorAll('.course-check-create'))
+                     .filter(cb => cb.closest('.course-item-label-create')?.style.display !== 'none');
+    const all = cbs.every(cb => cb.checked);
+    cbs.forEach(cb => cb.checked = !all);
   }
 
-  // Khởi tạo các danh sách cuộn ảo khi tải trang hoàn tất
-  document.addEventListener('DOMContentLoaded', () => {
-    // 1. Tải danh sách lộ trình học tập ảo
-    const pathsContainer = document.getElementById('pathsListContainer');
-    if (pathsContainer) {
-      pathsVirtualList = new VirtualList({
-        container: pathsContainer,
-        items: globalPaths,
-        itemHeight: 296,
-        windowSize: 10,
-        step: 5,
-        renderItem: (path) => {
-          let editButtonsHtml = '';
-          if (canManagePath) {
-            editButtonsHtml = `
-              <button type="button" class="btn btn-secondary" onclick="openEditModal(${path.id})" style="padding: 0.35rem 0.6rem; font-size: 0.8rem; color: #8b5cf6; border-color: rgba(139, 92, 246, 0.2); background: rgba(139, 92, 246, 0.05);" title="Sửa lộ trình">
-                <i class="fa-solid fa-pen-to-square"></i>
-              </button>
-              <form action="/paths/${path.id}/delete" method="POST" onsubmit="return confirm('Bạn có chắc chắn muốn xóa lộ trình này không? Hành động này không thể hoàn tác.');" style="margin: 0;">
-                <button type="submit" class="btn btn-secondary" style="padding: 0.35rem 0.6rem; font-size: 0.8rem; color: #ef4444; border-color: rgba(239, 68, 68, 0.2); background: rgba(239, 68, 68, 0.05);" title="Xóa lộ trình">
-                  <i class="fa-solid fa-trash-can"></i>
-                </button>
-              </form>
-            `;
-          }
+  /* ── Edit modal course filter ── */
+  function filterEditCourses(pathId) {
+    const q = document.getElementById(`courseSearchEdit-${pathId}`).value.toLowerCase().trim();
+    document.querySelectorAll(`.course-item-label-edit-${pathId}`).forEach(el => {
+      el.style.display = el.dataset.searchTitle.includes(q) ? 'flex' : 'none';
+    });
+  }
+  function selectAllEditCourses(pathId) {
+    const cbs = Array.from(document.querySelectorAll(`.course-check-edit-${pathId}`))
+                     .filter(cb => cb.closest(`.course-item-label-edit-${pathId}`)?.style.display !== 'none');
+    const all = cbs.every(cb => cb.checked);
+    cbs.forEach(cb => cb.checked = !all);
+  }
 
-          let coursesHtml = '';
-          if (path.courses.length === 0) {
-            coursesHtml = `<span style="font-size: 0.8rem; color: var(--text-muted); font-style: italic;">(Chưa liên kết khóa học nào)</span>`;
-          } else {
-            coursesHtml = path.courses.map((c, idx) => `
-              <div style="font-size: 0.82rem; display: flex; align-items: center; gap: 0.5rem; color: var(--text-main);">
-                <span class="step-badge">Step ${idx + 1}</span>
-                <span>${escapeHtml(c.title)}</span>
-              </div>
-            `).join('');
-          }
-
-          let assignButtonHtml = '';
-          if (canEnrollAssign) {
-            assignButtonHtml = `
-              <div style="border-top: 1px dashed var(--border-light); margin-top: 1.25rem; padding-top: 1rem;">
-                <button type="button" class="btn btn-primary" onclick="openAssignModal(${path.id})" style="width: 100%; display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 0.6rem 1.2rem; font-size: 0.85rem; border-radius: 8px;">
-                  <i class="fa-solid fa-user-plus"></i> Giao lộ trình học tập
-                </button>
-              </div>
-            `;
-          }
-
-          return `
-            <div class="path-item-card path-virtual-item" style="height: 280px; box-sizing: border-box; overflow: hidden; display: flex; flex-direction: column; justify-content: space-between; margin-bottom: 1rem;">
-              <div>
-                <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem;">
-                  <h4 style="font-size: 1.1rem; font-weight: 700; color: var(--text-accent); margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${escapeHtml(path.name)}">${escapeHtml(path.name)}</h4>
-                  <div style="display: flex; gap: 0.35rem; flex-shrink: 0;">
-                    ${editButtonsHtml}
-                  </div>
-                </div>
-                <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.5rem; margin-bottom: 0.75rem; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis; height: 2.6rem; line-height: 1.3rem;" title="${escapeHtml(path.description)}">${escapeHtml(path.description)}</p>
-              </div>
-              
-              <div style="border-top: 1px solid var(--border-light); padding-top: 0.5rem; flex-grow: 1; overflow-y: auto; min-height: 50px; max-height: 80px; scrollbar-width: thin;">
-                <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600; display: block; margin-bottom: 0.3rem;">Chuỗi khóa học trong lộ trình:</span>
-                <div style="display: flex; flex-direction: column; gap: 0.3rem;">
-                  ${coursesHtml}
-                </div>
-              </div>
-
-              ${assignButtonHtml}
-            </div>
-          `;
-        }
+  /* ── Assign modal helpers ── */
+  function selectAllDeptsModal(pathId) {
+    const cbs = document.querySelectorAll(`.dept-check-cb-${pathId}`);
+    const all = Array.from(cbs).every(cb => cb.checked);
+    cbs.forEach(cb => cb.checked = !all);
+  }
+  function selectAllUsersModal(pathId) {
+    const cbs = Array.from(document.querySelectorAll(`.user-check-cb-${pathId}`))
+                     .filter(cb => cb.closest(`.user-item-label-${pathId}`)?.style.display !== 'none');
+    const all = cbs.every(cb => cb.checked);
+    cbs.forEach(cb => cb.checked = !all);
+  }
+  function selectGroupUsersModal(pathId, deptId) {
+    const cbs = Array.from(document.querySelectorAll(`.user-check-cb-${pathId}[data-dept-id="${deptId}"]`))
+                     .filter(cb => cb.closest(`.user-item-label-${pathId}`)?.style.display !== 'none');
+    const all = cbs.every(cb => cb.checked);
+    cbs.forEach(cb => cb.checked = !all);
+  }
+  function filterUsersModal(pathId) {
+    const q = document.getElementById(`userSearch-${pathId}`).value.toLowerCase().trim();
+    document.querySelectorAll(`.user-group-block-${pathId}`).forEach(group => {
+      let vis = 0;
+      group.querySelectorAll(`.user-item-label-${pathId}`).forEach(item => {
+        const match = item.dataset.searchName.includes(q);
+        item.style.display = match ? 'flex' : 'none';
+        if (match) vis++;
       });
-      pathsVirtualList.render();
-      updatePathsEmptyState(globalPaths.length);
-    }
-
-    // 2. Đăng ký sự kiện click lớp phủ để đóng modal
-    const overlay = document.getElementById('modal-overlay');
-    if (overlay) {
-      overlay.addEventListener('click', () => {
-        const assignModals = document.querySelectorAll('[id^="assignModal-"]');
-        assignModals.forEach(m => m.style.display = 'none');
-        const editModals = document.querySelectorAll('[id^="editModal-"]');
-        editModals.forEach(m => m.style.display = 'none');
-        overlay.style.display = 'none';
-      });
-    }
-  });
+      group.style.display = vis > 0 ? 'block' : 'none';
+    });
+  }
 </script>
 
 <%- include('../partials/footer') %>

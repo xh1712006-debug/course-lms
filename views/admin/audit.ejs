@@ -40,7 +40,15 @@
     'QUIZ_SUBMIT': 'Nộp bài thi trắc nghiệm',
     'PATH_ASSIGN_BULK': 'Giao lộ trình hàng loạt',
     'ENROLL_REQUEST': 'Yêu cầu đăng ký khóa học',
-    'ENROLL_DIRECT': 'Vào học trực tiếp'
+    'ENROLL_DIRECT': 'Vào học trực tiếp',
+    'ASSESSMENT_CREATE_MANUAL': 'Tạo bài kiểm tra thủ công',
+    'ASSESSMENT_CREATE_AI': 'Tạo bài kiểm tra bằng AI',
+    'ASSESSMENT_QUESTION_ADD': 'Thêm câu hỏi kiểm tra',
+    'ASSESSMENT_QUESTION_DELETE': 'Xóa câu hỏi kiểm tra',
+    'ASSESSMENT_PUBLISH': 'Xuất bản bài kiểm tra',
+    'ASSESSMENT_DELETE': 'Xóa bài kiểm tra',
+    'ASSESSMENT_ASSIGN': 'Phân phối bài kiểm tra',
+    'ASSESSMENT_SUBMIT': 'Nộp bài kiểm tra doanh nghiệp'
   };
 
   const detailKeys = {
@@ -81,7 +89,11 @@
     'original_user_id': 'Mã người quản trị',
     'original_username': 'Tài khoản quản trị',
     'error': 'Lỗi chi tiết',
-    'permissions': 'Danh sách quyền'
+    'permissions': 'Danh sách quyền',
+    'target_ids': 'Mã đối tượng nhận',
+    'target_type': 'Loại đối tượng giao',
+    'assessment_id': 'Mã bài kiểm tra',
+    'question_id': 'Mã câu hỏi'
   };
 
   const detailValues = {
@@ -96,8 +108,8 @@
     'null': 'Không có',
     'published': 'Xuất bản',
     'draft': 'Bản nháp',
-    
-    // Ánh xạ tên quyền hạn (Permissions Mapping)
+    'user': 'Nhân sự',
+    'department': 'Phòng ban',
     'COURSE_VIEW': 'Xem khóa học',
     'COURSE_CREATE': 'Tạo khóa học',
     'COURSE_UPDATE': 'Cập nhật khóa học',
@@ -130,7 +142,7 @@
 
   function formatAuditDetails(details) {
     if (!details) {
-      return '<span style="font-style: italic; opacity: 0.7;">Không có chi tiết</span>';
+      return '<span class="aud-detail-empty">Không có chi tiết</span>';
     }
     
     let parsedDetails = details;
@@ -143,7 +155,7 @@
     }
     
     if (!parsedDetails || typeof parsedDetails !== 'object' || Object.keys(parsedDetails).length === 0) {
-      return '<span style="font-style: italic; opacity: 0.7;">Không có chi tiết</span>';
+      return '<span class="aud-detail-empty">Không có chi tiết</span>';
     }
     
     return Object.entries(parsedDetails).map(([key, val]) => {
@@ -162,78 +174,386 @@
         displayVal = detailValues[val] !== undefined ? detailValues[val] : val;
       }
       
-      return `<strong>${label}</strong>: ${displayVal}`;
-    }).join(', ');
+      return `<span class="aud-detail-item"><strong>${label}</strong>: <span>${displayVal}</span></span>`;
+    }).join(' ');
   }
 %>
 
-<div style="margin-bottom: 2rem;">
-  <h1 style="font-size: 2.2rem; font-weight: 800; background: var(--primary-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
-    Nhật Ký Hệ Thống (Audit Logs)
-  </h1>
-  <p style="color: var(--text-muted); margin-top: 0.25rem;">Giám sát vết hoạt động, kiểm tra các thay đổi cấu hình bảo mật và phân quyền vai trò.</p>
+<style>
+  /* ── Page Header ───────────────────────────── */
+  .aud-header {
+    margin-bottom: 2.25rem;
+  }
+  .aud-title {
+    font-size: 1.6rem;
+    font-weight: 800;
+    color: var(--text-main);
+    letter-spacing: -0.025em;
+    margin: 0;
+  }
+  .aud-subtitle {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    margin-top: 0.35rem;
+  }
+
+  /* ── Filters ────────────────────────────────── */
+  .aud-filter-card {
+    background: #fff;
+    border: 1px solid var(--border-light);
+    border-radius: 16px;
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 1.75rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+  }
+  .aud-filter-form {
+    display: grid;
+    grid-template-columns: 1.8fr 1.2fr 1fr 1fr auto;
+    gap: 1rem;
+    align-items: flex-end;
+  }
+  @media (max-width: 992px) {
+    .aud-filter-form {
+      grid-template-columns: 1fr 1fr;
+    }
+    .aud-form-actions {
+      grid-column: span 2;
+      justify-content: flex-end;
+    }
+  }
+  @media (max-width: 576px) {
+    .aud-filter-form {
+      grid-template-columns: 1fr;
+    }
+    .aud-form-actions {
+      grid-column: span 1;
+    }
+  }
+  .aud-field-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+  }
+  .aud-label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #94a3b8;
+  }
+  .aud-input-wrap {
+    position: relative;
+  }
+  .aud-input-wrap i {
+    position: absolute;
+    left: 0.85rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #94a3b8;
+    font-size: 0.85rem;
+    pointer-events: none;
+  }
+  .aud-input-wrap input {
+    padding-left: 2.3rem !important;
+  }
+  .aud-select, .aud-date-input {
+    width: 100%;
+    padding: 0.72rem 1rem;
+    background: #fff;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    color: var(--text-main);
+    font-size: 0.88rem;
+    outline: none;
+    transition: all 0.2s;
+    font-family: var(--font-body);
+  }
+  .aud-select:focus, .aud-date-input:focus {
+    border-color: #4f46e5;
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+  }
+  .aud-form-actions {
+    display: flex;
+    gap: 0.5rem;
+  }
+  .aud-btn-filter {
+    background: linear-gradient(135deg, #4f46e5, #6366f1);
+    color: #fff !important;
+    padding: 0.72rem 1.25rem;
+    border-radius: 8px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(79, 70, 229, 0.2);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    transition: all 0.2s;
+    height: 38px;
+  }
+  .aud-btn-filter:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+  }
+  .aud-btn-reset {
+    background: #fff;
+    color: #475569 !important;
+    border: 1px solid #cbd5e1;
+    padding: 0.72rem 1.1rem;
+    border-radius: 8px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    text-decoration: none;
+    transition: all 0.2s;
+    height: 38px;
+    justify-content: center;
+  }
+  .aud-btn-reset:hover {
+    background: #f8fafc;
+    border-color: #94a3b8;
+  }
+
+  /* ── Matrix Card & Table ───────────────────── */
+  .aud-card {
+    background: #fff;
+    border: 1px solid var(--border-light);
+    border-radius: 18px;
+    overflow: hidden;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.03);
+    margin-bottom: 2.5rem;
+  }
+  .aud-card-header {
+    padding: 1.1rem 1.5rem;
+    border-bottom: 1px solid var(--border-light);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .aud-card-title {
+    font-size: 0.98rem;
+    font-weight: 700;
+    color: var(--text-main);
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .aud-card-title i {
+    color: #6366f1;
+  }
+  .aud-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.86rem;
+  }
+  .aud-table thead {
+    background: #f8fafc;
+  }
+  .aud-table th {
+    padding: 0.85rem 1.25rem;
+    text-align: left;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: #94a3b8;
+    border-bottom: 1px solid var(--border-light);
+    white-space: nowrap;
+  }
+  .aud-table td {
+    padding: 0.95rem 1.25rem;
+    vertical-align: middle;
+    border-bottom: 1px solid #f1f5f9;
+  }
+  .aud-table tbody tr:last-child td {
+    border-bottom: none;
+  }
+  .aud-table tbody tr {
+    transition: background 0.15s;
+  }
+  .aud-table tbody tr:hover {
+    background: #fafbff;
+  }
+
+  /* STT / ID */
+  .aud-log-id {
+    color: #94a3b8;
+    font-weight: 700;
+    font-size: 0.82rem;
+  }
+  .aud-time {
+    color: var(--text-main);
+    font-weight: 500;
+    white-space: nowrap;
+    line-height: 1.4;
+  }
+  .aud-user-name {
+    font-weight: 700;
+    color: var(--text-main);
+  }
+  .aud-user-email {
+    font-size: 0.76rem;
+    color: var(--text-muted);
+  }
+  .aud-action-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.28rem 0.6rem;
+    border-radius: 6px;
+    font-size: 0.74rem;
+    font-weight: 600;
+    white-space: nowrap;
+    background: rgba(99, 102, 241, 0.08);
+    color: #4f46e5;
+    border: 1px solid rgba(99, 102, 241, 0.16);
+  }
+  .aud-detail-text {
+    max-width: 450px;
+    line-height: 1.5;
+    word-break: break-word;
+    color: #475569;
+  }
+  .aud-detail-item {
+    display: inline-block;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    padding: 0.15rem 0.45rem;
+    border-radius: 5px;
+    margin: 0.15rem 0.15rem 0.15rem 0;
+    font-size: 0.78rem;
+  }
+  .aud-detail-item strong {
+    color: #475569;
+  }
+  .aud-detail-empty {
+    font-style: italic;
+    color: #94a3b8;
+  }
+
+  /* ── Pagination ─────────────────────────────── */
+  .aud-pagination-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+    padding: 1.1rem 1.5rem;
+    background: #fafbff;
+    border-top: 1px solid var(--border-light);
+  }
+  .aud-pagination-info {
+    font-size: 0.84rem;
+    color: var(--text-muted);
+  }
+  .aud-pagination-pages {
+    display: flex;
+    gap: 0.3rem;
+    align-items: center;
+  }
+  .aud-page-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.25rem;
+    min-width: 34px;
+    height: 34px;
+    padding: 0 0.6rem;
+    border-radius: 8px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    border: 1px solid #e2e8f0;
+    background: #fff;
+    color: #64748b;
+    cursor: pointer;
+    transition: all 0.18s;
+    text-decoration: none;
+    font-family: var(--font-body);
+  }
+  .aud-page-btn:hover:not([disabled]) {
+    border-color: #a5b4fc;
+    color: #4f46e5;
+    background: rgba(99, 102, 241, 0.05);
+  }
+  .aud-page-btn.active {
+    background: linear-gradient(135deg, #4f46e5, #6366f1);
+    color: #fff;
+    border-color: transparent;
+    box-shadow: 0 3px 10px rgba(79, 70, 229, 0.25);
+    cursor: default;
+  }
+  .aud-page-btn[disabled] {
+    opacity: 0.4;
+    cursor: not-allowed;
+    pointer-events: none;
+  }
+  .aud-page-sep {
+    color: #94a3b8;
+    font-size: 0.85rem;
+    padding: 0 0.15rem;
+  }
+</style>
+
+<!-- ── Page Header ──────────────────────────────── -->
+<div class="aud-header">
+  <h1 class="aud-title">Nhật Ký Hệ Thống (Audit Logs)</h1>
+  <p class="aud-subtitle">Giám sát vết hoạt động, kiểm tra các thay đổi cấu hình bảo mật và phân quyền vai trò.</p>
 </div>
 
-<!-- Bộ lọc và Tìm kiếm Nhật ký -->
-<div class="glass-card" style="padding: 1.25rem 1.5rem; margin-bottom: 1.5rem; border-color: rgba(255, 255, 255, 0.05);">
-  <form action="/audit" method="GET" style="display: flex; gap: 1rem; align-items: flex-end; flex-wrap: wrap;">
-    <div style="flex: 1.5; min-width: 200px;">
-      <label class="form-label" style="font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); font-weight: 600; display: block; margin-bottom: 0.4rem;">
-        Tìm kiếm nhân sự / Email
-      </label>
-      <div style="position: relative;">
+<!-- ── Filters ─────────────────────────────────── -->
+<div class="aud-filter-card">
+  <form action="/audit" method="GET" class="aud-filter-form">
+    <div class="aud-field-group">
+      <label class="aud-label">Tìm kiếm nhân sự / Email</label>
+      <div class="aud-input-wrap">
+        <i class="fa-solid fa-magnifying-glass"></i>
         <input 
           type="text" 
           name="search" 
           placeholder="Nhập họ tên hoặc email..." 
           value="<%= search %>"
-          style="width: 100%; padding: 0.65rem 1rem 0.65rem 2.5rem; background: rgba(255,255,255,0.03); border: 1px solid var(--border-light); border-radius: 8px; color: var(--text-main); font-size: 0.9rem; outline: none; transition: border-color 0.2s;"
         >
-        <i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 0.9rem; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 0.85rem;"></i>
       </div>
     </div>
     
-    <div style="flex: 1; min-width: 180px;">
-      <label class="form-label" style="font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); font-weight: 600; display: block; margin-bottom: 0.4rem;">
-        Loại hành động
-      </label>
-      <select name="action" style="width: 100%; padding: 0.65rem 1rem; background: rgba(15, 23, 42, 0.5); border: 1px solid var(--border-light); border-radius: 8px; color: var(--text-main); font-size: 0.9rem; outline: none;">
+    <div class="aud-field-group">
+      <label class="aud-label">Loại hành động</label>
+      <select name="action" class="aud-select">
         <% actionTypes.forEach(type => { %>
           <option value="<%= type.value %>" <%= action === type.value ? 'selected' : '' %>><%= type.label %></option>
         <% }) %>
       </select>
     </div>
 
-    <div style="flex: 0.8; min-width: 140px;">
-      <label class="form-label" style="font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); font-weight: 600; display: block; margin-bottom: 0.4rem;">
-        Từ ngày
-      </label>
+    <div class="aud-field-group">
+      <label class="aud-label">Từ ngày</label>
       <input 
         type="date" 
         name="startDate" 
         value="<%= startDate %>"
-        style="width: 100%; padding: 0.55rem 1rem; background: rgba(15, 23, 42, 0.5); border: 1px solid var(--border-light); border-radius: 8px; color: var(--text-main); font-size: 0.9rem; outline: none;"
+        class="aud-date-input"
       >
     </div>
 
-    <div style="flex: 0.8; min-width: 140px;">
-      <label class="form-label" style="font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); font-weight: 600; display: block; margin-bottom: 0.4rem;">
-        Đến ngày
-      </label>
+    <div class="aud-field-group">
+      <label class="aud-label">Đến ngày</label>
       <input 
         type="date" 
         name="endDate" 
         value="<%= endDate %>"
-        style="width: 100%; padding: 0.55rem 1rem; background: rgba(15, 23, 42, 0.5); border: 1px solid var(--border-light); border-radius: 8px; color: var(--text-main); font-size: 0.9rem; outline: none;"
+        class="aud-date-input"
       >
     </div>
     
-    <div style="display: flex; gap: 0.5rem;">
-      <button type="submit" class="btn btn-primary" style="padding: 0.65rem 1.25rem; font-size: 0.85rem; border-radius: 8px; height: 38px;">
+    <div class="aud-form-actions">
+      <button type="submit" class="aud-btn-filter">
         <i class="fa-solid fa-filter"></i> Lọc kết quả
       </button>
       <% if (search || (action && action !== 'all') || startDate || endDate) { %>
-        <a href="/audit" class="btn btn-secondary" style="padding: 0.65rem 1.25rem; font-size: 0.85rem; border-radius: 8px; height: 38px; display: inline-flex; align-items: center; justify-content: center;">
+        <a href="/audit" class="aud-btn-reset">
           <i class="fa-solid fa-arrow-rotate-left"></i> Nhập lại
         </a>
       <% } %>
@@ -241,105 +561,130 @@
   </form>
 </div>
 
-<!-- Bảng nhật ký Audit Logs mờ kính -->
-<div class="glass-card" style="padding: 1.5rem; overflow-x: auto;">
-  <h3 style="font-size: 1.2rem; margin-bottom: 1.25rem;"><i class="fa-solid fa-clock-rotate-left" style="color: #a5b4fc;"></i> Nhật ký hoạt động hệ thống (Tổng số: <%= totalLogs %>)</h3>
+<!-- ── Main Table Card ─────────────────────────── -->
+<div class="aud-card">
+  <div class="aud-card-header">
+    <div class="aud-card-title">
+      <i class="fa-solid fa-clock-rotate-left"></i>
+      <span>Nhật ký hoạt động hệ thống</span>
+      <span style="font-size: 0.8rem; font-weight: 600; color: var(--text-muted); background: #f1f5f9; padding: 0.15rem 0.55rem; border-radius: 12px; margin-left: 0.35rem;">
+        Tổng số: <%= totalLogs %>
+      </span>
+    </div>
+  </div>
   
-  <table class="custom-table" style="margin-top: 0; font-size: 0.85rem;">
-    <thead>
-      <tr>
-        <th>Mã log</th>
-        <th>Thời gian</th>
-        <th>Nhân sự</th>
-        <th>Email</th>
-        <th>Hành động</th>
-        <th>Chi tiết hoạt động</th>
-      </tr>
-    </thead>
-    <tbody>
-      <% if (logs.length === 0) { %>
+  <div style="overflow-x: auto;">
+    <table class="aud-table">
+      <thead>
         <tr>
-          <td colspan="6" style="text-align: center; color: var(--text-muted); padding: 2rem;">Không tìm thấy nhật ký hoạt động nào khớp với bộ lọc.</td>
+          <th style="width: 80px;">Mã log</th>
+          <th style="width: 170px;">Thời gian</th>
+          <th style="width: 150px;">Nhân sự</th>
+          <th style="width: 200px;">Email</th>
+          <th style="width: 220px;">Hành động</th>
+          <th>Chi tiết hoạt động</th>
         </tr>
-      <% } else { %>
-        <% logs.forEach(log => { %>
+      </thead>
+      <tbody>
+        <% if (logs.length === 0) { %>
           <tr>
-            <td><strong>#<%= log.id %></strong></td>
-            <td><%= new Date(log.created_at).toLocaleString() %></td>
-            <td><strong><%= log.username || 'Hệ thống' %></strong></td>
-            <td style="color: var(--text-muted);"><%= log.email || 'N/A' %></td>
-            <td>
-              <span style="background: rgba(99, 102, 241, 0.15); color: var(--text-accent); padding: 0.2rem 0.5rem; border-radius: 4px; font-weight: 600; font-size: 0.75rem; border: 1px solid rgba(99, 102, 241, 0.3);">
-                <%= actionLabels[log.action] || log.action %>
-              </span>
-            </td>
-            <td style="max-width: 450px; color: var(--text-main); font-size: 0.82rem; word-break: break-word; white-space: normal;">
-              <%- formatAuditDetails(log.details) %>
+            <td colspan="6" style="text-align: center; color: var(--text-muted); padding: 3.5rem 1rem;">
+              <i class="fa-solid fa-inbox" style="font-size: 2rem; opacity: 0.25; display: block; margin-bottom: 0.75rem;"></i>
+              Không tìm thấy nhật ký hoạt động nào khớp với bộ lọc.
             </td>
           </tr>
-        <% }) %>
-      <% } %>
-    </tbody>
-  </table>
+        <% } else { %>
+          <% logs.forEach(log => { %>
+            <tr>
+              <td class="aud-log-id">#<%= log.id %></td>
+              <td class="aud-time">
+                <%= new Date(log.created_at).toLocaleString('vi-VN') %>
+              </td>
+              <td>
+                <span class="aud-user-name"><%= log.username || 'Hệ thống' %></span>
+              </td>
+              <td style="color: var(--text-muted);"><%= log.email || '—' %></td>
+              <td>
+                <span class="aud-action-badge">
+                  <%= actionLabels[log.action] || log.action %>
+                </span>
+              </td>
+              <td>
+                <div class="aud-detail-text">
+                  <%- formatAuditDetails(log.details) %>
+                </div>
+              </td>
+            </tr>
+          <% }) %>
+        <% } %>
+      </tbody>
+    </table>
+  </div>
 
-  <!-- Bộ điều khiển phân trang Glassmorphism -->
-  <div style="margin-top: 1.5rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
-    <div style="font-size: 0.85rem; color: var(--text-muted);">
-      Hiển thị <%= logs.length > 0 ? (currentPage - 1) * 20 + 1 : 0 %> - <%= Math.min(currentPage * 20, totalLogs) %> trong tổng số <strong><%= totalLogs %></strong> hoạt động
-    </div>
-    
-    <% if (totalPages > 1) { %>
-      <div style="display: flex; gap: 0.35rem; align-items: center;">
-        <!-- Nút trang trước -->
+  <!-- Pagination Bar -->
+  <% if (totalPages > 1) { %>
+    <div class="aud-pagination-bar">
+      <div class="aud-pagination-info">
+        Hiển thị <strong><%= logs.length > 0 ? (currentPage - 1) * 20 + 1 : 0 %></strong> – 
+        <strong><%= Math.min(currentPage * 20, totalLogs) %></strong> 
+        trong <strong><%= totalLogs %></strong> hoạt động
+      </div>
+      
+      <div class="aud-pagination-pages">
+        <!-- Prev Button -->
         <% if (currentPage > 1) { %>
-          <a href="/audit?page=<%= currentPage - 1 %>&search=<%= encodeURIComponent(search) %>&action=<%= encodeURIComponent(action) %>&startDate=<%= encodeURIComponent(startDate) %>&endDate=<%= encodeURIComponent(endDate) %>" class="btn btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.8rem; border-radius: 8px;">
-            <i class="fa-solid fa-chevron-left"></i> Trước
+          <a href="/audit?page=<%= currentPage - 1 %>&search=<%= encodeURIComponent(search) %>&action=<%= encodeURIComponent(action) %>&startDate=<%= encodeURIComponent(startDate) %>&endDate=<%= encodeURIComponent(endDate) %>" class="aud-page-btn" title="Trang trước">
+            <i class="fa-solid fa-chevron-left" style="font-size: 0.7rem;"></i> Trước
           </a>
         <% } else { %>
-          <button class="btn btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.8rem; border-radius: 8px; opacity: 0.4; cursor: not-allowed;" disabled>
-            <i class="fa-solid fa-chevron-left"></i> Trước
+          <button class="aud-page-btn" disabled>
+            <i class="fa-solid fa-chevron-left" style="font-size: 0.7rem;"></i> Trước
           </button>
         <% } %>
         
-        <!-- Các số trang -->
+        <!-- Page Numbers -->
         <% 
           let startPage = Math.max(1, currentPage - 2);
           let endPage = Math.min(totalPages, currentPage + 2);
           
           if (startPage > 1) { %>
-            <a href="/audit?page=1&search=<%= encodeURIComponent(search) %>&action=<%= encodeURIComponent(action) %>&startDate=<%= encodeURIComponent(startDate) %>&endDate=<%= encodeURIComponent(endDate) %>" class="btn <%= currentPage === 1 ? 'btn-primary' : 'btn-secondary' %>" style="padding: 0.4rem 0.8rem; font-size: 0.8rem; border-radius: 8px;">1</a>
+            <a href="/audit?page=1&search=<%= encodeURIComponent(search) %>&action=<%= encodeURIComponent(action) %>&startDate=<%= encodeURIComponent(startDate) %>&endDate=<%= encodeURIComponent(endDate) %>" class="aud-page-btn">1</a>
             <% if (startPage > 2) { %>
-              <span style="color: var(--text-muted); padding: 0 0.25rem;">...</span>
+              <span class="aud-page-sep">…</span>
             <% } %>
           <% } %>
           
           <% for (let i = startPage; i <= endPage; i++) { %>
-            <a href="/audit?page=<%= i %>&search=<%= encodeURIComponent(search) %>&action=<%= encodeURIComponent(action) %>&startDate=<%= encodeURIComponent(startDate) %>&endDate=<%= encodeURIComponent(endDate) %>" class="btn <%= currentPage === i ? 'btn-primary' : 'btn-secondary' %>" style="padding: 0.4rem 0.8rem; font-size: 0.8rem; border-radius: 8px; <%= currentPage === i ? 'pointer-events: none;' : '' %>">
-              <%= i %>
-            </a>
+            <% if (currentPage === i) { %>
+              <span class="aud-page-btn active"><%= i %></span>
+            <% } else { %>
+              <a href="/audit?page=<%= i %>&search=<%= encodeURIComponent(search) %>&action=<%= encodeURIComponent(action) %>&startDate=<%= encodeURIComponent(startDate) %>&endDate=<%= encodeURIComponent(endDate) %>" class="aud-page-btn">
+                <%= i %>
+              </a>
+            <% } %>
           <% } %>
           
           <% if (endPage < totalPages) { %>
             <% if (endPage < totalPages - 1) { %>
-              <span style="color: var(--text-muted); padding: 0 0.25rem;">...</span>
+              <span class="aud-page-sep">…</span>
             <% } %>
-            <a href="/audit?page=<%= totalPages %>&search=<%= encodeURIComponent(search) %>&action=<%= encodeURIComponent(action) %>&startDate=<%= encodeURIComponent(startDate) %>&endDate=<%= encodeURIComponent(endDate) %>" class="btn <%= currentPage === totalPages ? 'btn-primary' : 'btn-secondary' %>" style="padding: 0.4rem 0.8rem; font-size: 0.8rem; border-radius: 8px;"><%= totalPages %></a>
+            <a href="/audit?page=<%= totalPages %>&search=<%= encodeURIComponent(search) %>&action=<%= encodeURIComponent(action) %>&startDate=<%= encodeURIComponent(startDate) %>&endDate=<%= encodeURIComponent(endDate) %>" class="aud-page-btn"><%= totalPages %></a>
           <% } 
         %>
         
-        <!-- Nút trang sau -->
+        <!-- Next Button -->
         <% if (currentPage < totalPages) { %>
-          <a href="/audit?page=<%= currentPage + 1 %>&search=<%= encodeURIComponent(search) %>&action=<%= encodeURIComponent(action) %>&startDate=<%= encodeURIComponent(startDate) %>&endDate=<%= encodeURIComponent(endDate) %>" class="btn btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.8rem; border-radius: 8px;">
-            Sau <i class="fa-solid fa-chevron-right"></i>
+          <a href="/audit?page=<%= currentPage + 1 %>&search=<%= encodeURIComponent(search) %>&action=<%= encodeURIComponent(action) %>&startDate=<%= encodeURIComponent(startDate) %>&endDate=<%= encodeURIComponent(endDate) %>" class="aud-page-btn" title="Trang sau">
+            Sau <i class="fa-solid fa-chevron-right" style="font-size: 0.7rem;"></i>
           </a>
         <% } else { %>
-          <button class="btn btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.8rem; border-radius: 8px; opacity: 0.4; cursor: not-allowed;" disabled>
-            Sau <i class="fa-solid fa-chevron-right"></i>
+          <button class="aud-page-btn" disabled>
+            Sau <i class="fa-solid fa-chevron-right" style="font-size: 0.7rem;"></i>
           </button>
         <% } %>
       </div>
-    <% } %>
-  </div>
+    </div>
+  <% } %>
 </div>
 
 <%- include('../partials/footer') %>

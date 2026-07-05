@@ -33,7 +33,6 @@ router.post('/course-management/:courseId/lessons/:id/delete', requirePermission
 // NHÓM 3: QUẢN LÝ ĐỀ THI & NGÂN HÀNG CÂU HỎI
 // ==========================================
 router.get('/grade', requirePermission('QUIZ_GRADE'), adminController.getGradeList);
-router.post('/grade/:id', requirePermission('QUIZ_GRADE'), adminController.postGrade);
 
 // ==========================================
 // NHÓM 4: QUẢN LÝ LỘ TRÌNH ĐÀO TẠO & ĐĂNG KÝ

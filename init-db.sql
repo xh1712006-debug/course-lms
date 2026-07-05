@@ -153,6 +153,10 @@ CREATE TABLE quiz_submissions (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE INDEX IF NOT EXISTS idx_quiz_submissions_user_id ON quiz_submissions(user_id);
+CREATE INDEX IF NOT EXISTS idx_quiz_submissions_quiz_id ON quiz_submissions(quiz_id);
+CREATE INDEX IF NOT EXISTS idx_quiz_submissions_created_at ON quiz_submissions(created_at DESC);
+
 -- 14. Bảng nhật ký vết hoạt động (Audit Logs)
 CREATE TABLE audit_logs (
     id SERIAL PRIMARY KEY,

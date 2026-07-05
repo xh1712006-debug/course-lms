@@ -1,527 +1,930 @@
 <%- include('../partials/header') %>
 
-<div style="margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem;">
+<%
+const totalLessons       = allLessons.length;
+const coursesWithLessons = lessonsByCourse.filter(g => g.lessons.length > 0).length;
+const coursesEmpty       = lessonsByCourse.filter(g => g.lessons.length === 0).length;
+const hasVideo           = allLessons.filter(l => l.video_url && l.video_url.trim() !== '').length;
+%>
+
+<style>
+  /* ── Page header ───────────────────────────── */
+  .lo-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 1.75rem;
+  }
+  .lo-title {
+    font-size: 1.55rem;
+    font-weight: 800;
+    color: var(--text-main);
+    letter-spacing: -0.025em;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+  }
+  .lo-title-icon {
+    width: 38px;
+    height: 38px;
+    background: linear-gradient(135deg, #4f46e5, #818cf8);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 1rem;
+    flex-shrink: 0;
+    box-shadow: 0 4px 12px rgba(79,70,229,0.22);
+  }
+  .lo-subtitle {
+    color: var(--text-muted);
+    font-size: 0.88rem;
+    margin-top: 0.3rem;
+    line-height: 1.5;
+  }
+  .lo-nav-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.55rem 1.1rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    background: #fff;
+    color: #4f46e5;
+    font-size: 0.84rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+  .lo-nav-btn:hover {
+    border-color: #a5b4fc;
+    background: rgba(99,102,241,0.04);
+    color: #4338ca;
+    transform: translateY(-1px);
+  }
+
+  /* ── Stats cards ────────────────────────────── */
+  .lo-stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+    margin-bottom: 1.75rem;
+  }
+  @media (max-width: 900px) { .lo-stats { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 520px) { .lo-stats { grid-template-columns: 1fr; } }
+
+  .lo-stat {
+    background: #fff;
+    border: 1px solid var(--border-light);
+    border-radius: 14px;
+    padding: 1.25rem 1.4rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    transition: box-shadow 0.2s, transform 0.2s;
+  }
+  .lo-stat:hover {
+    box-shadow: 0 6px 20px rgba(0,0,0,0.06);
+    transform: translateY(-2px);
+  }
+  .lo-stat-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 11px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.15rem;
+    flex-shrink: 0;
+  }
+  .lo-stat-body {}
+  .lo-stat-label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: #94a3b8;
+    line-height: 1;
+    margin-bottom: 0.35rem;
+  }
+  .lo-stat-value {
+    font-size: 1.85rem;
+    font-weight: 800;
+    line-height: 1;
+    color: var(--text-main);
+    letter-spacing: -0.03em;
+  }
+
+  /* ── Filter bar ─────────────────────────────── */
+  .lo-filter-bar {
+    background: #fff;
+    border: 1px solid var(--border-light);
+    border-radius: 14px;
+    padding: 1rem 1.25rem;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    flex-wrap: wrap;
+  }
+  .lo-search-wrap {
+    flex: 1;
+    min-width: 240px;
+    position: relative;
+  }
+  .lo-search-wrap i {
+    position: absolute;
+    left: 0.9rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #94a3b8;
+    font-size: 0.85rem;
+    pointer-events: none;
+  }
+  .lo-search-wrap input {
+    padding-left: 2.4rem !important;
+  }
+  .lo-filter-count {
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    white-space: nowrap;
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+  }
+  .lo-filter-count strong {
+    font-size: 1rem;
+    font-weight: 800;
+    color: #4f46e5;
+  }
+
+  /* ── Main table card ─────────────────────────── */
+  .lo-table-card {
+    background: #fff;
+    border: 1px solid var(--border-light);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+    margin-bottom: 2.5rem;
+  }
+  .lo-table-head-bar {
+    padding: 1rem 1.4rem 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    border-bottom: 1px solid var(--border-light);
+  }
+  .lo-table-head-bar h3 {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--text-main);
+    margin: 0;
+  }
+
+  .lo-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.855rem;
+  }
+  .lo-table thead {
+    background: #f8fafc;
+  }
+  .lo-table th {
+    padding: 0.75rem 1rem;
+    text-align: left;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: #94a3b8;
+    white-space: nowrap;
+    border-bottom: 1px solid var(--border-light);
+  }
+  .lo-table th.center { text-align: center; }
+  .lo-table td {
+    padding: 0.85rem 1rem;
+    vertical-align: middle;
+    border-bottom: 1px solid #f1f5f9;
+  }
+  .lo-table tbody tr:last-child td { border-bottom: none; }
+  .lo-table tbody tr { transition: background 0.15s; }
+  .lo-table tbody tr:hover { background: #fafbff; }
+
+  .lo-stt {
+    color: #94a3b8;
+    font-size: 0.78rem;
+    font-weight: 600;
+    text-align: center;
+  }
+  .lo-lesson-title {
+    font-weight: 600;
+    color: var(--text-main);
+    font-size: 0.9rem;
+    line-height: 1.4;
+  }
+  .lo-lesson-preview {
+    font-size: 0.76rem;
+    color: #94a3b8;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 300px;
+    margin-top: 0.15rem;
+  }
+  .lo-course-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.28rem 0.65rem;
+    border-radius: 8px;
+    background: rgba(79,70,229,0.06);
+    border: 1px solid rgba(79,70,229,0.12);
+    color: #4f46e5;
+    font-size: 0.78rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: background 0.15s;
+    max-width: 220px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .lo-course-chip:hover {
+    background: rgba(79,70,229,0.12);
+    color: #4338ca;
+  }
+  .lo-order-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 32px;
+    height: 24px;
+    border-radius: 6px;
+    background: rgba(79,70,229,0.06);
+    border: 1px solid rgba(79,70,229,0.12);
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: #4f46e5;
+  }
+
+  /* status badges – reuse global .badge classes */
+
+  .lo-edit-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.35rem 0.7rem;
+    border-radius: 8px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #4f46e5;
+    border: 1px solid rgba(79,70,229,0.2);
+    background: rgba(79,70,229,0.05);
+    text-decoration: none;
+    transition: all 0.18s;
+  }
+  .lo-edit-btn:hover {
+    background: rgba(79,70,229,0.12);
+    border-color: rgba(79,70,229,0.35);
+    color: #4338ca;
+  }
+
+  /* ── Pagination ─────────────────────────────── */
+  .lo-pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 1rem 1.4rem;
+    border-top: 1px solid var(--border-light);
+    background: #fafbff;
+  }
+  .lo-page-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.25rem;
+    min-width: 34px;
+    height: 34px;
+    padding: 0 0.55rem;
+    border-radius: 8px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    border: 1px solid #e2e8f0;
+    background: #fff;
+    color: #64748b;
+    cursor: pointer;
+    transition: all 0.18s;
+    font-family: var(--font-body);
+  }
+  .lo-page-btn:hover:not(:disabled) {
+    border-color: #a5b4fc;
+    color: #4f46e5;
+    background: rgba(99,102,241,0.05);
+  }
+  .lo-page-btn.active {
+    background: linear-gradient(135deg, #4f46e5, #6366f1);
+    color: #fff;
+    border-color: transparent;
+    box-shadow: 0 3px 10px rgba(79,70,229,0.28);
+    cursor: default;
+  }
+  .lo-page-btn:disabled {
+    opacity: 0.38;
+    cursor: not-allowed;
+  }
+  .lo-page-sep { color: #94a3b8; font-size: 0.82rem; padding: 0 0.1rem; }
+
+  /* ── No result banner ───────────────────────── */
+  .lo-no-result {
+    display: none;
+    text-align: center;
+    padding: 3.5rem 1rem;
+    color: var(--text-muted);
+  }
+  .lo-no-result i { font-size: 2rem; opacity: 0.3; display: block; margin-bottom: 0.75rem; }
+
+  /* ── Accordion section ──────────────────────── */
+  .lo-section-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    cursor: pointer;
+    user-select: none;
+  }
+  .lo-section-title i.chevron {
+    font-size: 0.8rem;
+    transition: transform 0.28s;
+    color: #94a3b8;
+  }
+  .lo-section-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+  }
+  .lo-toggle-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.42rem 0.9rem;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+    background: #fff;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-family: var(--font-body);
+    transition: all 0.18s;
+  }
+  .lo-toggle-btn:hover {
+    border-color: #94a3b8;
+    color: var(--text-main);
+  }
+  .lo-accordion-card {
+    background: #fff;
+    border: 1px solid var(--border-light);
+    border-radius: 14px;
+    overflow: hidden;
+    transition: box-shadow 0.2s;
+  }
+  .lo-accordion-card:hover {
+    box-shadow: 0 4px 16px rgba(0,0,0,0.05);
+  }
+  .lo-accordion-trigger {
+    width: 100%;
+    background: none;
+    border: none;
+    padding: 1.1rem 1.35rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    text-align: left;
+    transition: background 0.15s;
+    font-family: var(--font-body);
+  }
+  .lo-accordion-trigger:hover { background: #fafbff; }
+  .lo-accordion-left {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+  }
+  .lo-course-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 9px;
+    background: linear-gradient(135deg, #4f46e5, #818cf8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 0.85rem;
+    flex-shrink: 0;
+    box-shadow: 0 3px 8px rgba(79,70,229,0.18);
+  }
+  .lo-accordion-course-title {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--text-main);
+  }
+  .lo-accordion-meta {
+    font-size: 0.75rem;
+    color: #94a3b8;
+    margin-top: 0.12rem;
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+  }
+  .lo-accordion-right {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+  }
+  .lo-config-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    font-size: 0.76rem;
+    font-weight: 600;
+    color: #4f46e5;
+    padding: 0.3rem 0.65rem;
+    border: 1px solid rgba(79,70,229,0.18);
+    border-radius: 7px;
+    background: rgba(79,70,229,0.05);
+    text-decoration: none;
+    transition: all 0.18s;
+  }
+  .lo-config-link:hover {
+    background: rgba(79,70,229,0.1);
+    border-color: rgba(79,70,229,0.3);
+    color: #4338ca;
+  }
+  .lo-accordion-body {
+    display: none;
+    border-top: 1px solid #f1f5f9;
+    background: #fafbff;
+  }
+  .lo-lesson-row-mini {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    padding: 0.8rem 1.35rem;
+    border-bottom: 1px solid rgba(226,232,240,0.5);
+    transition: background 0.13s;
+  }
+  .lo-lesson-row-mini:last-child { border-bottom: none; }
+  .lo-lesson-row-mini:hover { background: #fff; }
+  .lo-mini-order {
+    font-size: 0.76rem;
+    font-weight: 700;
+    color: #94a3b8;
+    min-width: 24px;
+    text-align: right;
+  }
+  .lo-mini-type-icon {
+    font-size: 0.9rem;
+    width: 20px;
+    text-align: center;
+    flex-shrink: 0;
+  }
+  .lo-mini-title {
+    flex: 1;
+    font-size: 0.87rem;
+    font-weight: 600;
+    color: var(--text-main);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .lo-mini-tags {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    flex-shrink: 0;
+  }
+  .lo-empty-course {
+    padding: 1.75rem;
+    text-align: center;
+    font-size: 0.85rem;
+    color: #94a3b8;
+  }
+</style>
+
+<!-- ── Page header ──────────────────────────────── -->
+<div class="lo-header">
   <div>
-    <h1 style="font-size: 2.2rem; font-weight: 800; background: linear-gradient(135deg, #4f46e5, #06b6d4); -webkit-background-clip: text; -webkit-text-fill-color: transparent; padding-top: 0.25rem; padding-bottom: 0.25rem;">
-      <i class="fa-solid fa-file-video" style="-webkit-text-fill-color: #4f46e5; font-size: 1.8rem; margin-right: 0.5rem;"></i>Bài Học & Nội Dung
+    <h1 class="lo-title">
+      <span class="lo-title-icon"><i class="fa-solid fa-file-video"></i></span>
+      Bài Học &amp; Nội Dung
     </h1>
-    <p style="color: var(--text-muted); margin-top: 0.25rem; font-size: 0.95rem;">
+    <p class="lo-subtitle">
       Tổng hợp tất cả bài giảng trong hệ thống. Chọn một khóa học để thêm hoặc chỉnh sửa bài học chi tiết.
     </p>
   </div>
   <% if (user.permissions.includes('COURSE_VIEW')) { %>
-    <a href="/course-management" class="btn btn-secondary" style="white-space: nowrap; display: inline-flex; align-items: center; gap: 0.5rem; border-radius: 12px;">
-      <i class="fa-solid fa-folder-open" style="color: #4f46e5;"></i> Đến Quản lý khóa học
+    <a href="/course-management" class="lo-nav-btn">
+      <i class="fa-solid fa-folder-open"></i> Đến Quản lý khóa học
     </a>
   <% } %>
 </div>
 
-<!-- Stats nhanh -->
-<%
-const totalLessons = allLessons.length;
-const coursesWithLessons = lessonsByCourse.filter(g => g.lessons.length > 0).length;
-const coursesEmpty = lessonsByCourse.filter(g => g.lessons.length === 0).length;
-const hasVideo = allLessons.filter(l => l.video_url && l.video_url.trim() !== '').length;
-%>
-<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.5rem; margin-bottom: 2.5rem;">
-  <!-- Thống kê: Tổng bài học -->
-  <div class="glass-card" style="padding: 1.5rem; display: flex; align-items: center; justify-content: space-between; border-left: 4px solid #a78bfa; overflow: hidden; position: relative;">
-    <div>
-      <div style="font-size: 0.85rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em;">Tổng bài học</div>
-      <div style="font-size: 2.2rem; font-weight: 800; color: var(--text-main); margin-top: 0.25rem; line-height: 1.2;"><%= totalLessons %></div>
+<!-- ── Stats ─────────────────────────────────────── -->
+<div class="lo-stats">
+  <div class="lo-stat">
+    <div class="lo-stat-icon" style="background:rgba(167,139,250,0.12); color:#8b5cf6;">
+      <i class="fa-solid fa-layer-group"></i>
     </div>
-    <div style="width: 48px; height: 48px; border-radius: 12px; background: rgba(167,139,250,0.1); display: flex; align-items: center; justify-content: center; color: #a78bfa; font-size: 1.3rem;">
-      <i class="fa-solid fa-file-video"></i>
+    <div class="lo-stat-body">
+      <div class="lo-stat-label">Tổng bài học</div>
+      <div class="lo-stat-value"><%= totalLessons %></div>
     </div>
   </div>
-
-  <!-- Thống kê: Khóa học -->
-  <div class="glass-card" style="padding: 1.5rem; display: flex; align-items: center; justify-content: space-between; border-left: 4px solid #06b6d4; overflow: hidden; position: relative;">
-    <div>
-      <div style="font-size: 0.85rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em;">Khóa học</div>
-      <div style="font-size: 2.2rem; font-weight: 800; color: var(--text-main); margin-top: 0.25rem; line-height: 1.2;"><%= courses.length %></div>
-    </div>
-    <div style="width: 48px; height: 48px; border-radius: 12px; background: rgba(6,182,212,0.1); display: flex; align-items: center; justify-content: center; color: #06b6d4; font-size: 1.3rem;">
+  <div class="lo-stat">
+    <div class="lo-stat-icon" style="background:rgba(6,182,212,0.12); color:#06b6d4;">
       <i class="fa-solid fa-graduation-cap"></i>
     </div>
-  </div>
-
-  <!-- Thống kê: Có video -->
-  <div class="glass-card" style="padding: 1.5rem; display: flex; align-items: center; justify-content: space-between; border-left: 4px solid #10b981; overflow: hidden; position: relative;">
-    <div>
-      <div style="font-size: 0.85rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em;">Có bài giảng video</div>
-      <div style="font-size: 2.2rem; font-weight: 800; color: var(--text-main); margin-top: 0.25rem; line-height: 1.2;"><%= hasVideo %></div>
+    <div class="lo-stat-body">
+      <div class="lo-stat-label">Khóa học</div>
+      <div class="lo-stat-value"><%= courses.length %></div>
     </div>
-    <div style="width: 48px; height: 48px; border-radius: 12px; background: rgba(16,185,129,0.1); display: flex; align-items: center; justify-content: center; color: #10b981; font-size: 1.3rem;">
+  </div>
+  <div class="lo-stat">
+    <div class="lo-stat-icon" style="background:rgba(16,185,129,0.12); color:#10b981;">
       <i class="fa-solid fa-circle-play"></i>
     </div>
-  </div>
-
-  <!-- Thống kê: Chưa có bài -->
-  <div class="glass-card" style="padding: 1.5rem; display: flex; align-items: center; justify-content: space-between; border-left: 4px solid #f59e0b; overflow: hidden; position: relative;">
-    <div>
-      <div style="font-size: 0.85rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em;">Chưa có bài giảng</div>
-      <div style="font-size: 2.2rem; font-weight: 800; color: var(--text-main); margin-top: 0.25rem; line-height: 1.2;"><%= coursesEmpty %></div>
+    <div class="lo-stat-body">
+      <div class="lo-stat-label">Có bài giảng video</div>
+      <div class="lo-stat-value"><%= hasVideo %></div>
     </div>
-    <div style="width: 48px; height: 48px; border-radius: 12px; background: rgba(245,158,11,0.1); display: flex; align-items: center; justify-content: center; color: #f59e0b; font-size: 1.3rem;">
+  </div>
+  <div class="lo-stat">
+    <div class="lo-stat-icon" style="background:rgba(245,158,11,0.12); color:#f59e0b;">
       <i class="fa-solid fa-folder-minus"></i>
+    </div>
+    <div class="lo-stat-body">
+      <div class="lo-stat-label">Chưa có bài giảng</div>
+      <div class="lo-stat-value"><%= coursesEmpty %></div>
     </div>
   </div>
 </div>
 
-<!-- Bộ lọc tìm kiếm -->
-<div class="glass-card" style="padding: 1.25rem 1.75rem; margin-bottom: 2rem; display: flex; align-items: center; gap: 1.25rem; flex-wrap: wrap; border-radius: 16px;">
-  <div style="flex: 1; min-width: 260px; position: relative;">
-    <i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 0.9rem;"></i>
+<!-- ── Filter bar ─────────────────────────────────── -->
+<div class="lo-filter-bar">
+  <div class="lo-search-wrap">
+    <i class="fa-solid fa-magnifying-glass"></i>
     <input
       id="lesson-search-input"
       type="text"
       placeholder="Tìm tên bài học, nội dung hoặc tên khóa học..."
       oninput="filterLessons()"
-      style="width: 100%; padding: 0.75rem 1rem 0.75rem 2.6rem; border: 1px solid var(--border-light); border-radius: 12px; color: var(--text-main); font-size: 0.9rem; outline: none; box-sizing: border-box; transition: all 0.3s;"
     >
   </div>
-  <div>
-    <select id="course-filter" onchange="filterLessons()" style="padding: 0.75rem 1.25rem; border: 1px solid var(--border-light); border-radius: 12px; color: var(--text-main); font-size: 0.9rem; min-width: 220px; transition: all 0.3s; background: #fff;">
-      <option value="">— Tất cả khóa học —</option>
-      <% courses.forEach(c => { %>
-        <option value="<%= c.id %>"><%= c.title %></option>
-      <% }) %>
-    </select>
-  </div>
-  <div>
-    <select id="video-filter" onchange="filterLessons()" style="padding: 0.75rem 1.25rem; border: 1px solid var(--border-light); border-radius: 12px; color: var(--text-main); font-size: 0.9rem; transition: all 0.3s; background: #fff;">
-      <option value="">— Tất cả loại bài học —</option>
-      <option value="has_video">Có video bài giảng</option>
-      <option value="no_video">Chưa có video bài giảng</option>
-    </select>
-  </div>
-  <div style="font-size: 0.88rem; color: var(--text-muted); font-weight: 500; white-space: nowrap; margin-left: auto;">
-    Hiển thị: <span id="lesson-count-display" style="font-weight: 700; color: #4f46e5; font-size: 1.1rem;"><%= totalLessons %></span> bài học
+  <select id="course-filter" onchange="filterLessons()" style="width:210px;">
+    <option value="">— Tất cả khóa học —</option>
+    <% courses.forEach(c => { %>
+      <option value="<%= c.id %>"><%= c.title %></option>
+    <% }) %>
+  </select>
+  <select id="video-filter" onchange="filterLessons()" style="width:200px;">
+    <option value="">— Tất cả loại bài học —</option>
+    <option value="has_video">Có video bài giảng</option>
+    <option value="no_video">Chưa có video bài giảng</option>
+  </select>
+  <div class="lo-filter-count">
+    Hiển thị: <strong id="lesson-count-display"><%= totalLessons %></strong> bài học
   </div>
 </div>
 
-<!-- Bảng tổng hợp tất cả bài học -->
-<div class="glass-card" style="padding: 1.5rem; overflow-x: auto; border-radius: 16px;">
-  <h3 style="font-size: 1.15rem; font-weight: 700; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 0.6rem; color: var(--text-main);">
-    <i class="fa-solid fa-layer-group" style="color: #4f46e5;"></i> Danh sách tất cả bài học
-  </h3>
+<!-- ── Main table ─────────────────────────────────── -->
+<div class="lo-table-card">
+  <div class="lo-table-head-bar">
+    <i class="fa-solid fa-list" style="color:#6366f1; font-size:0.85rem;"></i>
+    <h3>Danh sách tất cả bài học</h3>
+  </div>
 
   <% if (allLessons.length === 0) { %>
-    <div style="text-align: center; padding: 4rem 1rem; color: var(--text-muted);">
-      <i class="fa-solid fa-file-circle-question" style="font-size: 3rem; opacity: 0.3; display: block; margin-bottom: 1rem;"></i>
+    <div class="lo-no-result" style="display:block;">
+      <i class="fa-solid fa-file-circle-question"></i>
       Chưa có bài học nào trong hệ thống.<br>
-      <small>Hãy vào <a href="/course-management" style="color: #6366f1; font-weight: 600;">Quản lý khóa học</a> để thêm bài học đầu tiên.</small>
+      <small style="margin-top:0.5rem; display:inline-block;">
+        Hãy vào <a href="/course-management" style="color:#6366f1; font-weight:600;">Quản lý khóa học</a> để thêm bài học đầu tiên.
+      </small>
     </div>
   <% } else { %>
-    <table class="custom-table" style="margin-top: 0; font-size: 0.85rem;" id="lessons-table">
-      <thead>
-        <tr>
-          <th style="width: 60px;">STT</th>
-          <th>Tên bài học</th>
-          <th>Thuộc khóa học</th>
-          <th style="text-align: center; width: 90px;">Thứ tự</th>
-          <th style="text-align: center; width: 120px;">Video</th>
-          <th style="text-align: center; width: 120px;">Tài liệu</th>
-          <% if (user.permissions.includes('LESSON_MANAGE')) { %>
-          <th style="text-align: center; width: 100px;">Thao tác</th>
-          <% } %>
-        </tr>
-      </thead>
-      <tbody id="lessons-tbody">
-        <% let rowIndex = 0; allLessons.forEach(lesson => { rowIndex++; %>
-          <tr
-            class="lesson-row"
-            data-title="<%= lesson.title.toLowerCase() %>"
-            data-course="<%= lesson.course_id %>"
-            data-course-title="<%= lesson.course_title.toLowerCase() %>"
-            data-has-video="<%= (lesson.video_url && lesson.video_url.trim()) ? 'yes' : 'no' %>"
-          >
-            <td style="color: var(--text-muted); font-size: 0.8rem; font-weight: 500;"><%= rowIndex %></td>
-            <td>
-              <div style="font-weight: 600; color: var(--text-main); margin-bottom: 0.2rem; font-size: 0.92rem;"><%= lesson.title %></div>
-              <% if (lesson.content) { %>
-              <div style="font-size: 0.78rem; color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 320px;">
-                <%= lesson.content.substring(0, 80) %><%= lesson.content.length > 80 ? '…' : '' %>
-              </div>
-              <% } %>
-            </td>
-            <td>
-              <a href="/course-management/<%= lesson.course_id %>/lessons"
-                style="display: inline-flex; align-items: center; gap: 0.4rem; color: #4f46e5; text-decoration: none; font-size: 0.82rem; font-weight: 600; padding: 0.25rem 0.65rem; background: rgba(79, 70, 229, 0.06); border: 1px solid rgba(79, 70, 229, 0.1); border-radius: 8px; transition: all 0.2s;"
-                onmouseover="this.style.background='rgba(79, 70, 229, 0.12)'" onmouseout="this.style.background='rgba(79, 70, 229, 0.06)'"
-              >
-                <i class="fa-solid fa-folder-open" style="font-size: 0.75rem;"></i>
-                <%= lesson.course_title %>
-              </a>
-            </td>
-            <td style="text-align: center;">
-              <span style="background: rgba(79, 70, 229, 0.04); border: 1px solid rgba(79, 70, 229, 0.1); padding: 0.2rem 0.6rem; border-radius: 6px; font-size: 0.8rem; font-weight: 700; color: #4f46e5;">
-                #<%= lesson.order_index %>
-              </span>
-            </td>
-            <td style="text-align: center;">
-              <% if (lesson.is_quiz) { %>
-                <span class="badge badge-info"><i class="fa-solid fa-circle-question"></i> Trắc nghiệm</span>
-              <% } else if (lesson.video_url && lesson.video_url.trim()) { %>
-                <span class="badge badge-success" title="<%= lesson.video_url %>">
-                  <i class="fa-solid fa-circle-play"></i> Sẵn sàng
-                </span>
-              <% } else { %>
-                <span class="badge badge-secondary">
-                  <i class="fa-solid fa-circle-xmark"></i> Trống
-                </span>
-              <% } %>
-            </td>
-            <td style="text-align: center;">
-              <% if (lesson.is_quiz) { %>
-                <span class="badge badge-info"><i class="fa-solid fa-brain"></i> AI tạo đề</span>
-              <% } else if (lesson.attachment_url && lesson.attachment_url.trim()) { %>
-                <span class="badge badge-warning" title="<%= lesson.attachment_url %>">
-                  <i class="fa-solid fa-paperclip"></i> Đính kèm
-                </span>
-              <% } else { %>
-                <span class="badge badge-secondary">
-                  <i class="fa-solid fa-minus"></i> Trống
-                </span>
-              <% } %>
-            </td>
+    <div style="overflow-x:auto;">
+      <table class="lo-table" id="lessons-table">
+        <thead>
+          <tr>
+            <th class="center" style="width:52px;">STT</th>
+            <th>Tên bài học</th>
+            <th>Thuộc khóa học</th>
+            <th class="center" style="width:80px;">Thứ tự</th>
+            <th class="center" style="width:130px;">Video</th>
+            <th class="center" style="width:120px;">Tài liệu</th>
             <% if (user.permissions.includes('LESSON_MANAGE')) { %>
-            <td style="text-align: center;">
-              <div style="display: flex; justify-content: center; gap: 0.35rem;">
-                <a href="/course-management/<%= lesson.course_id %>/lessons"
-                  class="btn btn-secondary"
-                  style="padding: 0.35rem 0.65rem; font-size: 0.78rem; color: #4f46e5; border-color: rgba(79, 70, 229, 0.2); text-decoration: none; border-radius: 8px;"
-                  title="Đến trang chỉnh sửa bài học này">
-                  <i class="fa-solid fa-pen-to-square"></i> Sửa
-                </a>
-              </div>
-            </td>
+              <th class="center" style="width:90px;">Thao tác</th>
             <% } %>
           </tr>
-        <% }) %>
-      </tbody>
-    </table>
+        </thead>
+        <tbody id="lessons-tbody">
+          <% let rowIndex = 0; allLessons.forEach(lesson => { rowIndex++; %>
+            <tr
+              class="lesson-row"
+              data-title="<%= lesson.title.toLowerCase() %>"
+              data-course="<%= lesson.course_id %>"
+              data-course-title="<%= lesson.course_title.toLowerCase() %>"
+              data-has-video="<%= (lesson.video_url && lesson.video_url.trim()) ? 'yes' : 'no' %>"
+            >
+              <td class="lo-stt"><%= rowIndex %></td>
 
-    <!-- Phân trang -->
-    <div id="pagination-controls" style="display: flex; justify-content: center; align-items: center; gap: 0.5rem; margin-top: 1.5rem; flex-wrap: wrap;"></div>
+              <td>
+                <div class="lo-lesson-title"><%= lesson.title %></div>
+                <% if (lesson.content) { %>
+                  <div class="lo-lesson-preview">
+                    <%= lesson.content.substring(0, 85) %><%= lesson.content.length > 85 ? '…' : '' %>
+                  </div>
+                <% } %>
+              </td>
 
-    <!-- Thông báo khi lọc không có kết quả -->
-    <div id="no-filter-result" style="display: none; text-align: center; padding: 3rem; color: var(--text-muted);">
-      <i class="fa-solid fa-filter-circle-xmark" style="font-size: 2rem; opacity: 0.4; display: block; margin-bottom: 0.75rem;"></i>
+              <td>
+                <a href="/course-management/<%= lesson.course_id %>/lessons" class="lo-course-chip">
+                  <i class="fa-solid fa-folder-open" style="font-size:0.72rem; flex-shrink:0;"></i>
+                  <%= lesson.course_title %>
+                </a>
+              </td>
+
+              <td class="center" style="text-align:center;">
+                <span class="lo-order-badge">#<%= lesson.order_index %></span>
+              </td>
+
+              <td style="text-align:center;">
+                <% if (lesson.is_quiz) { %>
+                  <span class="badge badge-info"><i class="fa-solid fa-circle-question"></i> Trắc nghiệm</span>
+                <% } else if (lesson.video_url && lesson.video_url.trim()) { %>
+                  <span class="badge badge-success" title="<%= lesson.video_url %>">
+                    <i class="fa-solid fa-circle-play"></i> Sẵn sàng
+                  </span>
+                <% } else { %>
+                  <span class="badge badge-secondary"><i class="fa-solid fa-minus"></i> Trống</span>
+                <% } %>
+              </td>
+
+              <td style="text-align:center;">
+                <% if (lesson.is_quiz) { %>
+                  <span class="badge badge-info"><i class="fa-solid fa-brain"></i> AI tạo đề</span>
+                <% } else if (lesson.attachment_url && lesson.attachment_url.trim()) { %>
+                  <span class="badge badge-warning" title="<%= lesson.attachment_url %>">
+                    <i class="fa-solid fa-paperclip"></i> Đính kèm
+                  </span>
+                <% } else { %>
+                  <span class="badge badge-secondary"><i class="fa-solid fa-minus"></i> Trống</span>
+                <% } %>
+              </td>
+
+              <% if (user.permissions.includes('LESSON_MANAGE')) { %>
+                <td style="text-align:center;">
+                  <a href="/course-management/<%= lesson.course_id %>/lessons" class="lo-edit-btn" title="Chỉnh sửa bài học">
+                    <i class="fa-solid fa-pen-to-square"></i> Sửa
+                  </a>
+                </td>
+              <% } %>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination container -->
+    <div id="pagination-controls" class="lo-pagination" style="display:none;"></div>
+
+    <!-- No filter result -->
+    <div id="no-filter-result" class="lo-no-result">
+      <i class="fa-solid fa-filter-circle-xmark"></i>
       Không tìm thấy bài học phù hợp với bộ lọc.
     </div>
   <% } %>
 </div>
 
-<!-- Phân nhóm theo khóa học (accordion) -->
+<!-- ── Grouped by course (accordion) ─────────────── -->
 <% if (lessonsByCourse.length > 0) { %>
-<div style="margin-top: 2.5rem; border-top: 1px solid var(--border-light); padding-top: 2rem;">
-  <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem;">
-    <h3 
-      onclick="toggleSectionGroup()" 
-      style="font-size: 1.15rem; font-weight: 700; display: inline-flex; align-items: center; gap: 0.6rem; color: var(--text-muted); cursor: pointer; user-select: none;"
-    >
-      <i class="fa-solid fa-folder-tree" style="color: #06b6d4;"></i> Phân nhóm theo khóa học
-      <span id="group-toggle-badge" class="badge badge-secondary" style="font-size: 0.72rem; padding: 0.15rem 0.5rem; margin-left: 0.4rem;">Ẩn</span>
-      <i id="group-chevron" class="fa-solid fa-chevron-right" style="color: var(--text-muted); font-size: 0.85rem; transition: transform 0.3s; margin-left: 0.25rem;"></i>
-    </h3>
-    <button onclick="toggleSectionGroup()" class="btn btn-secondary" style="padding: 0.4rem 0.85rem; font-size: 0.82rem; border-radius: 8px; display: inline-flex; align-items: center; gap: 0.35rem;">
-      <i id="group-btn-icon" class="fa-solid fa-eye"></i> <span id="group-btn-text">Hiển thị</span>
+<div style="border-top: 1px solid var(--border-light); padding-top: 2rem;">
+  <div class="lo-section-controls">
+    <div class="lo-section-title" onclick="toggleSectionGroup()">
+      <i class="fa-solid fa-folder-tree" style="color:#06b6d4;"></i>
+      Phân nhóm theo khóa học
+      <span id="group-toggle-badge" class="badge badge-secondary" style="font-size:0.68rem; padding: 0.12rem 0.45rem; margin-left:0.2rem;">Ẩn</span>
+      <i id="group-chevron" class="fa-solid fa-chevron-right chevron"></i>
+    </div>
+    <button onclick="toggleSectionGroup()" class="lo-toggle-btn">
+      <i id="group-btn-icon" class="fa-solid fa-eye"></i>
+      <span id="group-btn-text">Hiển thị</span>
     </button>
   </div>
-  <div id="course-groups-list" style="display: none; flex-direction: column; gap: 1rem; transition: all 0.3s ease;">
+
+  <div id="course-groups-list" style="display:none; flex-direction:column; gap:0.85rem;">
     <% lessonsByCourse.forEach((group, gi) => { %>
-    <div class="glass-card" style="padding: 0; overflow: hidden; border-radius: 16px; border: 1px solid var(--border-light); transition: all 0.3s;">
-      <!-- Header accordion -->
-      <button
-        onclick="toggleAccordion(<%= gi %>)"
-        style="width: 100%; background: none; border: none; padding: 1.25rem 1.5rem; display: flex; align-items: center; justify-content: space-between; cursor: pointer; color: var(--text-main); text-align: left; transition: background 0.2s;"
-        onmouseover="this.style.background='rgba(79, 70, 229, 0.015)'"
-        onmouseout="this.style.background='none'"
-      >
-        <div style="display: flex; align-items: center; gap: 0.85rem;">
-          <div style="width: 38px; height: 38px; border-radius: 10px; background: linear-gradient(135deg, #4f46e5, #6366f1); display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 4px 10px rgba(79,70,229,0.15);">
-            <i class="fa-solid fa-book-open" style="color: #fff; font-size: 0.9rem;"></i>
-          </div>
-          <div>
-            <div style="font-weight: 700; font-size: 0.95rem; color: var(--text-main);"><%= group.course.title %></div>
-            <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 0.15rem; display: flex; align-items: center; gap: 0.5rem;">
-              <span><%= group.lessons.length %> bài học</span>
-              <span>•</span>
-              <span class="badge <%= group.course.is_published ? 'badge-success' : 'badge-warning' %>" style="padding: 0.1rem 0.45rem; font-size: 0.65rem;">
-                <%= group.course.is_published ? 'Đã xuất bản' : 'Bản nháp' %>
-              </span>
+      <div class="lo-accordion-card">
+        <!-- Trigger -->
+        <button class="lo-accordion-trigger" onclick="toggleAccordion(<%= gi %>)">
+          <div class="lo-accordion-left">
+            <div class="lo-course-avatar">
+              <i class="fa-solid fa-book-open"></i>
+            </div>
+            <div>
+              <div class="lo-accordion-course-title"><%= group.course.title %></div>
+              <div class="lo-accordion-meta">
+                <span><%= group.lessons.length %> bài học</span>
+                <span>·</span>
+                <span class="badge <%= group.course.is_published ? 'badge-success' : 'badge-warning' %>"
+                      style="padding:0.08rem 0.4rem; font-size:0.62rem;">
+                  <%= group.course.is_published ? 'Đã xuất bản' : 'Bản nháp' %>
+                </span>
+              </div>
             </div>
           </div>
-        </div>
-        <div style="display: flex; align-items: center; gap: 0.85rem;">
-          <% if (user.permissions.includes('LESSON_CREATE') || user.permissions.includes('LESSON_MANAGE')) { %>
-          <a href="/course-management/<%= group.course.id %>/lessons"
-            onclick="event.stopPropagation()"
-            style="font-size: 0.78rem; color: #4f46e5; text-decoration: none; padding: 0.35rem 0.75rem; border: 1px solid rgba(79, 70, 229, 0.2); border-radius: 8px; background: rgba(79, 70, 229, 0.05); font-weight: 600; display: inline-flex; align-items: center; gap: 0.3rem; transition: all 0.2s;"
-            onmouseover="this.style.background='rgba(79,70,229,0.1)'" onmouseout="this.style.background='rgba(79,70,229,0.05)'"
-          >
-            <i class="fa-solid fa-gear" style="font-size: 0.75rem;"></i> Cấu hình
-          </a>
-          <% } %>
-          <i id="accordion-icon-<%= gi %>" class="fa-solid fa-chevron-down" style="color: var(--text-muted); font-size: 0.85rem; transition: transform 0.3s; padding: 0.25rem;"></i>
-        </div>
-      </button>
-
-      <!-- Nội dung accordion -->
-      <div id="accordion-body-<%= gi %>" style="display: none; border-top: 1px solid var(--border-light); background: rgba(248, 250, 252, 0.65);">
-        <% if (group.lessons.length === 0) { %>
-          <div style="padding: 2rem; text-align: center; color: var(--text-muted); font-size: 0.88rem;">
-            <i class="fa-solid fa-inbox" style="margin-right: 0.4rem; font-size: 1.2rem; opacity: 0.5;"></i> Khóa học chưa có bài giảng nào.
-            <% if (user.permissions.includes('LESSON_CREATE')) { %>
-              <a href="/course-management/<%= group.course.id %>/lessons" style="color: #4f46e5; margin-left: 0.4rem; font-weight: 600;">Thêm ngay →</a>
+          <div class="lo-accordion-right">
+            <% if (user.permissions.includes('LESSON_CREATE') || user.permissions.includes('LESSON_MANAGE')) { %>
+              <a href="/course-management/<%= group.course.id %>/lessons"
+                 class="lo-config-link"
+                 onclick="event.stopPropagation()">
+                <i class="fa-solid fa-gear" style="font-size:0.72rem;"></i> Cấu hình
+              </a>
             <% } %>
+            <i id="accordion-icon-<%= gi %>" class="fa-solid fa-chevron-down" style="color:#94a3b8; font-size:0.82rem; transition:transform 0.28s;"></i>
           </div>
-        <% } else { %>
-          <div style="padding: 0.25rem 0;">
-            <% group.lessons.forEach((lesson, li) => { %>
-              <div style="
-                display: flex; align-items: center; gap: 0.85rem;
-                padding: 0.85rem 1.5rem;
-                border-bottom: 1px solid rgba(226, 232, 240, 0.5);
-                transition: background 0.15s;
-              " onmouseover="this.style.background='#ffffff'" onmouseout="this.style.background='none'">
-                <span style="font-size: 0.8rem; color: var(--text-muted); min-width: 28px; text-align: right; font-weight: 600;">#<%= lesson.order_index %></span>
-                
-                <div style="font-size: 1rem; width: 24px; display: flex; justify-content: center; align-items: center;">
-                  <% if (lesson.is_quiz) { %>
-                    <i class="fa-solid fa-circle-question" style="color: #4f46e5;" title="Bài kiểm tra trắc nghiệm"></i>
-                  <% } else if (lesson.video_url && lesson.video_url.trim()) { %>
-                    <i class="fa-solid fa-circle-play" style="color: #10b981;" title="Bài giảng video"></i>
-                  <% } else { %>
-                    <i class="fa-solid fa-file-lines" style="color: #64748b;" title="Bài học lý thuyết"></i>
-                  <% } %>
-                </div>
+        </button>
 
-                <div style="flex: 1; min-width: 0;">
-                  <div style="font-size: 0.9rem; font-weight: 600; color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                    <%= lesson.title %>
-                  </div>
-                </div>
-                
-                <div style="display: flex; align-items: center; gap: 0.5rem; flex-shrink: 0;">
+        <!-- Body -->
+        <div id="accordion-body-<%= gi %>" class="lo-accordion-body">
+          <% if (group.lessons.length === 0) { %>
+            <div class="lo-empty-course">
+              <i class="fa-solid fa-inbox" style="margin-right:0.4rem; opacity:0.5;"></i>
+              Khóa học chưa có bài giảng nào.
+              <% if (user.permissions.includes('LESSON_CREATE')) { %>
+                <a href="/course-management/<%= group.course.id %>/lessons"
+                   style="color:#4f46e5; margin-left:0.35rem; font-weight:600;">Thêm ngay →</a>
+              <% } %>
+            </div>
+          <% } else { %>
+            <% group.lessons.forEach((lesson) => { %>
+              <div class="lo-lesson-row-mini">
+                <span class="lo-mini-order">#<%= lesson.order_index %></span>
+                <span class="lo-mini-type-icon">
                   <% if (lesson.is_quiz) { %>
-                    <span class="badge badge-info" style="padding: 0.15rem 0.5rem; font-size: 0.7rem;">AI Quiz</span>
+                    <i class="fa-solid fa-circle-question" style="color:#4f46e5;" title="Trắc nghiệm"></i>
+                  <% } else if (lesson.video_url && lesson.video_url.trim()) { %>
+                    <i class="fa-solid fa-circle-play" style="color:#10b981;" title="Video bài giảng"></i>
+                  <% } else { %>
+                    <i class="fa-solid fa-file-lines" style="color:#94a3b8;" title="Lý thuyết"></i>
+                  <% } %>
+                </span>
+                <span class="lo-mini-title"><%= lesson.title %></span>
+                <div class="lo-mini-tags">
+                  <% if (lesson.is_quiz) { %>
+                    <span class="badge badge-info" style="padding:0.1rem 0.45rem; font-size:0.68rem;">AI Quiz</span>
                   <% } %>
                   <% if (lesson.video_url && lesson.video_url.trim()) { %>
-                    <span class="badge badge-success" style="padding: 0.15rem 0.5rem; font-size: 0.7rem;"><i class="fa-solid fa-circle-play"></i> Video</span>
+                    <span class="badge badge-success" style="padding:0.1rem 0.45rem; font-size:0.68rem;">
+                      <i class="fa-solid fa-circle-play"></i> Video
+                    </span>
                   <% } %>
                   <% if (lesson.attachment_url && lesson.attachment_url.trim()) { %>
-                    <span class="badge badge-warning" style="padding: 0.15rem 0.5rem; font-size: 0.7rem;"><i class="fa-solid fa-paperclip"></i> Tài liệu</span>
+                    <span class="badge badge-warning" style="padding:0.1rem 0.45rem; font-size:0.68rem;">
+                      <i class="fa-solid fa-paperclip"></i> Tài liệu
+                    </span>
                   <% } %>
                 </div>
               </div>
             <% }) %>
-          </div>
-        <% } %>
+          <% } %>
+        </div>
       </div>
-    </div>
     <% }) %>
   </div>
 </div>
 <% } %>
 
 <script>
-  // Toggle hiển thị phân nhóm khóa học
+  /* ── Section toggle ── */
   function toggleSectionGroup() {
-    const list = document.getElementById('course-groups-list');
+    const list    = document.getElementById('course-groups-list');
     const chevron = document.getElementById('group-chevron');
-    const badge = document.getElementById('group-toggle-badge');
-    const btnIcon = document.getElementById('group-btn-icon');
-    const btnText = document.getElementById('group-btn-text');
-    
-    const isHidden = list.style.display === 'none';
-    
-    if (isHidden) {
-      list.style.display = 'flex';
-      chevron.style.transform = 'rotate(90deg)';
-      badge.textContent = 'Đang hiện';
-      badge.className = 'badge badge-info';
-      btnIcon.className = 'fa-solid fa-eye-slash';
-      btnText.textContent = 'Ẩn đi';
-    } else {
-      list.style.display = 'none';
-      chevron.style.transform = '';
-      badge.textContent = 'Ẩn';
-      badge.className = 'badge badge-secondary';
-      btnIcon.className = 'fa-solid fa-eye';
-      btnText.textContent = 'Hiển thị';
-    }
+    const badge   = document.getElementById('group-toggle-badge');
+    const icon    = document.getElementById('group-btn-icon');
+    const text    = document.getElementById('group-btn-text');
+    const open    = list.style.display === 'none';
+
+    list.style.display = open ? 'flex' : 'none';
+    chevron.style.transform = open ? 'rotate(90deg)' : '';
+    badge.textContent  = open ? 'Đang hiện' : 'Ẩn';
+    badge.className    = open ? 'badge badge-info' : 'badge badge-secondary';
+    badge.style.cssText = 'font-size:0.68rem; padding:0.12rem 0.45rem; margin-left:0.2rem;';
+    icon.className     = open ? 'fa-solid fa-eye-slash' : 'fa-solid fa-eye';
+    text.textContent   = open ? 'Ẩn đi' : 'Hiển thị';
   }
 
-  // Accordion toggle
-  function toggleAccordion(index) {
-    const body = document.getElementById(`accordion-body-${index}`);
-    const icon = document.getElementById(`accordion-icon-${index}`);
-    const isOpen = body.style.display !== 'none';
-    body.style.display = isOpen ? 'none' : 'block';
-    icon.style.transform = isOpen ? '' : 'rotate(180deg)';
+  /* ── Accordion toggle ── */
+  function toggleAccordion(idx) {
+    const body = document.getElementById(`accordion-body-${idx}`);
+    const icon = document.getElementById(`accordion-icon-${idx}`);
+    const open = body.style.display !== 'none';
+    body.style.display   = open ? 'none' : 'block';
+    icon.style.transform = open ? '' : 'rotate(180deg)';
   }
 
+  /* ── Filter + pagination ── */
   let currentPage = 1;
-  const pageSize = 20;
+  const pageSize  = 20;
 
-  // Lọc và phân trang bài học
   function filterLessons(resetPage = true) {
-    if (resetPage) {
-      currentPage = 1;
-    }
+    if (resetPage) currentPage = 1;
 
-    const search  = document.getElementById('lesson-search-input').value.toLowerCase().trim();
-    const courseId = document.getElementById('course-filter').value;
-    const videoFilter = document.getElementById('video-filter').value;
+    const search    = document.getElementById('lesson-search-input').value.toLowerCase().trim();
+    const courseId  = document.getElementById('course-filter').value;
+    const vidFilter = document.getElementById('video-filter').value;
 
-    const rows = document.querySelectorAll('.lesson-row');
-    const matchedRows = [];
+    const rows   = document.querySelectorAll('.lesson-row');
+    const matched = [];
 
     rows.forEach(row => {
-      const title       = row.dataset.title || '';
-      const courseTitle = row.dataset.courseTitle || '';
-      const rowCourse   = row.dataset.course;
-      const hasVideo    = row.dataset.hasVideo;
-
-      const matchText   = !search || title.includes(search) || courseTitle.includes(search);
-      const matchCourse = !courseId || rowCourse === courseId;
-      const matchVideo  = !videoFilter
-        || (videoFilter === 'has_video' && hasVideo === 'yes')
-        || (videoFilter === 'no_video'  && hasVideo === 'no');
-
-      if (matchText && matchCourse && matchVideo) {
-        matchedRows.push(row);
-      } else {
-        row.style.display = 'none';
-      }
+      const ok =
+        (!search   || row.dataset.title.includes(search) || row.dataset.courseTitle.includes(search)) &&
+        (!courseId || row.dataset.course === courseId) &&
+        (!vidFilter
+          || (vidFilter === 'has_video' && row.dataset.hasVideo === 'yes')
+          || (vidFilter === 'no_video'  && row.dataset.hasVideo === 'no'));
+      if (ok) matched.push(row);
+      else    row.style.display = 'none';
     });
 
-    const totalMatched = matchedRows.length;
-    const totalPages = Math.ceil(totalMatched / pageSize);
+    const total      = matched.length;
+    const totalPages = Math.ceil(total / pageSize);
+    if (currentPage > totalPages && totalPages > 0) currentPage = totalPages;
 
-    // Đảm bảo currentPage không vượt quá totalPages
-    if (currentPage > totalPages && totalPages > 0) {
-      currentPage = totalPages;
-    }
-
-    // Hiển thị các dòng thuộc trang hiện tại
-    const startIndex = (currentPage - 1) * pageSize;
-    const endIndex = startIndex + pageSize;
-
-    matchedRows.forEach((row, index) => {
-      if (index >= startIndex && index < endIndex) {
-        row.style.display = '';
-        // Cập nhật lại số thứ tự hiển thị của các bài học theo thứ tự thực tế trong trang
-        const sttCell = row.querySelector('td:first-child');
-        if (sttCell) {
-          sttCell.textContent = index + 1;
-        }
-      } else {
-        row.style.display = 'none';
-      }
+    const start = (currentPage - 1) * pageSize;
+    matched.forEach((row, i) => {
+      row.style.display = (i >= start && i < start + pageSize) ? '' : 'none';
+      const stt = row.querySelector('td:first-child');
+      if (stt) stt.textContent = i + 1;
     });
 
-    document.getElementById('lesson-count-display').textContent = totalMatched;
+    document.getElementById('lesson-count-display').textContent = total;
+
     const noResult = document.getElementById('no-filter-result');
-    if (noResult) noResult.style.display = totalMatched === 0 ? 'block' : 'none';
+    if (noResult) noResult.style.display = total === 0 ? 'block' : 'none';
 
-    renderPaginationControls(totalPages);
+    renderPagination(totalPages);
   }
 
-  // Tạo giao diện các nút phân trang
-  function renderPaginationControls(totalPages) {
+  function renderPagination(totalPages) {
     const container = document.getElementById('pagination-controls');
     if (!container) return;
 
-    if (totalPages <= 1) {
-      container.innerHTML = '';
-      return;
+    if (totalPages <= 1) { container.style.display = 'none'; return; }
+    container.style.display = 'flex';
+
+    const p     = currentPage;
+    let start = Math.max(1, p - 2);
+    let end   = Math.min(totalPages, start + 4);
+    if (end - start < 4) start = Math.max(1, end - 4);
+
+    let html = `<button class="lo-page-btn" onclick="changePage(${p-1})" ${p===1?'disabled':''}><i class="fa-solid fa-chevron-left" style="font-size:.68rem;"></i> Trước</button>`;
+
+    if (start > 1) {
+      html += `<button class="lo-page-btn" onclick="changePage(1)">1</button>`;
+      if (start > 2) html += `<span class="lo-page-sep">…</span>`;
     }
-
-    let html = '';
-
-    // Nút Trước
-    html += `
-      <button 
-        onclick="changePage(${currentPage - 1})" 
-        class="btn btn-secondary" 
-        style="padding: 0.4rem 0.85rem; font-size: 0.82rem; border-radius: 10px; display: inline-flex; align-items: center; gap: 0.25rem;"
-        ${currentPage === 1 ? 'disabled style="opacity: 0.4; cursor: not-allowed;"' : ''}
-      >
-        <i class="fa-solid fa-chevron-left" style="font-size: 0.75rem;"></i> Trước
-      </button>
-    `;
-
-    // Giới hạn hiển thị tối đa 5 nút số trang xung quanh trang hiện tại
-    const maxVisiblePages = 5;
-    let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
-    let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
-
-    if (endPage - startPage + 1 < maxVisiblePages) {
-      startPage = Math.max(1, endPage - maxVisiblePages + 1);
+    for (let i = start; i <= end; i++) {
+      html += `<button class="lo-page-btn ${i===p?'active':''}" onclick="changePage(${i})">${i}</button>`;
     }
-
-    if (startPage > 1) {
-      html += `<button onclick="changePage(1)" class="btn btn-secondary" style="padding: 0.4rem 0.75rem; font-size: 0.82rem; border-radius: 10px;">1</button>`;
-      if (startPage > 2) {
-        html += `<span style="color: var(--text-muted); font-size: 0.85rem; padding: 0 0.25rem;">...</span>`;
-      }
+    if (end < totalPages) {
+      if (end < totalPages - 1) html += `<span class="lo-page-sep">…</span>`;
+      html += `<button class="lo-page-btn" onclick="changePage(${totalPages})">${totalPages}</button>`;
     }
-
-    for (let p = startPage; p <= endPage; p++) {
-      const isActive = p === currentPage;
-      html += `
-        <button 
-          onclick="changePage(${p})" 
-          class="btn ${isActive ? 'btn-primary' : 'btn-secondary'}" 
-          style="padding: 0.4rem 0.75rem; font-size: 0.82rem; border-radius: 10px; ${isActive ? 'background: var(--primary-gradient); color: #fff; border: none; box-shadow: 0 4px 10px rgba(79,70,229,0.15);' : ''}"
-        >
-          ${p}
-        </button>
-      `;
-    }
-
-    if (endPage < totalPages) {
-      if (endPage < totalPages - 1) {
-        html += `<span style="color: var(--text-muted); font-size: 0.85rem; padding: 0 0.25rem;">...</span>`;
-      }
-      html += `<button onclick="changePage(${totalPages})" class="btn btn-secondary" style="padding: 0.4rem 0.75rem; font-size: 0.82rem; border-radius: 10px;">${totalPages}</button>`;
-    }
-
-    // Nút Sau
-    html += `
-      <button 
-        onclick="changePage(${currentPage + 1})" 
-        class="btn btn-secondary" 
-        style="padding: 0.4rem 0.85rem; font-size: 0.82rem; border-radius: 10px; display: inline-flex; align-items: center; gap: 0.25rem;"
-        ${currentPage === totalPages ? 'disabled style="opacity: 0.4; cursor: not-allowed;"' : ''}
-      >
-        Sau <i class="fa-solid fa-chevron-right" style="font-size: 0.75rem;"></i>
-      </button>
-    `;
+    html += `<button class="lo-page-btn" onclick="changePage(${p+1})" ${p===totalPages?'disabled':''}> Sau <i class="fa-solid fa-chevron-right" style="font-size:.68rem;"></i></button>`;
 
     container.innerHTML = html;
   }
 
-  // Xử lý sự kiện chuyển trang
   function changePage(page) {
     currentPage = page;
     filterLessons(false);
-    
-    // Cuộn mượt lên vị trí bảng
-    const tableHeader = document.getElementById('lessons-table');
-    if (tableHeader) {
-      tableHeader.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-    }
+    const tbl = document.getElementById('lessons-table');
+    if (tbl) tbl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }
 
-  // Chạy lọc và hiển thị phân trang khi tải xong trang
-  document.addEventListener('DOMContentLoaded', () => {
-    filterLessons(true);
-  });
+  document.addEventListener('DOMContentLoaded', () => filterLessons(true));
 </script>
 
 <%- include('../partials/footer') %>

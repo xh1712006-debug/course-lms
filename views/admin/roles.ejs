@@ -1,45 +1,277 @@
 <%- include('../partials/header') %>
 
-<div style="margin-bottom: 2rem;">
-  <h1 style="font-size: 2.2rem; font-weight: 800; background: var(--primary-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
-    Ma Trận Vai Trò & Quyền Hạn (RBAC Matrix)
-  </h1>
-  <p style="color: var(--text-muted); margin-top: 0.25rem;">
-    Quản lý đặc quyền tập trung. Bật/tắt các đặc quyền của từng vai trò tức thời và an toàn thông qua bảng ma trận.
-  </p>
+<style>
+  /* ── Page Header ───────────────────────────── */
+  .rbac-header {
+    margin-bottom: 2rem;
+  }
+  .rbac-title {
+    font-size: 1.6rem;
+    font-weight: 800;
+    color: var(--text-main);
+    letter-spacing: -0.025em;
+    margin: 0;
+  }
+  .rbac-subtitle {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    margin-top: 0.3rem;
+  }
+
+  /* ── Alerts ────────────────────────────────── */
+  .rbac-alert {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.85rem 1.25rem;
+    border-radius: 12px;
+    font-size: 0.88rem;
+    font-weight: 500;
+    margin-bottom: 1.5rem;
+  }
+  .rbac-alert-success {
+    background: rgba(16, 185, 129, 0.08);
+    border: 1px solid rgba(16, 185, 129, 0.25);
+    color: #059669;
+  }
+  .rbac-alert-error {
+    background: rgba(239, 68, 68, 0.08);
+    border: 1px solid rgba(239, 68, 68, 0.25);
+    color: #dc2626;
+  }
+
+  /* ── Create Role Card ──────────────────────── */
+  .rbac-create-card {
+    background: #fff;
+    border: 1px solid var(--border-light);
+    border-radius: 16px;
+    padding: 1.5rem;
+    margin-bottom: 1.75rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+  }
+  .rbac-create-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .rbac-create-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text-main);
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .rbac-create-title i {
+    color: #6366f1;
+  }
+  .rbac-create-body {
+    margin-top: 1.25rem;
+    border-top: 1px solid #f1f5f9;
+    padding-top: 1.25rem;
+  }
+  .rbac-create-grid {
+    display: grid;
+    grid-template-columns: 1.2fr 2fr auto;
+    gap: 1rem;
+    align-items: flex-end;
+  }
+  @media (max-width: 768px) {
+    .rbac-create-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+  .rbac-create-btn {
+    padding: 0.7rem 1.5rem;
+    border-radius: 8px;
+    height: 38px;
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* ── Matrix Card & Table ───────────────────── */
+  .rbac-matrix-card {
+    background: #fff;
+    border: 1px solid var(--border-light);
+    border-radius: 18px;
+    overflow: hidden;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.03);
+    margin-bottom: 2.5rem;
+  }
+  .rbac-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  .rbac-table th,
+  .rbac-table td {
+    padding: 0.95rem 1.25rem;
+    vertical-align: middle;
+  }
+  .rbac-table thead tr {
+    background: #f8fafc;
+    border-bottom: 1.5px solid var(--border-light);
+  }
+  .rbac-table th {
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #94a3b8;
+  }
+  .rbac-table th.role-header {
+    text-align: center;
+    min-width: 130px;
+  }
+  .rbac-role-name {
+    color: #4f46e5;
+    font-weight: 700;
+    font-size: 0.9rem;
+    margin-bottom: 0.15rem;
+  }
+  .rbac-role-id {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    font-weight: 500;
+    margin-bottom: 0.45rem;
+  }
+
+  /* Group header rows */
+  .rbac-group-row {
+    background: #fdfdfd;
+    border-top: 1px solid var(--border-light);
+    border-bottom: 1px solid var(--border-light);
+  }
+  .rbac-group-row td {
+    padding: 0.65rem 1.25rem;
+  }
+  .rbac-group-title {
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+  }
+  .rbac-group-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    font-size: 0.7rem;
+    font-weight: 600;
+    padding: 0.2rem 0.6rem;
+    border-radius: 20px;
+    text-decoration: none;
+    transition: all 0.2s;
+    margin-left: 0.75rem;
+  }
+
+  /* Matrix rows */
+  .rbac-item-row {
+    border-bottom: 1px solid #f1f5f9;
+    transition: background 0.15s;
+  }
+  .rbac-item-row:hover {
+    background: #fafbff;
+  }
+  .rbac-perm-desc {
+    font-weight: 600;
+    font-size: 0.88rem;
+    color: var(--text-main);
+  }
+  .rbac-perm-key {
+    font-family: monospace;
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    margin-top: 0.18rem;
+  }
+  .rbac-cell-center {
+    text-align: center;
+  }
+
+  /* Checkbox styling */
+  .rbac-checkbox {
+    width: 16px;
+    height: 16px;
+    accent-color: #4f46e5;
+    cursor: pointer;
+    vertical-align: middle;
+  }
+  .rbac-checkbox:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+  }
+
+  /* Badge styling */
+  .rbac-badge-lock {
+    font-size: 0.68rem;
+    font-weight: 600;
+    color: #d97706;
+    background: rgba(245, 158, 11, 0.08);
+    padding: 0.2rem 0.5rem;
+    border-radius: 6px;
+    border: 1px solid rgba(245, 158, 11, 0.18);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+  }
+  .rbac-btn-delete {
+    background: rgba(239, 68, 68, 0.06);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    color: #ef4444;
+    padding: 0.25rem 0.55rem;
+    border-radius: 6px;
+    font-size: 0.72rem;
+    cursor: pointer;
+    transition: all 0.18s;
+    font-family: var(--font-body);
+  }
+  .rbac-btn-delete:hover {
+    background: rgba(239, 68, 68, 0.12);
+    border-color: rgba(239, 68, 68, 0.35);
+  }
+</style>
+
+<!-- ── Page Header ──────────────────────────────── -->
+<div class="rbac-header">
+  <h1 class="rbac-title">Ma Trận Vai Trò &amp; Quyền Hạn (RBAC Matrix)</h1>
+  <p class="rbac-subtitle">Quản lý đặc quyền tập trung. Bật/tắt các đặc quyền của từng vai trò tức thời và an toàn thông qua bảng ma trận.</p>
 </div>
 
-<!-- Thông báo thành công / lỗi -->
+<!-- ── Alerts ───────────────────────────────────── -->
 <% if (success) { %>
-  <div class="alert-banner alert-success" style="margin-bottom: 1.5rem; padding: 1rem 1.5rem; border-radius: 12px; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); color: #10b981; display: flex; align-items: center; gap: 0.75rem;">
+  <div class="rbac-alert rbac-alert-success">
     <i class="fa-solid fa-circle-check"></i>
     <span><%= success %></span>
   </div>
 <% } %>
 <% if (error) { %>
-  <div class="alert-banner alert-error" style="margin-bottom: 1.5rem; padding: 1rem 1.5rem; border-radius: 12px; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); color: #f87171; display: flex; align-items: center; gap: 0.75rem;">
+  <div class="rbac-alert rbac-alert-error">
     <i class="fa-solid fa-circle-exclamation"></i>
     <span><%= error %></span>
   </div>
 <% } %>
 
-<!-- Panel tạo vai trò mới -->
-<div class="glass-card" style="padding: 1.5rem; margin-bottom: 1.5rem; border: 1px solid rgba(99, 102, 241, 0.2);">
-  <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem;">
-    <h2 style="font-size: 1.1rem; font-weight: 700; color: var(--text-accent); display: flex; align-items: center; gap: 0.6rem;">
+<!-- ── Create Role Card ─────────────────────────── -->
+<div class="rbac-create-card">
+  <div class="rbac-create-header">
+    <h2 class="rbac-create-title">
       <i class="fa-solid fa-circle-plus"></i> Tạo vai trò mới
     </h2>
-    <button id="toggle-create-form" onclick="toggleCreateForm()" class="btn btn-secondary" style="font-size: 0.85rem; padding: 0.5rem 1rem;">
-      <i class="fa-solid fa-chevron-down" id="form-chevron"></i> Mở rộng
+    <button id="toggle-create-form" onclick="toggleCreateForm()" class="btn btn-secondary" style="font-size: 0.82rem; padding: 0.45rem 0.95rem;">
+      <i class="fa-solid fa-chevron-down" id="form-chevron" style="margin-right: 0.25rem;"></i> Mở rộng
     </button>
   </div>
   
-  <div id="create-role-form" style="display: none;">
+  <div id="create-role-form" class="rbac-create-body" style="display: none;">
     <form action="/permissions/create" method="POST">
-      <div style="display: grid; grid-template-columns: 1fr 2fr auto; gap: 1rem; align-items: end;">
-        <div>
-          <label style="display: block; font-size: 0.8rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.4rem; text-transform: uppercase; letter-spacing: 0.05em;">
-            Tên vai trò <span style="color: #f87171;">*</span>
+      <div class="rbac-create-grid">
+        <div class="form-group" style="margin-bottom: 0;">
+          <label class="form-label" style="font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); font-weight: 700; margin-bottom: 0.4rem;">
+            Tên vai trò <span style="color: #ef4444;">*</span>
           </label>
           <input 
             type="text" 
@@ -47,44 +279,39 @@
             id="role-name-input"
             placeholder="Ví dụ: Content Manager" 
             required
-            style="width: 100%; padding: 0.7rem 1rem; background: rgba(255,255,255,0.05); border: 1px solid var(--border-light); border-radius: 10px; color: var(--text-main); font-size: 0.9rem; outline: none; transition: border-color 0.2s;"
-            onfocus="this.style.borderColor='rgba(99,102,241,0.5)'"
-            onblur="this.style.borderColor='var(--border-light)'"
           >
         </div>
-        <div>
-          <label style="display: block; font-size: 0.8rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.4rem; text-transform: uppercase; letter-spacing: 0.05em;">
+        <div class="form-group" style="margin-bottom: 0;">
+          <label class="form-label" style="font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); font-weight: 700; margin-bottom: 0.4rem;">
             Mô tả vai trò
           </label>
           <input 
             type="text" 
             name="description" 
             placeholder="Mô tả ngắn chức năng và phạm vi của vai trò này" 
-            style="width: 100%; padding: 0.7rem 1rem; background: rgba(255,255,255,0.05); border: 1px solid var(--border-light); border-radius: 10px; color: var(--text-main); font-size: 0.9rem; outline: none; transition: border-color 0.2s;"
-            onfocus="this.style.borderColor='rgba(99,102,241,0.5)'"
-            onblur="this.style.borderColor='var(--border-light)'"
           >
         </div>
-        <button type="submit" class="btn btn-primary" style="padding: 0.7rem 1.5rem; white-space: nowrap;">
+        <button type="submit" class="btn btn-primary rbac-create-btn">
           <i class="fa-solid fa-plus"></i> Tạo vai trò
         </button>
       </div>
-      <p style="font-size: 0.78rem; color: var(--text-muted); margin-top: 0.75rem;">
-        <i class="fa-solid fa-circle-info" style="margin-right: 0.3rem; color: #818cf8;"></i>
+      <p style="font-size: 0.78rem; color: var(--text-muted); margin-top: 0.85rem; margin-bottom: 0;">
+        <i class="fa-solid fa-circle-info" style="margin-right: 0.25rem; color: #6366f1;"></i>
         Sau khi tạo, bạn có thể gán quyền hạn cho vai trò này ngay trong bảng ma trận bên dưới.
       </p>
     </form>
   </div>
 </div>
 
-
-<!-- Định nghĩa mảng dữ liệu quyền hạn trực tiếp trong EJS để lặp cấu trúc dễ dàng -->
+<!-- ── Permission Groups Definition ────────────── -->
 <% 
 const permissionGroups = [
   {
     title: 'Quản lý Khóa học (Course Management)',
     icon: 'fa-folder-open',
-    color: '#6366f1',
+    color: '#4f46e5',
+    bg: 'rgba(79, 70, 229, 0.06)',
+    border: 'rgba(79, 70, 229, 0.15)',
     sidebarNote: 'Quản lý khóa học',
     sidebarUrl: '/course-management',
     perms: [
@@ -98,7 +325,9 @@ const permissionGroups = [
   {
     title: 'Bài giảng & Học liệu (Lesson & Content)',
     icon: 'fa-file-video',
-    color: '#a78bfa',
+    color: '#8b5cf6',
+    bg: 'rgba(139, 92, 246, 0.06)',
+    border: 'rgba(139, 92, 246, 0.15)',
     sidebarNote: 'Bài học & Nội dung',
     sidebarUrl: '/lessons',
     perms: [
@@ -110,7 +339,9 @@ const permissionGroups = [
   {
     title: 'Kiểm tra Doanh nghiệp (Company Assessments)',
     icon: 'fa-clipboard-check',
-    color: '#34d399',
+    color: '#0d9488',
+    bg: 'rgba(13, 148, 136, 0.06)',
+    border: 'rgba(13, 148, 136, 0.15)',
     sidebarNote: 'Kiểm tra Doanh nghiệp',
     sidebarUrl: '/admin/assessments',
     perms: [
@@ -122,7 +353,9 @@ const permissionGroups = [
   {
     title: 'Lộ trình & Đăng ký (Learning Path & Enrollment)',
     icon: 'fa-route',
-    color: '#22d3ee',
+    color: '#06b6d4',
+    bg: 'rgba(6, 182, 212, 0.06)',
+    border: 'rgba(6, 182, 212, 0.15)',
     sidebarNote: 'Lộ trình đào tạo / Duyệt đăng ký',
     sidebarUrl: '/paths',
     perms: [
@@ -134,7 +367,9 @@ const permissionGroups = [
   {
     title: 'Quản lý Nhân sự (User Management)',
     icon: 'fa-users-gear',
-    color: '#f472b6',
+    color: '#ec4899',
+    bg: 'rgba(236, 72, 153, 0.06)',
+    border: 'rgba(236, 72, 153, 0.15)',
     sidebarNote: 'Quản lý nhân sự',
     sidebarUrl: '/users',
     perms: [
@@ -146,7 +381,9 @@ const permissionGroups = [
   {
     title: 'Phòng ban & Cơ cấu (Department Structure)',
     icon: 'fa-building',
-    color: '#06b6d4',
+    color: '#0284c7',
+    bg: 'rgba(2, 132, 199, 0.06)',
+    border: 'rgba(2, 132, 199, 0.15)',
     sidebarNote: 'Phòng ban',
     sidebarUrl: '/departments',
     perms: [
@@ -156,7 +393,9 @@ const permissionGroups = [
   {
     title: 'Báo cáo & Thống kê (Analytics & Reports)',
     icon: 'fa-chart-pie',
-    color: '#fb923c',
+    color: '#ea580c',
+    bg: 'rgba(234, 88, 12, 0.06)',
+    border: 'rgba(234, 88, 12, 0.15)',
     sidebarNote: 'Báo cáo',
     sidebarUrl: '/reports',
     perms: [
@@ -167,7 +406,9 @@ const permissionGroups = [
   {
     title: 'Bảo mật & Đặc quyền Hệ thống (System Privileges)',
     icon: 'fa-shield-halved',
-    color: '#f87171',
+    color: '#e11d48',
+    bg: 'rgba(225, 29, 72, 0.06)',
+    border: 'rgba(225, 29, 72, 0.15)',
     perms: [
       { key: 'ROLE_MANAGE', desc: 'Cấu hình phân quyền hệ thống (Trang này)' },
       { key: 'USER_IMPERSONATE', desc: 'Đóng vai người dùng khác để gỡ lỗi' },
@@ -177,7 +418,9 @@ const permissionGroups = [
   {
     title: 'Học tập & Tiện ích (Learning & Utilities)',
     icon: 'fa-graduation-cap',
-    color: '#fb7185',
+    color: '#db2777',
+    bg: 'rgba(219, 39, 119, 0.06)',
+    border: 'rgba(219, 39, 119, 0.15)',
     perms: [
       { key: 'PATH_VIEW', desc: 'Xem Lộ trình học tập của tôi' },
       { key: 'COURSE_ENROLL_REQUEST', desc: 'Xem Kho khóa học & Đăng ký học' },
@@ -188,118 +431,113 @@ const permissionGroups = [
 ];
 %>
 
-<!-- Thùng chứa bảng ma trận -->
-<div class="glass-card" style="padding: 1.5rem; overflow-x: auto; margin-bottom: 2rem;">
-  <table class="matrix-table" style="width: 100%; border-collapse: collapse; text-align: left;">
-    <thead>
-      <tr style="border-bottom: 2px solid var(--border-light);">
-        <th style="padding: 1rem; width: 40%; font-size: 1.05rem; font-weight: 700; color: #a5b4fc;">QUYỀN HẠN & CHỨC NĂNG</th>
-        <% roles.forEach(role => { %>
-          <th style="padding: 1rem; text-align: center; font-size: 1rem; font-weight: 700; min-width: 130px;">
-            <div style="color: var(--text-accent); margin-bottom: 0.3rem;"><%= role.name %></div>
-            <div style="font-size: 0.72rem; color: var(--text-muted); font-weight: normal; margin-bottom: 0.5rem;">ID: <%= role.id %></div>
-            <% if (role.id !== 1) { %>
-              <form action="/permissions/<%= role.id %>/delete" method="POST" id="delete-form-<%= role.id %>" style="display:inline;">
-                <button type="button" 
-                  onclick="confirmDeleteRole('<%= role.id %>', '<%= role.name %>')"
-                  title="Xóa vai trò <%= role.name %>"
-                  style="background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3); color: #f87171; padding: 0.2rem 0.5rem; border-radius: 6px; font-size: 0.7rem; cursor: pointer; transition: all 0.2s;"
-                  onmouseover="this.style.background='rgba(239,68,68,0.2)'"
-                  onmouseout="this.style.background='rgba(239,68,68,0.1)'">
-                  <i class="fa-solid fa-trash-can"></i>
-                </button>
-              </form>
-            <% } else { %>
-              <span style="font-size: 0.68rem; color: rgba(251,191,36,0.7); background: rgba(251,191,36,0.08); padding: 0.2rem 0.5rem; border-radius: 6px; border: 1px solid rgba(251,191,36,0.2);">
-                <i class="fa-solid fa-lock"></i> Bảo vệ
-              </span>
-            <% } %>
-          </th>
-        <% }) %>
-      </tr>
-    </thead>
-    <tbody>
-      <% permissionGroups.forEach((group, gIdx) => { %>
-        <!-- Header của nhóm quyền -->
-        <tr style="background: rgba(255, 255, 255, 0.02); border-bottom: 1px solid var(--border-light);">
-          <td colspan="<%= roles.length + 1 %>" style="padding: 0.85rem 0.75rem;">
-            <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
-              <span style="font-size: 0.88rem; font-weight: 700; letter-spacing: 0.4px; text-transform: uppercase; color: <%= group.color %>;">
-                <i class="fa-solid <%= group.icon %>" style="margin-right: 0.4rem;"></i><%= group.title %>
-              </span>
-              <% if (group.sidebarNote) { %>
-                <a href="<%= group.sidebarUrl %>" target="_blank"
-                  style="display: inline-flex; align-items: center; gap: 0.35rem; font-size: 0.7rem; font-weight: 600; padding: 0.2rem 0.6rem; border-radius: 999px; border: 1px solid <%= group.color %>40; background: <%= group.color %>15; color: <%= group.color %>; text-decoration: none; transition: all 0.2s;"
-                  onmouseover="this.style.background='<%= group.color %>25'" onmouseout="this.style.background='<%= group.color %>15'"
-                  title="Xem trang sidebar này">
-                  <i class="fa-solid fa-sidebar" style="font-size: 0.62rem;"></i>
-                  Sidebar: <%= group.sidebarNote %>
-                  <i class="fa-solid fa-arrow-up-right-from-square" style="font-size: 0.55rem; opacity: 0.7;"></i>
-                </a>
+<!-- ── Matrix Card ──────────────────────────────── -->
+<div class="rbac-matrix-card">
+  <div style="overflow-x: auto;">
+    <table class="rbac-table">
+      <thead>
+        <tr>
+          <th style="width: 40%; font-size: 0.85rem; font-weight: 700; color: var(--text-main);">Quyền hạn &amp; Chức năng</th>
+          <% roles.forEach(role => { %>
+            <th class="role-header">
+              <div class="rbac-role-name"><%= role.name %></div>
+              <div class="rbac-role-id">ID: <%= role.id %></div>
+              <% if (role.id !== 1) { %>
+                <form action="/permissions/<%= role.id %>/delete" method="POST" id="delete-form-<%= role.id %>" style="display:inline;">
+                  <button type="button" 
+                    onclick="confirmDeleteRole('<%= role.id %>', '<%= role.name %>')"
+                    title="Xóa vai trò <%= role.name %>"
+                    class="rbac-btn-delete">
+                    <i class="fa-solid fa-trash-can"></i>
+                  </button>
+                </form>
+              <% } else { %>
+                <span class="rbac-badge-lock">
+                  <i class="fa-solid fa-lock"></i> Hệ thống
+                </span>
               <% } %>
-            </div>
-          </td>
+            </th>
+          <% }) %>
         </tr>
-
-        <% group.perms.forEach(perm => { %>
-          <!-- Dòng cho từng quyền cụ thể -->
-          <tr class="matrix-row" style="border-bottom: 1px solid rgba(255, 255, 255, 0.03); transition: background 0.2s ease;">
-            <td style="padding: 0.85rem 1rem;">
-              <div style="font-weight: 600; font-size: 0.9rem; color: #f1f5f9;"><%= perm.desc %></div>
-              <div style="font-family: monospace; font-size: 0.72rem; color: var(--text-muted); margin-top: 0.15rem;"><%= perm.key %></div>
+      </thead>
+      <tbody>
+        <% permissionGroups.forEach((group) => { %>
+          <!-- Group row header -->
+          <tr class="rbac-group-row">
+            <td colspan="<%= roles.length + 1 %>">
+              <div style="display: flex; align-items: center; flex-wrap: wrap;">
+                <span class="rbac-group-title" style="color: <%= group.color %>;">
+                  <i class="fa-solid <%= group.icon %>"></i>
+                  <%= group.title %>
+                </span>
+                <% if (group.sidebarNote) { %>
+                  <a href="<%= group.sidebarUrl %>" target="_blank" class="rbac-group-link"
+                     style="border: 1px solid <%= group.border %>; background: <%= group.bg %>; color: <%= group.color %>;"
+                     title="Xem trang liên kết">
+                    <i class="fa-solid fa-sidebar" style="font-size: 0.62rem;"></i>
+                    Sidebar: <%= group.sidebarNote %>
+                    <i class="fa-solid fa-arrow-up-right-from-square" style="font-size: 0.55rem; opacity: 0.8;"></i>
+                  </a>
+                <% } %>
+              </div>
             </td>
-            <% roles.forEach(role => { %>
-              <td style="padding: 0.85rem 1rem; text-align: center;">
-                <input type="checkbox" 
-                       class="matrix-checkbox" 
-                       data-role-id="<%= role.id %>" 
-                       data-role-name="<%= role.name %>"
-                       data-permission="<%= perm.key %>"
-                       <%= role.permissions.includes(perm.key) ? 'checked' : '' %>
-                       <%= role.id === 1 ? 'disabled' : '' %>
-                       style="transform: scale(1.25); accent-color: #6366f1; cursor: <%= role.id === 1 ? 'not-allowed' : 'pointer' %>; vertical-align: middle;">
-              </td>
-            <% }) %>
           </tr>
+
+          <!-- Permission Rows -->
+          <% group.perms.forEach(perm => { %>
+            <tr class="rbac-item-row">
+              <td>
+                <div class="rbac-perm-desc"><%= perm.desc %></div>
+                <div class="rbac-perm-key"><%= perm.key %></div>
+              </td>
+              <% roles.forEach(role => { %>
+                <td class="rbac-cell-center">
+                  <input type="checkbox" 
+                         class="rbac-checkbox" 
+                         data-role-id="<%= role.id %>" 
+                         data-role-name="<%= role.name %>"
+                         data-permission="<%= perm.key %>"
+                         <%= role.permissions.includes(perm.key) ? 'checked' : '' %>
+                         <%= role.id === 1 ? 'disabled' : '' %>
+                         title="<%= role.id === 1 ? 'Quyền của Super Admin được bảo vệ cố định' : '' %>"
+                  >
+                </td>
+              <% }) %>
+            </tr>
+          <% }) %>
         <% }) %>
-      <% }) %>
-    </tbody>
-  </table>
+      </tbody>
+    </table>
+  </div>
 </div>
 
-<!-- Vùng chứa các thông báo Toast nổi -->
+<!-- ── Toast Notifications area ──────────────────── -->
 <div id="toast-container" style="position: fixed; bottom: 2rem; right: 2rem; display: flex; flex-direction: column; gap: 0.75rem; z-index: 9999;"></div>
 
-<!-- Thông báo Toast và các tương tác được định nghĩa phong cách trong style.css -->
-
-<!-- Script AJAX tương tác bật tắt quyền động -->
 <script>
   document.addEventListener('DOMContentLoaded', () => {
-    const checkboxes = document.querySelectorAll('.matrix-checkbox');
+    const checkboxes = document.querySelectorAll('.rbac-checkbox');
     const toastContainer = document.getElementById('toast-container');
 
-    // Hàm tạo và hiển thị thông báo Toast nổi
     function showToast(message, type = 'success') {
       const toast = document.createElement('div');
       toast.className = 'toast-box';
       
-      let icon = '<i class="fa-solid fa-circle-check" style="color: #10b981;"></i>';
+      let icon = '<i class="fa-solid fa-circle-check" style="color: #059669;"></i>';
       if (type === 'error') {
-        icon = '<i class="fa-solid fa-circle-exclamation" style="color: #f87171;"></i>';
-        toast.style.borderLeft = '4px solid #f87171';
+        icon = '<i class="fa-solid fa-circle-exclamation" style="color: #dc2626;"></i>';
+        toast.style.borderLeft = '4px solid #dc2626';
       } else {
-        toast.style.borderLeft = '4px solid #10b981';
+        toast.style.borderLeft = '4px solid #059669';
       }
 
       toast.innerHTML = `${icon} <span style="flex-grow: 1; font-weight: 500;">${message}</span>`;
       toastContainer.appendChild(toast);
 
-      // Animation trượt lên
       setTimeout(() => {
         toast.classList.add('show');
       }, 50);
 
-      // Tự biến mất sau 3 giây
       setTimeout(() => {
         toast.classList.remove('show');
         setTimeout(() => {
@@ -308,7 +546,6 @@ const permissionGroups = [
       }, 3000);
     }
 
-    // Gán sự kiện thay đổi cho các checkbox ma trận
     checkboxes.forEach(cb => {
       cb.addEventListener('change', async (e) => {
         const checkbox = e.target;
@@ -317,7 +554,6 @@ const permissionGroups = [
         const permission = checkbox.getAttribute('data-permission');
         const isChecked = checkbox.checked;
 
-        // Khóa giao diện click tạm thời trong khi gọi API
         checkbox.disabled = true;
 
         try {
@@ -339,22 +575,18 @@ const permissionGroups = [
             showToast(`Đã ${isChecked ? 'cấp' : 'thu hồi'} quyền "${permission}" cho vai trò ${roleName}.`, 'success');
           } else {
             showToast(`Lỗi: ${resData.error || 'Cập nhật thất bại'}`, 'error');
-            // Reset trạng thái nếu lưu lỗi
             checkbox.checked = !isChecked;
           }
         } catch (err) {
           showToast(`Lỗi hệ thống khi kết nối: ${err.message}`, 'error');
           checkbox.checked = !isChecked;
         } finally {
-          // Bật lại checkbox khi hoàn tất
           checkbox.disabled = false;
         }
       });
     });
   });
-</script>
 
-<script>
   // Toggle form tạo vai trò mới
   function toggleCreateForm() {
     const form = document.getElementById('create-role-form');
@@ -364,15 +596,13 @@ const permissionGroups = [
     
     if (isHidden) {
       form.style.display = 'block';
-      form.style.opacity = '0';
-      setTimeout(() => { form.style.opacity = '1'; form.style.transition = 'opacity 0.3s'; }, 10);
       chevron.className = 'fa-solid fa-chevron-up';
-      btn.innerHTML = '<i class="fa-solid fa-chevron-up" id="form-chevron"></i> Thu gọn';
+      btn.innerHTML = '<i class="fa-solid fa-chevron-up" id="form-chevron" style="margin-right: 0.25rem;"></i> Thu gọn';
       document.getElementById('role-name-input').focus();
     } else {
       form.style.display = 'none';
       chevron.className = 'fa-solid fa-chevron-down';
-      btn.innerHTML = '<i class="fa-solid fa-chevron-down" id="form-chevron"></i> Mở rộng';
+      btn.innerHTML = '<i class="fa-solid fa-chevron-down" id="form-chevron" style="margin-right: 0.25rem;"></i> Mở rộng';
     }
   }
 
@@ -384,14 +614,9 @@ const permissionGroups = [
     }
   }
 
-  // Tự động mở form nếu có lỗi (để user thấy gì đã nhập)
-  <% if (error) { %>
-    // Không auto-open vì lỗi được hiển thị ở trên rồi
-  <% } %>
-
   // Tự động ẩn alert sau 5 giây
   setTimeout(() => {
-    document.querySelectorAll('.alert-banner').forEach(el => {
+    document.querySelectorAll('.rbac-alert').forEach(el => {
       el.style.transition = 'opacity 0.5s';
       el.style.opacity = '0';
       setTimeout(() => el.remove(), 500);

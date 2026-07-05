@@ -4,9 +4,28 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>LMS Nội Bộ Doanh Nghiệp</title>
-  <link rel="stylesheet" href="/css/style.css?v=1.1">
-  <!-- Thêm font awesome để dùng icon đơn giản -->
+  <!-- Google Fonts: Inter — load sớm để không bị FOUT -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
+  <link rel="stylesheet" href="/css/style.css?v=1.3">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Strip gradient-text khỏi heading ngay khi DOM load — không chờ stylesheet -->
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      document.querySelectorAll('h1, h2, h3').forEach(function (el) {
+        var s = el.style;
+        if (s.webkitTextFillColor === 'transparent' || s.getPropertyValue('-webkit-text-fill-color') === 'transparent') {
+          s.background = 'none';
+          s.webkitBackgroundClip = 'unset';
+          s.webkitTextFillColor = '';
+          el.style.removeProperty('-webkit-text-fill-color');
+          el.style.removeProperty('-webkit-background-clip');
+          el.style.removeProperty('background');
+        }
+      });
+    });
+  </script>
 </head>
 <body>
 
@@ -140,7 +159,7 @@
 
               <% if (perms.includes('QUIZ_GRADE')) { %>
                 <li class="nav-item">
-                  <a href="/grade"><i class="fa-solid fa-star-half-stroke"></i> Chấm điểm</a>
+                  <a href="/grade"><i class="fa-solid fa-graduation-cap"></i> Kết quả thi</a>
                 </li>
               <% } %>
 
