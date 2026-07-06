@@ -53,20 +53,20 @@ async function generateContentWithFallback(prompt) {
   throw lastError || new Error('Không thể kết nối đến bất kỳ mô hình Gemini nào.');
 }
 
-async function startChatWithFallback(history, systemInstruction, userQuestion) {
+async function startChatWithFallback(formattedHistory, systemInstruction, messageParts) {
   let lastError = null;
   for (const modelName of FALLBACK_MODELS) {
     try {
       console.log(`[Gemini Service] Đang bắt đầu chat bằng mô hình: ${modelName}`);
       const model = genAI.getGenerativeModel({ model: modelName });
       const chat = model.startChat({
-        history: history.map(h => ({
-          role: h.role === 'user' ? 'user' : 'model',
-          parts: [{ text: h.content }]
-        })),
-        systemInstruction: systemInstruction
+        history: formattedHistory,
+        systemInstruction: {
+          role: 'system',
+          parts: [{ text: systemInstruction }]
+        }
       });
-      const result = await chat.sendMessage(userQuestion);
+      const result = await chat.sendMessage(messageParts);
       return result;
     } catch (err) {
       console.warn(`[Gemini Service] Chat bằng mô hình ${modelName} thất bại: ${err.message}`);
@@ -93,6 +93,106 @@ async function getYouTubeVideoTitle(videoUrl) {
   return null;
 }
 
+/**
+ * Trích xuất tệp video và tài liệu đính kèm cục bộ dưới dạng inlineData cho Gemini
+ */
+async function getLessonMediaParts(videoUrl, attachmentUrl) {
+  const mediaParts = {
+    videoPart: null,
+    attachmentPart: null,
+    videoPromptText: '',
+    attachmentPromptText: ''
+  };
+
+  const hasVideo = videoUrl && videoUrl.trim() !== '';
+  const hasAttachment = attachmentUrl && attachmentUrl.trim() !== '';
+
+  if (hasVideo) {
+    if (videoUrl.startsWith('/uploads/')) {
+      const localFilePath = path.join(__dirname, '..', 'public', videoUrl);
+      if (fs.existsSync(localFilePath)) {
+        const stats = fs.statSync(localFilePath);
+        if (stats.size < 20 * 1024 * 1024) {
+          console.log(`[Gemini Service] Đang nạp video cục bộ để gửi kèm AI (${(stats.size/1024/1024).toFixed(2)} MB): ${localFilePath}`);
+          const videoData = fs.readFileSync(localFilePath);
+          const ext = path.extname(localFilePath).toLowerCase();
+          let mimeType = 'video/mp4';
+          if (ext === '.webm') mimeType = 'video/webm';
+          else if (ext === '.ogg') mimeType = 'video/ogg';
+
+          mediaParts.videoPart = {
+            inlineData: {
+              data: videoData.toString('base64'),
+              mimeType: mimeType
+            }
+          };
+          mediaParts.videoPromptText = `\nTôi đã gửi kèm tệp video thực tế của bài học này. Hãy phân tích hình ảnh và âm thanh trong video này để trả lời chính xác các câu hỏi liên quan đến nội dung bài học.\n`;
+        } else {
+          mediaParts.videoPromptText = `\nLưu ý: Bài học có video cục bộ nằm tại "${videoUrl}" nhưng dung lượng quá lớn (${(stats.size/1024/1024).toFixed(2)} MB), không thể gửi kèm trực tiếp cho AI phân tích.\n`;
+        }
+      }
+    } else {
+      const youtubeTitle = await getYouTubeVideoTitle(videoUrl);
+      if (youtubeTitle) {
+        mediaParts.videoPromptText = `\nĐường dẫn Video bài giảng (YouTube hoặc liên kết ngoài): ${videoUrl}\nTiêu đề video YouTube: "${youtubeTitle}"\n`;
+      } else {
+        mediaParts.videoPromptText = `\nĐường dẫn Video bài giảng (YouTube hoặc liên kết ngoài): ${videoUrl}\n`;
+      }
+    }
+  }
+
+  if (hasAttachment) {
+    if (attachmentUrl.startsWith('/uploads/')) {
+      const localFilePath = path.join(__dirname, '..', 'public', attachmentUrl);
+      if (fs.existsSync(localFilePath)) {
+        const stats = fs.statSync(localFilePath);
+        if (stats.size < 20 * 1024 * 1024) {
+          const ext = path.extname(localFilePath).toLowerCase();
+          const SUPPORTED_MIME_TYPES = {
+            '.pdf': 'application/pdf',
+            '.png': 'image/png',
+            '.jpg': 'image/jpeg',
+            '.jpeg': 'image/jpeg',
+            '.webp': 'image/webp',
+            '.heic': 'image/heic',
+            '.heif': 'image/heif',
+            '.txt': 'text/plain',
+            '.csv': 'text/csv',
+            '.html': 'text/html',
+            '.htm': 'text/html',
+            '.xml': 'text/xml',
+            '.js': 'text/javascript',
+            '.json': 'application/json',
+            '.css': 'text/css',
+            '.md': 'text/markdown'
+          };
+
+          const mimeType = SUPPORTED_MIME_TYPES[ext];
+          if (mimeType) {
+            console.log(`[Gemini Service] Đang nạp tài liệu cục bộ để gửi kèm AI (${(stats.size/1024/1024).toFixed(2)} MB): ${localFilePath}`);
+            const attachmentData = fs.readFileSync(localFilePath);
+            mediaParts.attachmentPart = {
+              inlineData: {
+                data: attachmentData.toString('base64'),
+                mimeType: mimeType
+              }
+            };
+            mediaParts.attachmentPromptText = `\nTôi đã gửi kèm tệp tài liệu thực tế của bài học này (định dạng ${mimeType}). Hãy đọc và phân tích kỹ tài liệu này để trả lời chính xác các câu hỏi liên quan đến nội dung bài học.\n`;
+          } else {
+            mediaParts.attachmentPromptText = `\nLưu ý: Bài học có tài liệu đính kèm tên là "${path.basename(localFilePath)}" tại "${attachmentUrl}" nhưng định dạng này không hỗ trợ gửi trực tiếp dưới dạng inline data cho AI.\n`;
+          }
+        } else {
+          mediaParts.attachmentPromptText = `\nLưu ý: Bài học có tài liệu đính kèm tại "${attachmentUrl}" nhưng dung lượng quá lớn (${(stats.size/1024/1024).toFixed(2)} MB), không thể gửi kèm trực tiếp cho AI phân tích.\n`;
+        }
+      }
+    } else {
+      mediaParts.attachmentPromptText = `\nĐường dẫn Tài liệu đính kèm (liên kết ngoài): ${attachmentUrl}\n`;
+    }
+  }
+
+  return mediaParts;
+}
+
 module.exports = {
   /**
    * Tóm tắt bài học ngắn gọn, tập trung vào các ý chính quan trọng
@@ -114,6 +214,7 @@ module.exports = {
     }
 
     try {
+      const mediaParts = await getLessonMediaParts(videoUrl, attachmentUrl);
       const parts = [];
       let promptText = `
         Bạn là Trợ lý Học tập AI dành cho doanh nghiệp nội bộ.
@@ -125,92 +226,8 @@ module.exports = {
         promptText += `\nNội dung bài học dạng văn bản:\n${lessonContent}\n`;
       }
 
-      let videoPart = null;
-      if (hasVideo) {
-        if (videoUrl.startsWith('/uploads/')) {
-          const localFilePath = path.join(__dirname, '..', 'public', videoUrl);
-          if (fs.existsSync(localFilePath)) {
-            const stats = fs.statSync(localFilePath);
-            // Giới hạn gửi trực tiếp dưới 20MB để tránh tràn bộ nhớ và quá giới hạn API
-            if (stats.size < 20 * 1024 * 1024) {
-              console.log(`[Gemini Service] Đang nạp video cục bộ để gửi kèm AI (${(stats.size/1024/1024).toFixed(2)} MB): ${localFilePath}`);
-              const videoData = fs.readFileSync(localFilePath);
-              const ext = path.extname(localFilePath).toLowerCase();
-              let mimeType = 'video/mp4';
-              if (ext === '.webm') mimeType = 'video/webm';
-              else if (ext === '.ogg') mimeType = 'video/ogg';
-
-              videoPart = {
-                inlineData: {
-                  data: videoData.toString('base64'),
-                  mimeType: mimeType
-                }
-              };
-              promptText += `\nTôi đã gửi kèm tệp video thực tế của bài học này. Hãy phân tích hình ảnh và âm thanh trong video này để tóm tắt chính xác nội dung bài học.\n`;
-            } else {
-              promptText += `\nLưu ý: Bài học có video cục bộ nằm tại "${videoUrl}" nhưng dung lượng quá lớn (${(stats.size/1024/1024).toFixed(2)} MB), không thể gửi kèm trực tiếp cho AI phân tích.\n`;
-            }
-          }
-        } else {
-          const youtubeTitle = await getYouTubeVideoTitle(videoUrl);
-          if (youtubeTitle) {
-            promptText += `\nĐường dẫn Video bài giảng (YouTube hoặc liên kết ngoài): ${videoUrl}\nTiêu đề video YouTube: "${youtubeTitle}"\n`;
-          } else {
-            promptText += `\nĐường dẫn Video bài giảng (YouTube hoặc liên kết ngoài): ${videoUrl}\n`;
-          }
-        }
-      }
-
-      let attachmentPart = null;
-      if (hasAttachment) {
-        if (attachmentUrl.startsWith('/uploads/')) {
-          const localFilePath = path.join(__dirname, '..', 'public', attachmentUrl);
-          if (fs.existsSync(localFilePath)) {
-            const stats = fs.statSync(localFilePath);
-            // Giới hạn gửi trực tiếp dưới 20MB
-            if (stats.size < 20 * 1024 * 1024) {
-              const ext = path.extname(localFilePath).toLowerCase();
-              const SUPPORTED_MIME_TYPES = {
-                '.pdf': 'application/pdf',
-                '.png': 'image/png',
-                '.jpg': 'image/jpeg',
-                '.jpeg': 'image/jpeg',
-                '.webp': 'image/webp',
-                '.heic': 'image/heic',
-                '.heif': 'image/heif',
-                '.txt': 'text/plain',
-                '.csv': 'text/csv',
-                '.html': 'text/html',
-                '.htm': 'text/html',
-                '.xml': 'text/xml',
-                '.js': 'text/javascript',
-                '.json': 'application/json',
-                '.css': 'text/css',
-                '.md': 'text/markdown'
-              };
-
-              const mimeType = SUPPORTED_MIME_TYPES[ext];
-              if (mimeType) {
-                console.log(`[Gemini Service] Đang nạp tài liệu cục bộ để gửi kèm AI (${(stats.size/1024/1024).toFixed(2)} MB): ${localFilePath}`);
-                const attachmentData = fs.readFileSync(localFilePath);
-                attachmentPart = {
-                  inlineData: {
-                    data: attachmentData.toString('base64'),
-                    mimeType: mimeType
-                  }
-                };
-                promptText += `\nTôi đã gửi kèm tệp tài liệu thực tế của bài học này (định dạng ${mimeType}). Hãy đọc và phân tích kỹ tài liệu này để tóm tắt chính xác nội dung bài học.\n`;
-              } else {
-                promptText += `\nLưu ý: Bài học có tài liệu đính kèm tên là "${path.basename(localFilePath)}" tại "${attachmentUrl}" nhưng định dạng này không hỗ trợ gửi trực tiếp dưới dạng inline data cho AI.\n`;
-              }
-            } else {
-              promptText += `\nLưu ý: Bài học có tài liệu đính kèm tại "${attachmentUrl}" nhưng dung lượng quá lớn (${(stats.size/1024/1024).toFixed(2)} MB), không thể gửi kèm trực tiếp cho AI phân tích.\n`;
-            }
-          }
-        } else {
-          promptText += `\nĐường dẫn Tài liệu đính kèm (liên kết ngoài): ${attachmentUrl}\n`;
-        }
-      }
+      promptText += mediaParts.videoPromptText;
+      promptText += mediaParts.attachmentPromptText;
 
       promptText += `
         Yêu cầu tóm tắt:
@@ -224,11 +241,11 @@ module.exports = {
       `;
 
       parts.push(promptText);
-      if (videoPart) {
-        parts.push(videoPart);
+      if (mediaParts.videoPart) {
+        parts.push(mediaParts.videoPart);
       }
-      if (attachmentPart) {
-        parts.push(attachmentPart);
+      if (mediaParts.attachmentPart) {
+        parts.push(mediaParts.attachmentPart);
       }
 
       const result = await generateContentWithFallback(parts);
@@ -247,30 +264,70 @@ module.exports = {
    * @param {Array} history - Lịch sử trò chuyện trước đó (nếu có)
    * @returns {Promise<string>} - Câu trả lời chi tiết dạng Markdown bằng tiếng Việt
    */
-  answerQuestion: async (lessonTitle, lessonContent, userQuestion, history = []) => {
+  answerQuestion: async (lessonTitle, lessonContent, userQuestion, history = [], videoUrl = null, attachmentUrl = null) => {
     if (!genAI) {
       return 'Trợ lý AI chưa sẵn sàng do thiếu cấu hình API Key. Vui lòng liên hệ Admin hệ thống.';
     }
 
     try {
+      const mediaParts = await getLessonMediaParts(videoUrl, attachmentUrl);
+      
       // Xây dựng ngữ cảnh học tập
-      const systemContext = `
+      let systemContext = `
         Bạn là một Trợ lý AI học tập chuyên nghiệp tích hợp trong hệ thống LMS nội bộ của công ty.
         Nhiệm vụ của bạn là giải thích bài học và trả lời câu hỏi của nhân viên dựa trên bài học dưới đây:
         
         BÀI HỌC: "${lessonTitle}"
-        NỘI DUNG BÀI HỌC:
-        ${lessonContent}
-        
+      `;
+
+      if (lessonContent && lessonContent.trim() !== '') {
+        systemContext += `\nNỘI DUNG BÀI HỌC DẠNG VĂN BẢN:\n${lessonContent}\n`;
+      }
+
+      systemContext += mediaParts.videoPromptText;
+      systemContext += mediaParts.attachmentPromptText;
+
+      systemContext += `
         QUY TẮC TRẢ LỜI:
         1. Câu trả lời phải lịch sự, chuyên nghiệp, xưng hô là "Trợ lý AI" và "Bạn".
         2. Trả lời bằng TIẾNG VIỆT, sử dụng định dạng Markdown rõ ràng.
         3. Nếu câu hỏi KHÔNG liên quan đến bài học, hãy trả lời khéo léo để nhắc họ tập trung vào bài học này, nhưng vẫn có thể giải thích ngắn gọn nếu đó là kiến thức công nghệ/chuyên môn liên quan.
-        4. Tránh bịa đặt thông tin không có trong tài liệu.
+        4. Tránh bịa đặt thông tin không có trong tài liệu/video/đính kèm được cung cấp. Bạn có thể sử dụng thông tin từ video và tài liệu đính kèm đã gửi để trả lời câu hỏi.
         5. QUY TẮC CÔNG THỨC TOÁN: Khi sử dụng ký hiệu toán học hoặc công thức LaTeX, bạn BẮT BUỘC phải viết đúng định dạng LaTeX chuẩn trong cặp dấu đô la $...$ hoặc $$...$$. Tuyệt đối không được thêm khoảng trắng sau dấu gạch chéo ngược (ví dụ: viết $\\Delta$, không được viết $\\ Delta$).
       `;
 
-      const result = await startChatWithFallback(history, systemContext, userQuestion);
+      // Phân chia gửi tệp đính kèm trong chat
+      const formattedHistory = [];
+      let videoSent = false;
+      let attachmentSent = false;
+
+      for (let i = 0; i < history.length; i++) {
+        const h = history[i];
+        const role = h.role === 'user' ? 'user' : 'model';
+        const parts = [{ text: h.content }];
+
+        if (role === 'user' && !videoSent && !attachmentSent) {
+          if (mediaParts.videoPart) {
+            parts.push(mediaParts.videoPart);
+            videoSent = true;
+          }
+          if (mediaParts.attachmentPart) {
+            parts.push(mediaParts.attachmentPart);
+            attachmentSent = true;
+          }
+        }
+        formattedHistory.push({ role, parts });
+      }
+
+      const messageParts = [userQuestion];
+      if (!videoSent && mediaParts.videoPart) {
+        messageParts.push(mediaParts.videoPart);
+      }
+      if (!attachmentSent && mediaParts.attachmentPart) {
+        messageParts.push(mediaParts.attachmentPart);
+      }
+
+      const result = await startChatWithFallback(formattedHistory, systemContext, messageParts);
       return result.response.text();
     } catch (err) {
       console.error('[Gemini Service] Lỗi trả lời câu hỏi AI:', err);
@@ -284,19 +341,29 @@ module.exports = {
    * @param {string} lessonContent - Nội dung chi tiết làm nguồn đề
    * @returns {Promise<Array>} - Mảng JSON chứa các câu hỏi trắc nghiệm
    */
-  generateQuiz: async (lessonTitle, lessonContent) => {
+  generateQuiz: async (lessonTitle, lessonContent, videoUrl = null, attachmentUrl = null) => {
     if (!genAI) {
       throw new Error('Gemini API Key chưa được cấu hình.');
     }
 
     try {
-      const prompt = `
+      const mediaParts = await getLessonMediaParts(videoUrl, attachmentUrl);
+      const parts = [];
+      let prompt = `
         Bạn là một chuyên gia L&D thiết kế câu hỏi trắc nghiệm ôn tập.
         Dựa vào bài học sau đây, hãy sinh ra 3 câu hỏi trắc nghiệm (multiple choice) để kiểm tra kiến thức nhân viên:
         
         Tiêu đề bài học: ${lessonTitle}
-        Nội dung: ${lessonContent}
-        
+      `;
+
+      if (lessonContent && lessonContent.trim() !== '') {
+        prompt += `\nNội dung bài học dạng văn bản:\n${lessonContent}\n`;
+      }
+
+      prompt += mediaParts.videoPromptText;
+      prompt += mediaParts.attachmentPromptText;
+
+      prompt += `
         YÊU CẦU ĐẦU RA BẮT BUỘC:
         1. Trả về kết quả DẠNG MẢNG JSON duy nhất (JSON array). Không thêm bất kỳ văn bản giải thích nào trước hoặc sau khối JSON.
         2. Cấu trúc mỗi phần tử trong mảng JSON phải đúng 100% như sau:
@@ -305,11 +372,19 @@ module.exports = {
           "options": ["Đáp án A", "Đáp án B", "Đáp án C", "Đáp án D"],
           "correct_answer": "Phải khớp chính xác hoàn toàn với 1 trong 4 lựa chọn trong mảng options"
         }
-        3. Nội dung câu hỏi phải bám sát bài học, có độ khó phù hợp với thực tế công việc.
+        3. Nội dung câu hỏi phải bám sát bài học (văn bản, video hoặc tài liệu đính kèm), có độ khó phù hợp với thực tế công việc.
         4. QUY TẮC CÔNG THỨC TOÁN: Nếu câu hỏi hoặc đáp án có chứa ký hiệu toán học hoặc công thức LaTeX, bạn BẮT BUỘC phải viết đúng định dạng LaTeX chuẩn trong cặp dấu $...$ (ví dụ: viết $\\Delta$, không viết $\\ Delta$).
       `;
 
-      const result = await generateContentWithFallback(prompt);
+      parts.push(prompt);
+      if (mediaParts.videoPart) {
+        parts.push(mediaParts.videoPart);
+      }
+      if (mediaParts.attachmentPart) {
+        parts.push(mediaParts.attachmentPart);
+      }
+
+      const result = await generateContentWithFallback(parts);
       const rawText = result.response.text();
       const cleanJson = cleanJsonResponse(rawText);
       

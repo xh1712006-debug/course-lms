@@ -15,14 +15,18 @@ class GeminiAiService {
       lessonEntity.title,
       lessonEntity.content,
       userQuestion,
-      history
+      history,
+      lessonEntity.videoUrl,
+      lessonEntity.attachmentUrl
     );
   }
 
   async generateQuiz(lessonEntity) {
     return await geminiService.generateQuiz(
       lessonEntity.title,
-      lessonEntity.content
+      lessonEntity.content,
+      lessonEntity.videoUrl,
+      lessonEntity.attachmentUrl
     );
   }
 }

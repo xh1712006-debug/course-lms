@@ -195,8 +195,26 @@ module.exports = {
       }
 
       const lessons = await Lesson.findByCourseId(courseId);
-      const enrollment = await Enrollment.findByUserAndCourse(userId, courseId);
+      let enrollment = await Enrollment.findByUserAndCourse(userId, courseId);
       const quiz = await Quiz.findByCourseId(courseId);
+
+      const canManage = req.session.permissions && (
+        req.session.permissions.includes('LESSON_MANAGE') || 
+        req.session.permissions.includes('LESSON_CREATE') ||
+        req.session.permissions.includes('COURSE_UPDATE')
+      );
+
+      if (canManage && (!enrollment || enrollment.status !== 'approved')) {
+        enrollment = {
+          id: null,
+          user_id: userId,
+          course_id: courseId,
+          status: 'approved',
+          progress: 100,
+          is_assigned: false,
+          deadline: null
+        };
+      }
 
       res.render('courses/detail', {
         course,
@@ -255,7 +273,25 @@ module.exports = {
 
     try {
       // 1. Kiểm tra học viên đã đăng ký học khóa này chưa
-      const enrollment = await Enrollment.findByUserAndCourse(userId, courseId);
+      let enrollment = await Enrollment.findByUserAndCourse(userId, courseId);
+      const canManage = req.session.permissions && (
+        req.session.permissions.includes('LESSON_MANAGE') || 
+        req.session.permissions.includes('LESSON_CREATE') ||
+        req.session.permissions.includes('COURSE_UPDATE')
+      );
+
+      if (canManage && (!enrollment || enrollment.status !== 'approved')) {
+        enrollment = {
+          id: null,
+          user_id: userId,
+          course_id: courseId,
+          status: 'approved',
+          progress: 100,
+          is_assigned: false,
+          deadline: null
+        };
+      }
+
       if (!enrollment || enrollment.status !== 'approved') {
         return res.redirect(`/courses/${courseId}`);
       }
@@ -351,7 +387,9 @@ module.exports = {
             enrollment.progress,
             Math.round(((currentIdx + 1) / totalLessons) * 100)
           );
-          await Enrollment.updateProgress(userId, courseId, calculatedProgress);
+          if (enrollment.id !== null) {
+            await Enrollment.updateProgress(userId, courseId, calculatedProgress);
+          }
         }
       } else {
         // Bài lý thuyết/Video: tự động cập nhật tiến độ khi xem
@@ -359,7 +397,9 @@ module.exports = {
           enrollment.progress, 
           Math.round(((currentIdx + 1) / totalLessons) * 100)
         );
-        await Enrollment.updateProgress(userId, courseId, calculatedProgress);
+        if (enrollment.id !== null) {
+          await Enrollment.updateProgress(userId, courseId, calculatedProgress);
+        }
       }
 
       // 4. Lấy lịch sử bình luận / thảo luận bài học

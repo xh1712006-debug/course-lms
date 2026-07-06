@@ -1315,9 +1315,7 @@ module.exports = {
     const permission = req.body.permission;
     const isChecked = req.body.isChecked === true || req.body.isChecked === 'true';
 
-    if (roleId === 1) {
-      return res.status(400).json({ error: 'Không thể chỉnh sửa vai trò Super Admin để đảm bảo an toàn hệ thống.' });
-    }
+
 
     try {
       const db = require('../config/db');

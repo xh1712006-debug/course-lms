@@ -498,8 +498,7 @@ const permissionGroups = [
                          data-role-name="<%= role.name %>"
                          data-permission="<%= perm.key %>"
                          <%= role.permissions.includes(perm.key) ? 'checked' : '' %>
-                         <%= role.id === 1 ? 'disabled' : '' %>
-                         title="<%= role.id === 1 ? 'Quyền của Super Admin được bảo vệ cố định' : '' %>"
+                         title="Bật/Tắt quyền <%= perm.key %> cho vai trò <%= role.name %>"
                   >
                 </td>
               <% }) %>
@@ -553,6 +552,14 @@ const permissionGroups = [
         const roleName = checkbox.getAttribute('data-role-name');
         const permission = checkbox.getAttribute('data-permission');
         const isChecked = checkbox.checked;
+
+        if (roleId === 1) {
+          const confirmMsg = `⚠️ Cảnh báo bảo mật: Bạn đang thay đổi phân quyền cho vai trò "${roleName}" (Quản trị viên hệ thống).\n\nBạn có chắc chắn muốn ${isChecked ? 'cấp' : 'thu hồi'} quyền "${permission}" cho vai trò này không?`;
+          if (!confirm(confirmMsg)) {
+            checkbox.checked = !isChecked;
+            return;
+          }
+        }
 
         checkbox.disabled = true;
 

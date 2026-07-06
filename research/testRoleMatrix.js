@@ -11,16 +11,16 @@ async function testRoleMatrix() {
   let hasErrors = false;
 
   try {
-    // 1. Kiểm tra an toàn bảo mật: Không được phép sửa đổi vai trò Super Admin (ID = 1)
-    console.log('[1/3] Kiểm tra bảo vệ vai trò Super Admin...');
+    // 1. Kiểm tra an toàn bảo mật: Được phép sửa đổi vai trò Super Admin (ID = 1)
+    console.log('[1/3] Kiểm tra cập nhật quyền cho vai trò Super Admin...');
     
     // Giả lập đối tượng req, res
     const reqSuper = {
-      session: { userId: 1, permissions: ['ROLE_MANAGE'] },
+      session: { userId: 1, username: 'admin', roleId: 1, roleName: 'Super Admin', permissions: ['ROLE_MANAGE'] },
       body: { roleId: 1, permission: 'COURSE_CREATE', isChecked: false }
     };
     
-    let superStatus = 0;
+    let superStatus = 200;
     let superJson = {};
     
     const resSuper = {
@@ -30,14 +30,23 @@ async function testRoleMatrix() {
           json: (data) => { superJson = data; }
         };
       },
-      json: (data) => { superJson = data; }
+      json: (data) => {
+        superStatus = 200;
+        superJson = data;
+      }
     };
+
+    // Đảm bảo quyền tồn tại trước khi tắt
+    await db.query("INSERT INTO role_permissions (role_id, permission_name) VALUES (1, 'COURSE_CREATE') ON CONFLICT DO NOTHING");
 
     await adminController.toggleRolePermission(reqSuper, resSuper);
     
-    assert.strictEqual(superStatus, 400, 'Yêu cầu cập nhật quyền Super Admin phải bị từ chối với mã lỗi 400.');
-    assert.strictEqual(superJson.error, 'Không thể chỉnh sửa vai trò Super Admin để đảm bảo an toàn hệ thống.');
-    console.log('      [OK] Super Admin được bảo vệ thành công khỏi việc thu hồi quyền.');
+    assert.strictEqual(superStatus, 200, 'Yêu cầu cập nhật quyền Super Admin phải thành công.');
+    assert.strictEqual(superJson.success, true);
+
+    // Khôi phục lại quyền cho Super Admin sau kiểm thử
+    await db.query("INSERT INTO role_permissions (role_id, permission_name) VALUES (1, 'COURSE_CREATE') ON CONFLICT DO NOTHING");
+    console.log('      [OK] Cập nhật quyền Super Admin thành công và đã khôi phục lại.');
 
     // 2. Kiểm tra cập nhật quyền thành công của vai trò khác (HR Manager - ID = 2)
     console.log('[2/3] Kiểm tra cập nhật quyền cho vai trò HR Manager...');

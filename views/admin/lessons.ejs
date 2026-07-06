@@ -1,4 +1,4 @@
-﻿<%- include('../partials/header') %>
+<%- include('../partials/header') %>
 
 <div style="margin-bottom: 2rem;">
   <a href="/course-management" style="font-size: 0.9rem; font-weight: 500; color: var(--text-muted);">
@@ -83,7 +83,7 @@
           <% lessons.forEach(lesson => { %>
             <tr>
               <td><strong>#<%= lesson.order_index %></strong></td>
-              <td><strong><%= lesson.title %></strong></td>
+              <td><strong><a href="/courses/<%= course.id %>/lessons/<%= lesson.id %>" target="_blank" style="color: inherit; text-decoration: none;" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'" title="Xem trải nghiệm bài học"><%= lesson.title %></a></strong></td>
               <td style="max-width: 200px;">
                 <% if (lesson.is_quiz) { %>
                   <span style="color: #fbbf24; font-weight: 600;"><i class="fa-solid fa-circle-question"></i> Bài kiểm tra trắc nghiệm AI</span>
@@ -95,6 +95,11 @@
                 <div style="display: flex; justify-content: center; gap: 0.25rem;">
                   
                   <% if (user.permissions.includes('LESSON_MANAGE')) { %>
+                    <!-- Nút xem trải nghiệm bài học -->
+                    <a href="/courses/<%= course.id %>/lessons/<%= lesson.id %>" target="_blank" class="btn btn-secondary" style="padding: 0.3rem 0.6rem; font-size: 0.75rem; background: rgba(99, 102, 241, 0.15); border: 1px solid rgba(99, 102, 241, 0.3); color: #818cf8; display: inline-flex; align-items: center;" title="Xem trải nghiệm bài học">
+                      <i class="fa-solid fa-eye"></i>
+                    </a>
+
                     <!-- Nút mở modal chỉnh sửa bài học -->
                     <button class="btn btn-secondary" onclick="openEditLessonModal('<%= lesson.id %>', '<%= lesson.title %>', `<%= lesson.content %>`, '<%= lesson.video_url %>', '<%= lesson.attachment_url %>', '<%= lesson.order_index %>', '<%= lesson.is_quiz %>')" style="padding: 0.3rem 0.6rem; font-size: 0.75rem;">
                       <i class="fa-solid fa-pen"></i>

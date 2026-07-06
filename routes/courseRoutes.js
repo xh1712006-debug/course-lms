@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const courseController = require('../controllers/courseController');
-const { isAuthenticated, requirePermission } = require('../middleware/auth');
+const { isAuthenticated, requirePermission, requireAnyPermission } = require('../middleware/auth');
 
 // Yêu cầu đăng nhập cho tất cả các định tuyến khóa học
 router.use(isAuthenticated);
@@ -10,10 +10,10 @@ router.use(isAuthenticated);
 router.get('/dashboard', courseController.getDashboard);
 
 // Trang danh sách khóa học
-router.get('/courses', requirePermission('COURSE_ENROLL_REQUEST'), courseController.getCourses);
+router.get('/courses', requireAnyPermission(['COURSE_ENROLL_REQUEST', 'COURSE_VIEW', 'COURSE_UPDATE']), courseController.getCourses);
 
 // Chi tiết khóa học
-router.get('/courses/:id', requirePermission('COURSE_ENROLL_REQUEST'), courseController.getCourseDetail);
+router.get('/courses/:id', requireAnyPermission(['COURSE_ENROLL_REQUEST', 'COURSE_VIEW', 'COURSE_UPDATE', 'LESSON_MANAGE']), courseController.getCourseDetail);
 
 // Đăng ký tham gia khóa học
 router.get('/courses/:id/enroll', requirePermission('COURSE_ENROLL_REQUEST'), courseController.enrollCourse);

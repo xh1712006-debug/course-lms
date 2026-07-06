@@ -29,6 +29,25 @@ function requirePermission(permission) {
 }
 
 /**
+ * Middleware kiểm tra có ít nhất một trong số các quyền hạn thao tác (RBAC)
+ * @param {string[]} permissions - Danh sách quyền hạn chấp nhận
+ */
+function requireAnyPermission(permissions) {
+  return (req, res, next) => {
+    if (req.session && req.session.permissions) {
+      const hasAny = permissions.some(p => req.session.permissions.includes(p));
+      if (hasAny) {
+        return next();
+      }
+    }
+    // Không đủ quyền hạn
+    res.status(403).render('error', { 
+      message: `Bạn không có quyền truy cập chức năng này.` 
+    });
+  };
+}
+
+/**
  * Middleware tải danh sách quyền hạn động theo thời gian thực (Real-time Dynamic RBAC)
  */
 async function loadDynamicPermissions(req, res, next) {
@@ -109,6 +128,7 @@ async function loadDynamicPermissions(req, res, next) {
 module.exports = {
   isAuthenticated,
   requirePermission,
+  requireAnyPermission,
   loadDynamicPermissions
 };
 
