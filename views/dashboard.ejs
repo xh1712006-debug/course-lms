@@ -33,70 +33,63 @@
      ========================================================================== -->
 <% if (hasStudentAccess) { %>
 <div id="dashboard-student-section" style="display: <%= (hasStudentAccess) ? 'block' : 'none' %>;">
-  
-  <!-- Grid KPI Học viên -->
-  <% if (user.permissions.includes('COURSE_ENROLL_REQUEST') || user.permissions.includes('PROGRESS_TRACK')) { %>
-    <div class="kpi-grid" style="margin-bottom: 2rem;">
-      <div class="glass-card kpi-card">
-        <div class="kpi-title">Khóa đang học</div>
-        <div class="kpi-value"><%= enrollments.filter(e => e.progress < 100).length %></div>
-      </div>
-      
-      <div class="glass-card kpi-card">
-        <div class="kpi-title">Đã hoàn thành</div>
-        <div class="kpi-value secondary">
-          <%= enrollments.filter(e => e.progress === 100).length %>
+
+  <!-- Banner Học tiếp nhanh (Quick Resume Widget) -->
+  <% 
+    // Tìm khóa học đang dang dở mà người dùng học gần đây nhất (hoặc tiến độ cao nhất chưa hoàn thành)
+    const latestActive = enrollments.find(e => e.progress < 100);
+    if (latestActive) { 
+  %>
+    <div class="glass-card quick-resume-card">
+      <div style="display: flex; align-items: center; gap: 1.5rem; flex: 1; flex-wrap: wrap;">
+        <div class="quick-resume-media">
+          <img src="<%= latestActive.image_url %>" alt="<%= latestActive.title %>">
+          <div class="quick-resume-play-icon">
+            <i class="fa-solid fa-play" style="margin-left: 1px;"></i>
+          </div>
         </div>
+        <div style="flex: 1; min-width: 200px;">
+          <span style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: var(--text-accent); letter-spacing: 0.05em; display: block;">Học Tiếp Bài Học Gần Nhất</span>
+          <h3 style="font-size: 1.25rem; font-weight: 800; color: var(--text-main); margin: 0.2rem 0 0.5rem 0;"><%= latestActive.title %></h3>
+          <div style="display: flex; align-items: center; gap: 1rem; max-width: 450px;">
+            <div class="progress-container" style="flex: 1; height: 6px; margin: 0; background: rgba(0,0,0,0.06);">
+              <div class="progress-bar" style="width: <%= latestActive.progress %>%; height: 6px;"></div>
+            </div>
+            <span style="font-size: 0.82rem; font-weight: 700; color: #0d9488;"><%= latestActive.progress %>% Hoàn thành</span>
+          </div>
+        </div>
+      </div>
+      <div style="flex-shrink: 0;">
+        <a href="/courses/<%= latestActive.course_id %>/lessons/1" class="btn btn-primary" style="padding: 0.75rem 1.75rem; border-radius: 10px; box-shadow: 0 4px 15px rgba(79, 70, 229, 0.25);">
+          <i class="fa-solid fa-circle-play"></i> Học tiếp ngay
+        </a>
       </div>
     </div>
-  <% } %>
-
-  <!-- Bảng phân tích thống kê học tập (Learning Analytics) -->
-  <% if (enrollments.length > 0) { %>
-    <div style="margin-bottom: 2.5rem;">
-      <h2 style="font-size: 1.4rem; display: flex; align-items: center; gap: 0.5rem; color: var(--text-main); margin-bottom: 1.25rem;">
-        <i class="fa-solid fa-chart-line" style="color: #6366f1;"></i> Báo cáo phân tích tiến độ học tập
-      </h2>
-      
-      <div class="glass-card" style="padding: 2rem; border-radius: 16px;">
-        <div style="display: grid; grid-template-columns: 1.8fr 1.2fr; gap: 2.5rem;" class="analytics-grid">
-          <!-- Canvas 1: Tiến trình chi tiết -->
-          <div style="position: relative; width: 100%; display: flex; flex-direction: column; justify-content: space-between; overflow: hidden;">
-            <h4 style="font-size: 0.95rem; font-weight: 700; color: var(--text-main); margin-bottom: 1rem; display: flex; align-items: center; gap: 0.4rem;">
-              <i class="fa-solid fa-chart-bar" style="color: #4f46e5;"></i> Chi tiết tiến độ hoàn thành các khóa học (%)
-            </h4>
-            <div style="display: flex; position: relative; width: 100%; height: 258px; overflow: hidden;">
-              <!-- Cột Y-Axis cố định bên trái -->
-              <div style="width: 50px; height: 250px; flex-shrink: 0; position: relative;">
-                <canvas id="courseProgressChartTicks" style="width: 100%; height: 100%;"></canvas>
-              </div>
-              <!-- Khung cuộn chứa các cột dữ liệu bên phải -->
-              <div class="chart-scroll-container" style="flex-grow: 1; overflow-x: auto; overflow-y: hidden; -webkit-overflow-scrolling: touch; height: 258px;">
-                <div style="position: relative; height: 250px; min-width: 100%;" id="courseProgressChartWrapper">
-                  <canvas id="courseProgressChart"></canvas>
-                </div>
-              </div>
-            </div>
-          </div>
-          
-          <!-- Canvas 2: Phân bổ trạng thái -->
-          <div style="position: relative; width: 100%; display: flex; flex-direction: column; justify-content: space-between; border-left: 1px solid var(--border-light); padding-left: 2rem;" class="status-chart-container">
-            <h4 style="font-size: 0.95rem; font-weight: 700; color: var(--text-main); margin-bottom: 1rem; display: flex; align-items: center; gap: 0.4rem;">
-              <i class="fa-solid fa-chart-pie" style="color: #0d9488;"></i> Tỷ lệ trạng thái hoàn thành khóa học
-            </h4>
-            <div style="position: relative; width: 100%;">
-              <canvas id="courseStatusChart"></canvas>
-            </div>
-          </div>
+  <% } else if (enrollments.length > 0 && enrollments.filter(e => e.progress < 100).length === 0) { %>
+    <!-- Tất cả đã hoàn thành -->
+    <div class="glass-card quick-resume-card quick-resume-card-completed">
+      <div style="display: flex; align-items: center; gap: 1.5rem; flex: 1; flex-wrap: wrap;">
+        <div style="background: rgba(16, 185, 129, 0.1); width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; border: 1px solid rgba(16, 185, 129, 0.2);">
+          <i class="fa-solid fa-circle-check fa-lg" style="color: #10b981;"></i>
         </div>
+        <div style="flex: 1; min-width: 250px;">
+          <span style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: #10b981; letter-spacing: 0.05em; display: block;">Mục Tiêu Đã Hoàn Thành</span>
+          <h3 style="font-size: 1.2rem; font-weight: 800; color: var(--text-main); margin: 0.2rem 0 0.15rem 0;">Tuyệt vời! Bạn đã hoàn thành xuất sắc tất cả các khóa học.</h3>
+          <p style="font-size: 0.85rem; color: var(--text-muted); margin: 0; line-height: 1.4;">Hãy tự hào về hành trình của bạn. Tiếp tục đăng ký thêm các khóa học mới từ thư viện để nâng tầm chuyên môn.</p>
+        </div>
+      </div>
+      <div style="flex-shrink: 0;">
+        <a href="/courses" class="btn btn-primary" style="padding: 0.7rem 1.5rem; border-radius: 10px; background: var(--secondary-gradient); box-shadow: 0 4px 15px rgba(13, 148, 136, 0.2);">
+          <i class="fa-solid fa-compass"></i> Tìm khóa học mới
+        </a>
       </div>
     </div>
   <% } %>
 
   <%
-    let layoutStyle = "display: grid; gap: 2rem;";
+    let layoutStyle = "display: grid; gap: 2.25rem;";
     if ((user.permissions.includes('COURSE_ENROLL_REQUEST') || user.permissions.includes('PROGRESS_TRACK')) && (user.permissions.includes('PATH_VIEW') || user.permissions.includes('HISTORY_VIEW'))) {
-      layoutStyle += " grid-template-columns: 2fr 1fr;";
+      layoutStyle += " grid-template-columns: 1.9fr 1.1fr;";
     } else {
       layoutStyle += " grid-template-columns: 1fr;";
     }
@@ -104,148 +97,231 @@
 
   <div style="<%= layoutStyle %>" class="dashboard-main-grid-override">
     
-    <!-- Cột bên trái: Khóa học của tôi -->
+    <!-- Cột bên trái: Khóa học của tôi & Báo cáo thống kê -->
     <% if (user.permissions.includes('COURSE_ENROLL_REQUEST') || user.permissions.includes('PROGRESS_TRACK')) { %>
-      <div style="display: flex; flex-direction: column; gap: 1.5rem;">
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-          <h2 style="font-size: 1.4rem; display: flex; align-items: center; gap: 0.5rem; color: var(--text-main); margin: 0;">
-            <i class="fa-solid fa-graduation-cap" style="color: var(--text-accent);"></i> Khóa học đang tham gia
-          </h2>
-          <% if (enrollments.length > 2) { %>
-            <a href="/my-paths" class="btn btn-secondary" style="padding: 0.4rem 0.85rem; font-size: 0.82rem; border-radius: 8px; font-weight: 600; display: inline-flex; align-items: center; gap: 0.25rem;">
-              Xem tất cả (<%= enrollments.length %>) <i class="fa-solid fa-arrow-right" style="font-size: 0.75rem;"></i>
-            </a>
-          <% } %>
-        </div>
-
-        <% if (enrollments.length === 0) { %>
-          <div class="glass-card" style="text-align: center; padding: 3rem 2rem; border-style: dashed; border-width: 2px;">
-            <i class="fa-solid fa-book-open-reader fa-3x" style="color: var(--text-muted); margin-bottom: 1rem; opacity: 0.6;"></i>
-            <h3>Bạn chưa đăng ký khóa học nào</h3>
-            <p style="color: var(--text-muted); margin-top: 0.5rem; margin-bottom: 1.5rem;">Hãy khám phá các khóa học công khai của công ty để bắt đầu lộ trình phát triển.</p>
-            <% if (user.permissions.includes('COURSE_ENROLL_REQUEST')) { %>
-              <a href="/courses" class="btn btn-primary">Tìm kiếm khóa học</a>
+      <div style="display: flex; flex-direction: column; gap: 2.5rem;">
+        
+        <!-- Khóa học đang tham gia -->
+        <div style="display: flex; flex-direction: column; gap: 1.25rem;">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <h2 style="font-size: 1.4rem; display: flex; align-items: center; gap: 0.5rem; color: var(--text-main); margin: 0; font-weight: 800;">
+              <i class="fa-solid fa-graduation-cap" style="color: var(--text-accent);"></i> Khóa học của tôi
+            </h2>
+            <% if (enrollments.length > 2) { %>
+              <a href="/my-paths" class="btn btn-secondary" style="padding: 0.45rem 1rem; font-size: 0.82rem; border-radius: 8px; font-weight: 600; display: inline-flex; align-items: center; gap: 0.25rem;">
+                Xem tất cả (<%= enrollments.length %>) <i class="fa-solid fa-arrow-right" style="font-size: 0.75rem;"></i>
+              </a>
             <% } %>
           </div>
-        <% } else { %>
-          <% 
-            // Sắp xếp khóa học chưa hoàn thành lên trước, hoặc theo tiến độ giảm dần
-            const activeEnrollments = [...enrollments].sort((a, b) => {
-              if (a.progress === 100 && b.progress < 100) return 1;
-              if (a.progress < 100 && b.progress === 100) return -1;
-              return b.progress - a.progress;
-            }).slice(0, 2);
-          %>
-          <div class="course-grid">
-            <% activeEnrollments.forEach(enroll => { %>
-              <div class="glass-card course-card">
-                <img src="<%= enroll.image_url %>" alt="<%= enroll.title %>">
-                <div class="course-title"><%= enroll.title %></div>
-                <p class="course-desc"><%= enroll.description %></p>
-                
-                <div style="margin-top: auto; padding-top: 1rem;">
-                  <div style="display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 0.5rem;">
-                    <span style="color: var(--text-muted);">Tiến độ học</span>
-                    <span style="font-weight: 600; color: #0d9488;"><%= enroll.progress %>%</span>
-                  </div>
-                  <div class="progress-container" style="margin-bottom: 1.25rem;">
-                    <div class="progress-bar" style="width: <%= enroll.progress %>%;"></div>
+
+          <% if (enrollments.length === 0) { %>
+            <div class="glass-card" style="text-align: center; padding: 4rem 2rem; border-style: dashed; border-width: 2px; border-color: #cbd5e1;">
+              <i class="fa-solid fa-book-open-reader fa-3x" style="color: var(--text-muted); margin-bottom: 1.25rem; opacity: 0.5;"></i>
+              <h3 style="font-weight: 800; font-size: 1.25rem; color: var(--text-main);">Bạn chưa đăng ký khóa học nào</h3>
+              <p style="color: var(--text-muted); margin-top: 0.5rem; margin-bottom: 1.75rem; font-size: 0.95rem; max-width: 450px; margin-left: auto; margin-right: auto;">Hãy khám phá các khóa học đào tạo chuyên môn và quy trình nội bộ của công ty để phát triển lộ trình năng lực.</p>
+              <% if (user.permissions.includes('COURSE_ENROLL_REQUEST')) { %>
+                <a href="/courses" class="btn btn-primary" style="padding: 0.75rem 1.75rem; border-radius: 10px;">
+                  <i class="fa-solid fa-magnifying-glass"></i> Khám phá Thư viện khóa học
+                </a>
+              <% } %>
+            </div>
+          <% } else { %>
+            <!-- Row-based course cards to avoid stretching layout -->
+            <div style="display: flex; flex-direction: column; gap: 1rem;">
+              <% 
+                // Sắp xếp khóa học chưa hoàn thành lên trước
+                const sortedEnrollments = [...enrollments].sort((a, b) => {
+                  if (a.progress === 100 && b.progress < 100) return 1;
+                  if (a.progress < 100 && b.progress === 100) return -1;
+                  return b.progress - a.progress;
+                }).slice(0, 3);
+              %>
+              <% sortedEnrollments.forEach(enroll => { %>
+                <div class="course-list-row">
+                  <img src="<%= enroll.image_url %>" alt="<%= enroll.title %>" class="course-list-row-image">
+                  
+                  <div class="course-list-row-info">
+                    <div>
+                      <h4 class="course-list-row-title" title="<%= enroll.title %>">
+                        <%= enroll.title %>
+                      </h4>
+                      <p class="course-list-row-desc">
+                        <%= enroll.description %>
+                      </p>
+                    </div>
+                    
+                    <div style="display: flex; align-items: center; gap: 1rem; margin-top: auto;">
+                      <div style="flex: 1; max-width: 320px;">
+                        <div style="display: flex; justify-content: space-between; font-size: 0.78rem; margin-bottom: 0.25rem; font-weight: 600;">
+                          <span style="color: var(--text-muted);">Tiến độ hoàn thành</span>
+                          <span style="color: #0d9488;"><%= enroll.progress %>%</span>
+                        </div>
+                        <div class="progress-container" style="height: 5px; margin: 0; background: #e2e8f0;">
+                          <div class="progress-bar" style="width: <%= enroll.progress %>%;"></div>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                   
-                  <div style="display: flex; gap: 0.5rem;">
+                  <div style="flex-shrink: 0; display: flex; gap: 0.5rem; margin-left: 1rem;">
                     <% if (enroll.progress === 100) { %>
-                      <a href="/courses/<%= enroll.course_id %>/lessons/1" class="btn btn-primary" style="flex: 1; padding: 0.5rem 1rem; font-size: 0.85rem; background: var(--secondary-gradient); color: #fff;">
+                      <a href="/courses/<%= enroll.course_id %>/lessons/1" class="btn btn-secondary" style="padding: 0.5rem 1rem; font-size: 0.82rem; border-radius: 8px; font-weight: 600; display: inline-flex; align-items: center; gap: 0.35rem; border-color: rgba(16, 185, 129, 0.3); color: #0d9488; background: rgba(16, 185, 129, 0.02);">
                         <i class="fa-solid fa-rotate-left"></i> Ôn tập
                       </a>
                     <% } else { %>
-                      <a href="/courses/<%= enroll.course_id %>" class="btn btn-secondary" style="flex: 1; padding: 0.5rem 1rem; font-size: 0.85rem;">
+                      <a href="/courses/<%= enroll.course_id %>" class="btn btn-secondary" style="padding: 0.5rem 1rem; font-size: 0.82rem; border-radius: 8px; font-weight: 600;">
                         Chi tiết
                       </a>
-                      <a href="/courses/<%= enroll.course_id %>/lessons/1" class="btn btn-primary" style="flex: 2; padding: 0.5rem 1rem; font-size: 0.85rem;">
-                        <i class="fa-solid fa-circle-play"></i> Học tiếp
+                      <a href="/courses/<%= enroll.course_id %>/lessons/1" class="btn btn-primary" style="padding: 0.5rem 1.25rem; font-size: 0.82rem; border-radius: 8px; font-weight: 600; display: inline-flex; align-items: center; gap: 0.35rem;">
+                        <i class="fa-solid fa-play"></i> Học tiếp
                       </a>
                     <% } %>
                   </div>
                 </div>
-              </div>
-            <% }) %>
-          </div>
-        <% } %>
+              <% }) %>
+            </div>
+          <% } %>
+        </div>
 
-        <% if (typeof pendingEnrollments !== 'undefined' && pendingEnrollments.length > 0) { %>
-          <h3 style="font-size: 1.2rem; margin-top: 2rem; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem; color: #ea580c;">
-            <i class="fa-solid fa-clock-rotate-left"></i> Đang chờ phê duyệt từ HR
-          </h3>
-          <div style="display: flex; flex-direction: column; gap: 0.75rem; margin-bottom: 2rem;">
-            <% pendingEnrollments.forEach(enroll => { %>
-              <div class="glass-card" style="padding: 1rem 1.5rem; display: flex; justify-content: space-between; align-items: center; border-left: 4px solid #ea580c;">
-                <div style="display: flex; align-items: center; gap: 1rem;">
-                  <img src="<%= enroll.image_url %>" alt="<%= enroll.title %>" style="width: 50px; height: 35px; object-fit: cover; border-radius: 4px; border: 1px solid var(--border-light);">
-                  <div>
-                    <h4 style="font-size: 0.95rem; font-weight: 600; margin: 0; color: var(--text-main);"><%= enroll.title %></h4>
-                    <p style="font-size: 0.8rem; color: var(--text-muted); margin: 0.25rem 0 0 0;">Yêu cầu đăng ký đã gửi đi và đang đợi phê duyệt</p>
+        <!-- Bảng phân tích thống kê học tập (Learning Analytics) -->
+        <% if (enrollments.length > 0) { %>
+          <div>
+            <h2 style="font-size: 1.35rem; display: flex; align-items: center; gap: 0.5rem; color: var(--text-main); margin-bottom: 1.25rem; font-weight: 800;">
+              <i class="fa-solid fa-chart-pie" style="color: #6366f1;"></i> Phân tích hiệu suất học tập
+            </h2>
+            
+            <div class="glass-card" style="padding: 2rem; border-radius: 16px; background: #ffffff; border: 1px solid var(--border-light);">
+              <div style="display: grid; grid-template-columns: 1.6fr 1.2fr; gap: 2.5rem;" class="analytics-grid">
+                <!-- Canvas 1: Tiến trình chi tiết -->
+                <div style="position: relative; width: 100%; display: flex; flex-direction: column; justify-content: space-between; overflow: hidden;">
+                  <h4 style="font-size: 0.95rem; font-weight: 700; color: var(--text-main); margin-bottom: 1.25rem; display: flex; align-items: center; gap: 0.4rem;">
+                    <i class="fa-solid fa-chart-bar" style="color: #4f46e5;"></i> Tiến độ chi tiết từng khóa học (%)
+                  </h4>
+                  <div style="display: flex; position: relative; width: 100%; height: 230px; overflow: hidden;">
+                    <!-- Cột Y-Axis cố định bên trái -->
+                    <div style="width: 45px; height: 220px; flex-shrink: 0; position: relative;">
+                      <canvas id="courseProgressChartTicks" style="width: 100%; height: 100%;"></canvas>
+                    </div>
+                    <!-- Khung cuộn chứa các cột dữ liệu bên phải -->
+                    <div class="chart-scroll-container" style="flex-grow: 1; overflow-x: auto; overflow-y: hidden; -webkit-overflow-scrolling: touch; height: 230px;">
+                      <div style="position: relative; height: 220px; min-width: 100%;" id="courseProgressChartWrapper">
+                        <canvas id="courseProgressChart"></canvas>
+                      </div>
+                    </div>
                   </div>
                 </div>
-                <span style="font-size: 0.8rem; background: rgba(234, 88, 12, 0.1); color: #ea580c; padding: 0.25rem 0.75rem; border-radius: 12px; border: 1px solid rgba(234, 88, 12, 0.3);">
-                  Chờ duyệt
-                </span>
-              </div>
-            <% }) %>
-          </div>
-        <% } %>
-
-        <% if (typeof rejectedEnrollments !== 'undefined' && rejectedEnrollments.length > 0) { %>
-          <h3 style="font-size: 1.2rem; margin-top: 2rem; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem; color: #ef4444;">
-            <i class="fa-solid fa-circle-xmark"></i> Yêu cầu bị từ chối
-          </h3>
-          <div style="display: flex; flex-direction: column; gap: 0.75rem;">
-            <% rejectedEnrollments.forEach(enroll => { %>
-              <div class="glass-card" style="padding: 1rem 1.5rem; display: flex; justify-content: space-between; align-items: center; border-left: 4px solid #ef4444;">
-                <div style="display: flex; align-items: center; gap: 1rem;">
-                  <img src="<%= enroll.image_url %>" alt="<%= enroll.title %>" style="width: 50px; height: 35px; object-fit: cover; border-radius: 4px; border: 1px solid var(--border-light);">
-                  <div>
-                    <h4 style="font-size: 0.95rem; font-weight: 600; margin: 0; color: var(--text-main);"><%= enroll.title %></h4>
-                    <p style="font-size: 0.8rem; color: var(--text-muted); margin: 0.25rem 0 0 0;">HR đã từ chối yêu cầu đăng ký khóa học này</p>
+                
+                <!-- Canvas 2: Phân bổ trạng thái -->
+                <div style="position: relative; width: 100%; display: flex; flex-direction: column; justify-content: space-between; border-left: 1px solid var(--border-light); padding-left: 2.5rem;" class="status-chart-container">
+                  <h4 style="font-size: 0.95rem; font-weight: 700; color: var(--text-main); margin-bottom: 1.25rem; display: flex; align-items: center; gap: 0.4rem;">
+                    <i class="fa-solid fa-chart-pie" style="color: #0d9488;"></i> Phân bổ trạng thái học tập
+                  </h4>
+                  <div style="position: relative; width: 100%;">
+                    <canvas id="courseStatusChart"></canvas>
                   </div>
                 </div>
-                <a href="/courses/<%= enroll.course_id %>" class="btn btn-secondary" style="padding: 0.3rem 0.75rem; font-size: 0.75rem;">
-                  Chi tiết
-                </a>
               </div>
-            <% }) %>
+            </div>
           </div>
         <% } %>
       </div>
     <% } %>
 
-    <!-- Cột bên phải: Lộ trình và Lịch sử thi -->
+    <!-- Cột bên phải (Sidebar): Lộ trình, Deadline & Trạng thái đăng ký -->
     <% if (user.permissions.includes('PATH_VIEW') || user.permissions.includes('HISTORY_VIEW')) { %>
       <div style="display: flex; flex-direction: column; gap: 2rem;">
         
-        <!-- Lộ trình học gợi ý -->
+        <!-- Bài kiểm tra sắp tới -->
+        <% if (typeof myAssessments !== 'undefined') { %>
+          <% 
+            const upcomingAssessments = myAssessments.filter(a => !a.submission_id);
+          %>
+          <div>
+            <h2 style="font-size: 1.3rem; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem; color: var(--text-main); font-weight: 800;">
+              <i class="fa-solid fa-square-poll-vertical" style="color: #8b5cf6;"></i> Bài kiểm tra
+            </h2>
+            <div class="glass-card" style="padding: 1.25rem; border-radius: 16px;">
+              <% if (upcomingAssessments.length === 0) { %>
+                <div style="text-align: center; padding: 1.5rem 0.5rem;">
+                  <i class="fa-solid fa-circle-check" style="color: #10b981; font-size: 1.5rem; margin-bottom: 0.5rem; opacity: 0.7;"></i>
+                  <p style="color: var(--text-muted); font-size: 0.85rem; margin: 0; font-weight: 500;">Bạn không có bài kiểm tra nào sắp tới.</p>
+                </div>
+              <% } else { %>
+                <!-- Scroll panel to prevent form overflow -->
+                <div class="sidebar-scroll-panel">
+                  <% upcomingAssessments.forEach(assess => { %>
+                    <% 
+                      let day = '∞';
+                      let month = 'Hạn';
+                      let isOverdue = false;
+                      if (assess.deadline) {
+                        const d = new Date(assess.deadline);
+                        day = d.getDate().toString().padStart(2, '0');
+                        month = 'Th' + (d.getMonth() + 1);
+                        const now = new Date();
+                        isOverdue = d.getTime() < now.getTime();
+                      }
+                    %>
+                    <div style="display: flex; align-items: center; background: #f8fafc; padding: 0.85rem 1rem; border-radius: 12px; border: 1px solid var(--border-light); gap: 1rem; transition: var(--transition-smooth);" onmouseover="this.style.borderColor='rgba(139, 92, 246, 0.25)';" onmouseout="this.style.borderColor='var(--border-light)';">
+                      <!-- Calendar Badge -->
+                      <div class="calendar-badge <%= isOverdue ? 'overdue' : 'normal' %>">
+                        <span class="badge-month"><%= month %></span>
+                        <span class="badge-day"><%= day %></span>
+                      </div>
+                      
+                      <div style="flex: 1; min-width: 0;">
+                        <h4 style="font-size: 0.85rem; font-weight: 700; margin: 0; color: var(--text-main); line-height: 1.4; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="<%= assess.title %>"><%= assess.title %></h4>
+                        <span style="font-size: 0.72rem; color: <%= isOverdue ? '#dc2626' : 'var(--text-muted)' %>; display: block; margin-top: 0.2rem; font-weight: 500;">
+                          <%= isOverdue ? 'Quá hạn nộp bài!' : 'Hạn nộp: ' + (assess.deadline ? new Date(assess.deadline).toLocaleDateString('vi-VN') : 'Không giới hạn') %>
+                        </span>
+                      </div>
+                      
+                      <div style="flex-shrink: 0;">
+                        <a href="/assessments/<%= assess.id %>/take" class="btn btn-primary" style="padding: 0.4rem 0.75rem; font-size: 0.75rem; font-weight: 600; border-radius: 6px; text-decoration: none; box-shadow: 0 2px 8px rgba(139, 92, 246, 0.15); background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);">
+                          Làm
+                        </a>
+                      </div>
+                    </div>
+                  <% }) %>
+                </div>
+              <% } %>
+            </div>
+          </div>
+        <% } %>
+
+        <!-- Lộ trình học gợi ý dạng Timeline -->
         <% if (user.permissions.includes('PATH_VIEW')) { %>
           <div>
-            <h2 style="font-size: 1.3rem; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem; color: var(--text-main);">
+            <h2 style="font-size: 1.3rem; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem; color: var(--text-main); font-weight: 800;">
               <i class="fa-solid fa-route" style="color: #06b6d4;"></i> Lộ trình gợi ý
             </h2>
-            <div class="glass-card" style="display: flex; flex-direction: column; gap: 1rem; padding: 1.5rem;">
+            <div class="glass-card" style="padding: 1.5rem; border-radius: 16px;">
               <% if (pathsWithCourses.length === 0) { %>
-                <p style="color: var(--text-muted); font-size: 0.85rem; text-align: center;">Chưa cấu hình lộ trình học gợi ý.</p>
+                <p style="color: var(--text-muted); font-size: 0.85rem; text-align: center; margin: 0.5rem 0;">Chưa cấu hình lộ trình học gợi ý.</p>
               <% } else { %>
-                <% pathsWithCourses.forEach(path => { %>
-                  <div style="border-bottom: 1px solid var(--border-light); padding-bottom: 0.75rem; &:last-child { border-bottom: none; padding-bottom: 0; }">
-                    <h4 style="color: var(--text-accent); font-size: 0.95rem; margin: 0;"><%= path.name %></h4>
-                    <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.25rem; margin-bottom: 0.5rem;"><%= path.description %></p>
-                    <div style="display: flex; flex-wrap: wrap; gap: 0.25rem;">
-                      <% path.courses.forEach(c => { %>
-                        <span style="font-size: 0.7rem; background: #f1f5f9; padding: 0.2rem 0.5rem; border-radius: 4px; border: 1px solid var(--border-light); color: var(--text-muted);">
-                          <%= c.title %>
-                        </span>
-                      <% }) %>
+                <!-- Scroll panel to prevent form overflow -->
+                <div class="sidebar-scroll-panel">
+                  <% pathsWithCourses.forEach(path => { %>
+                    <div style="margin-bottom: 1rem; &:last-child { margin-bottom: 0; }">
+                      <h4 style="color: var(--text-accent); font-size: 0.95rem; margin: 0 0 0.75rem 0; font-weight: 700; display: flex; align-items: center; gap: 0.4rem;">
+                        <i class="fa-regular fa-compass"></i> <%= path.name %>
+                      </h4>
+                      
+                      <!-- Timeline Container -->
+                      <div class="roadmap-timeline-wrapper">
+                        <% path.courses.forEach((c, idx) => { %>
+                          <div class="roadmap-node">
+                            <div class="roadmap-dot"></div>
+                            <span style="font-size: 0.82rem; font-weight: 600; color: var(--text-main); display: block; line-height: 1.3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="<%= c.title %>">
+                              <%= c.title %>
+                            </span>
+                          </div>
+                        <% }) %>
+                      </div>
                     </div>
-                  </div>
-                <% }) %>
-                <a href="/my-paths" class="btn btn-secondary" style="margin-top: 0.5rem; justify-content: center; font-size: 0.82rem; padding: 0.5rem; border-radius: 8px; font-weight: 600; display: flex; align-items: center; gap: 0.25rem;">
+                  <% }) %>
+                </div>
+                <a href="/my-paths" class="btn btn-secondary" style="margin-top: 0.75rem; width: 100%; justify-content: center; font-size: 0.8rem; padding: 0.5rem; border-radius: 8px; font-weight: 600; display: flex; align-items: center; gap: 0.25rem; border-color: rgba(6, 182, 212, 0.2); color: #0891b2;">
                   Xem tất cả lộ trình <i class="fa-solid fa-arrow-right" style="font-size: 0.75rem;"></i>
                 </a>
               <% } %>
@@ -253,39 +329,54 @@
           </div>
         <% } %>
 
-        <!-- Bài kiểm tra sắp tới -->
-        <% if (typeof myAssessments !== 'undefined') { %>
-          <% 
-            const upcomingAssessments = myAssessments.filter(a => !a.submission_id);
-          %>
+        <!-- Trạng thái phê duyệt khóa học (HR Approvals) -->
+        <% 
+          const hasPending = typeof pendingEnrollments !== 'undefined' && pendingEnrollments.length > 0;
+          const hasRejected = typeof rejectedEnrollments !== 'undefined' && rejectedEnrollments.length > 0;
+          if (hasPending || hasRejected) { 
+        %>
           <div>
-            <h2 style="font-size: 1.3rem; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem; color: var(--text-main);">
-              <i class="fa-solid fa-square-poll-vertical" style="color: #8b5cf6;"></i> Bài kiểm tra sắp tới
+            <h2 style="font-size: 1.3rem; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem; color: var(--text-main); font-weight: 800;">
+              <i class="fa-solid fa-bell" style="color: #f97316;"></i> Thông báo đăng ký
             </h2>
-            <div class="glass-card" style="padding: 1.5rem;">
-              <% if (upcomingAssessments.length === 0) { %>
-                <p style="color: var(--text-muted); font-size: 0.85rem; text-align: center;">Không có bài kiểm tra nào sắp tới.</p>
-              <% } else { %>
-                <div style="display: flex; flex-direction: column; gap: 0.75rem;">
-                  <% upcomingAssessments.forEach(assess => { %>
-                    <div style="display: flex; flex-direction: column; background: #f8fafc; padding: 1rem; border-radius: 8px; border: 1px solid var(--border-light); gap: 0.5rem;">
-                      <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 0.5rem;">
-                        <div>
-                          <h4 style="font-size: 0.85rem; font-weight: 600; margin: 0; color: var(--text-main);"><%= assess.title %></h4>
-                          <span style="font-size: 0.75rem; color: var(--text-muted);">
-                            Hạn nộp: <%= assess.deadline ? new Date(assess.deadline).toLocaleDateString('vi-VN') : 'Không giới hạn' %>
-                          </span>
-                        </div>
-                        <div style="text-align: right; flex-shrink: 0;">
-                          <a href="/assessments/<%= assess.id %>/take" class="btn btn-primary" style="padding: 0.35rem 0.75rem; font-size: 0.75rem; font-weight: 600; border-radius: 6px; text-decoration: none;">
-                            Làm bài
-                          </a>
-                        </div>
+            <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+              
+              <!-- Khóa học đang chờ duyệt -->
+              <% if (hasPending) { %>
+                <% pendingEnrollments.forEach(enroll => { %>
+                  <div class="glass-card" style="padding: 0.85rem 1rem; display: flex; justify-content: space-between; align-items: center; border-left: 4px solid #ea580c; border-radius: 12px; background: #ffffff;">
+                    <div style="display: flex; align-items: center; gap: 0.75rem; overflow: hidden; flex: 1;">
+                      <img src="<%= enroll.image_url %>" alt="<%= enroll.title %>" style="width: 45px; height: 32px; object-fit: cover; border-radius: 4px; border: 1px solid var(--border-light); flex-shrink: 0;">
+                      <div style="overflow: hidden; flex: 1;">
+                        <h4 style="font-size: 0.82rem; font-weight: 700; margin: 0; color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"><%= enroll.title %></h4>
+                        <p style="font-size: 0.72rem; color: var(--text-muted); margin: 0.15rem 0 0 0;">Đang chờ HR duyệt...</p>
                       </div>
                     </div>
-                  <% }) %>
-                </div>
+                    <span style="font-size: 0.7rem; background: rgba(234, 88, 12, 0.08); color: #ea580c; padding: 0.2rem 0.5rem; border-radius: 10px; border: 1px solid rgba(234, 88, 12, 0.2); margin-left: 0.5rem; flex-shrink: 0; font-weight: 600;">
+                      Chờ duyệt
+                    </span>
+                  </div>
+                <% }) %>
               <% } %>
+
+              <!-- Khóa học bị từ chối -->
+              <% if (hasRejected) { %>
+                <% rejectedEnrollments.forEach(enroll => { %>
+                  <div class="glass-card" style="padding: 0.85rem 1rem; display: flex; justify-content: space-between; align-items: center; border-left: 4px solid #ef4444; border-radius: 12px; background: #ffffff;">
+                    <div style="display: flex; align-items: center; gap: 0.75rem; overflow: hidden; flex: 1;">
+                      <img src="<%= enroll.image_url %>" alt="<%= enroll.title %>" style="width: 45px; height: 32px; object-fit: cover; border-radius: 4px; border: 1px solid var(--border-light); flex-shrink: 0;">
+                      <div style="overflow: hidden; flex: 1;">
+                        <h4 style="font-size: 0.82rem; font-weight: 700; margin: 0; color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"><%= enroll.title %></h4>
+                        <p style="font-size: 0.72rem; color: var(--text-muted); margin: 0.15rem 0 0 0;">HR đã từ chối yêu cầu</p>
+                      </div>
+                    </div>
+                    <a href="/courses/<%= enroll.course_id %>" class="btn btn-secondary" style="padding: 0.25rem 0.5rem; font-size: 0.7rem; flex-shrink: 0; margin-left: 0.5rem; border-radius: 6px;">
+                      Chi tiết
+                    </a>
+                  </div>
+                <% }) %>
+              <% } %>
+
             </div>
           </div>
         <% } %>
@@ -1220,6 +1311,10 @@
       border-left: none !important;
       padding-left: 0 !important;
       margin-top: 1rem;
+    }
+    .hero-stats-container {
+      width: 100% !important;
+      justify-content: space-between !important;
     }
   }
 </style>
