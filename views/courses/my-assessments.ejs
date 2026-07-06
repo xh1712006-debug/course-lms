@@ -1,209 +1,432 @@
-﻿<%- include('../partials/header') %>
+<%- include('../partials/header') %>
 
-<div style="margin-bottom: 2rem;">
-  <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 0.5rem;">
-    <a href="/dashboard" style="color: var(--text-muted); text-decoration:none; font-size: 0.85rem; display:flex; align-items:center; gap:0.4rem; transition: color 0.15s;" onmouseover="this.style.color='var(--text-accent)'" onmouseout="this.style.color='var(--text-muted)'">
-      <i class="fa-solid fa-chevron-left"></i> Bảng điều khiển
-    </a>
-  </div>
-  <h1 style="font-size: 1.55rem; font-weight: 700; color: var(--text-main);">
-    Bài Kiểm Tra Của Tôi
-  </h1>
-  <p style="color: var(--text-muted); margin-top: 0.25rem;">Danh sách các bài kiểm tra năng lực được giao từ công ty.</p>
+<style>
+  /* ── Page header ── */
+  .as-header {
+    padding: 2rem 0 1.5rem;
+    border-bottom: 1px solid var(--border-light);
+    margin-bottom: 1.75rem;
+  }
+  .as-breadcrumb {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    text-decoration: none;
+    margin-bottom: 0.6rem;
+    transition: color 0.15s;
+  }
+  .as-breadcrumb:hover { color: #6366f1; }
+  .as-title { font-size: 1.45rem; font-weight: 700; color: var(--text-main); margin: 0 0 0.3rem; letter-spacing: -0.3px; }
+  .as-sub   { font-size: 0.88rem; color: var(--text-muted); margin: 0; }
+
+  /* ── Stats strip ── */
+  .as-stats {
+    display: flex;
+    border: 1px solid var(--border-light);
+    border-radius: 12px;
+    overflow: hidden;
+    background: #fff;
+    margin-bottom: 1.75rem;
+  }
+  .as-stat {
+    flex: 1;
+    padding: 0.9rem 1.1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    border-right: 1px solid var(--border-light);
+    transition: background 0.18s;
+  }
+  .as-stat:last-child { border-right: none; }
+  .as-stat:hover { background: #f8fafc; }
+  .as-stat-icon {
+    width: 34px; height: 34px;
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.8rem; flex-shrink: 0;
+  }
+  .as-stat-icon.indigo { background: #eff6ff; color: #6366f1; }
+  .as-stat-icon.amber  { background: #fffbeb; color: #f59e0b; }
+  .as-stat-icon.green  { background: #f0fdf4; color: #22c55e; }
+  .as-stat-icon.red    { background: #fff1f2; color: #ef4444; }
+  .as-stat-val   { font-size: 1.15rem; font-weight: 700; color: var(--text-main); display: block; line-height: 1; }
+  .as-stat-label { font-size: 0.72rem; color: var(--text-muted); margin-top: 0.15rem; display: block; }
+
+  /* ── Tabs ── */
+  .as-tabs {
+    display: flex;
+    gap: 0;
+    border-bottom: 2px solid var(--border-light);
+    margin-bottom: 1.5rem;
+  }
+  .as-tab-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.7rem 1.15rem;
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -2px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: color 0.18s, border-color 0.18s;
+    white-space: nowrap;
+  }
+  .as-tab-btn:hover { color: var(--text-main); }
+  .as-tab-btn.active          { color: #f59e0b; border-bottom-color: #f59e0b; }
+  .as-tab-btn.active.green-t  { color: #22c55e; border-bottom-color: #22c55e; }
+  .as-tab-count {
+    font-size: 0.68rem; font-weight: 700;
+    padding: 0.1rem 0.4rem;
+    border-radius: 20px;
+    background: #f1f5f9; color: var(--text-muted);
+    transition: all 0.18s;
+  }
+  .as-tab-btn.active          .as-tab-count { background: #fef3c7; color: #d97706; }
+  .as-tab-btn.active.green-t  .as-tab-count { background: #dcfce7; color: #16a34a; }
+
+  /* ── Card grid ── */
+  .as-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 1.1rem;
+  }
+
+  /* ── Assessment card ── */
+  .as-card {
+    background: #fff;
+    border: 1px solid var(--border-light);
+    border-radius: 14px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    transition: box-shadow 0.2s, transform 0.2s;
+  }
+  .as-card:hover {
+    box-shadow: 0 6px 20px rgba(0,0,0,0.07);
+    transform: translateY(-2px);
+  }
+  .as-card.expired  { opacity: 0.75; }
+  .as-card.locked   { opacity: 0.8; }
+  .as-card.done     { border-color: rgba(34,197,94,0.25); }
+
+  /* Card top strip — colored accent */
+  .as-card-stripe {
+    height: 4px;
+    width: 100%;
+  }
+  .stripe-amber  { background: #f59e0b; }
+  .stripe-red    { background: #ef4444; }
+  .stripe-gray   { background: #cbd5e1; }
+  .stripe-green  { background: #22c55e; }
+
+  /* Card body */
+  .as-card-body { padding: 1rem 1.1rem 0; flex: 1; display: flex; flex-direction: column; gap: 0.75rem; }
+
+  /* Header row: icon + title + badge */
+  .as-card-head {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+  .as-card-icon {
+    width: 40px; height: 40px;
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.95rem;
+    flex-shrink: 0;
+  }
+  .as-card-icon.ongoing { background: #eff6ff; color: #6366f1; }
+  .as-card-icon.done    { background: #f0fdf4; color: #22c55e; }
+  .as-card-meta { flex: 1; min-width: 0; }
+  .as-card-title {
+    font-size: 0.92rem;
+    font-weight: 700;
+    color: var(--text-main);
+    margin: 0 0 0.2rem;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    line-height: 1.4;
+  }
+  .as-card-creator { font-size: 0.73rem; color: var(--text-muted); margin: 0; }
+
+  /* Status pill */
+  .as-status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.2rem;
+    font-size: 0.65rem;
+    font-weight: 700;
+    padding: 0.18rem 0.5rem;
+    border-radius: 99px;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .pill-amber  { background: #fef3c7; color: #d97706; border: 1px solid #fde68a; }
+  .pill-red    { background: #fff1f2; color: #ef4444; border: 1px solid #fecdd3; }
+  .pill-gray   { background: #f1f5f9; color: #64748b; border: 1px solid #e2e8f0; }
+  .pill-green  { background: #f0fdf4; color: #16a34a; border: 1px solid #bbf7d0; }
+
+  /* Stats row: 3 mini boxes */
+  .as-mini-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.5rem;
+  }
+  .as-mini-box {
+    text-align: center;
+    padding: 0.5rem 0.4rem;
+    background: #f8fafc;
+    border-radius: 8px;
+    border: 1px solid var(--border-light);
+  }
+  .as-mini-val   { font-size: 1rem; font-weight: 800; line-height: 1; }
+  .as-mini-label { font-size: 0.65rem; color: var(--text-muted); margin-top: 0.15rem; }
+
+  /* Time info */
+  .as-time-row {
+    display: flex;
+    flex-direction: column;
+    gap: 0.22rem;
+  }
+  .as-time-item {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.77rem;
+    color: var(--text-muted);
+  }
+  .as-time-item i { width: 14px; text-align: center; }
+  .as-time-item strong { color: var(--text-main); }
+  .as-time-item.warn   { color: #ef4444; }
+  .as-time-item.accent { color: #6366f1; }
+
+  /* Score box */
+  .as-score-box {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.65rem 0.85rem;
+    border-radius: 9px;
+  }
+  .as-score-box.pass { background: #f0fdf4; border: 1px solid #bbf7d0; }
+  .as-score-box.fail { background: #fff1f2; border: 1px solid #fecdd3; }
+  .as-score-num {
+    font-size: 1.3rem;
+    font-weight: 800;
+    line-height: 1;
+  }
+  .as-score-num.pass { color: #16a34a; }
+  .as-score-num.fail { color: #ef4444; }
+  .as-score-label { font-size: 0.72rem; color: var(--text-muted); margin-top: 0.2rem; }
+  .as-score-tag {
+    font-size: 0.75rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+  }
+  .as-score-tag.pass { color: #16a34a; }
+  .as-score-tag.fail { color: #ef4444; }
+
+  /* Card footer */
+  .as-card-foot {
+    padding: 0.75rem 1.1rem;
+    border-top: 1px solid var(--border-light);
+    margin-top: auto;
+  }
+  .as-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    width: 100%;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.18s;
+  }
+  .as-btn-primary  { background: #6366f1; color: #fff; }
+  .as-btn-primary:hover { background: #4f46e5; }
+  .as-btn-green    { background: #22c55e; color: #fff; }
+  .as-btn-green:hover { background: #16a34a; }
+  .as-btn-disabled { background: #f1f5f9; color: #94a3b8; pointer-events: none; }
+
+  /* Empty state */
+  .as-empty { text-align: center; padding: 3.5rem 2rem; border: 1px dashed var(--border-light); border-radius: 14px; background: #fafafa; }
+  .as-empty-icon { font-size: 1.75rem; color: var(--text-muted); opacity: 0.3; margin-bottom: 0.75rem; }
+  .as-empty h3 { font-size: 0.95rem; color: var(--text-main); margin: 0 0 0.35rem; }
+  .as-empty p  { font-size: 0.82rem; color: var(--text-muted); margin: 0 0 1rem; }
+
+  @media (max-width: 640px) {
+    .as-stats { flex-direction: column; }
+    .as-stat  { border-right: none; border-bottom: 1px solid var(--border-light); }
+    .as-stat:last-child { border-bottom: none; }
+    .as-grid  { grid-template-columns: 1fr; }
+  }
+</style>
+
+<!-- Page header -->
+<div class="as-header">
+  <a href="/dashboard" class="as-breadcrumb">
+    <i class="fa-solid fa-chevron-left"></i> Bảng điều khiển
+  </a>
+  <h1 class="as-title">Bài Kiểm Tra Của Tôi</h1>
+  <p class="as-sub">Danh sách các bài kiểm tra năng lực được giao từ công ty.</p>
 </div>
 
+<%
+  const ongoing   = assessments.filter(a => !a.submission_id);
+  const completed = assessments.filter(a => !!a.submission_id);
+  const passed    = completed.filter(a => a.is_passed);
+%>
+
 <% if (assessments.length === 0) { %>
-  <div class="glass-card" style="text-align: center; padding: 5rem 2rem; color: var(--text-muted);">
-    <i class="fa-solid fa-clipboard-check" style="font-size: 4rem; color: #374151; margin-bottom: 1.5rem; display: block;"></i>
-    <h3 style="color: #6b7280; margin-bottom: 0.5rem;">Chưa có bài kiểm tra nào</h3>
-    <p style="font-size: 0.9rem;">Bộ phận L&D chưa giao bài kiểm tra cho bạn. Hãy tiếp tục học các khóa học!</p>
-    <a href="/courses" class="btn btn-primary" style="margin-top: 1.5rem; display: inline-block;">
-      <i class="fa-solid fa-graduation-cap" style="margin-right: 0.5rem;"></i> Xem Khóa Học
+  <div class="as-empty">
+    <div class="as-empty-icon"><i class="fa-solid fa-clipboard-check"></i></div>
+    <h3>Chưa có bài kiểm tra nào</h3>
+    <p>Bộ phận L&D chưa giao bài kiểm tra cho bạn. Hãy tiếp tục học các khóa học!</p>
+    <a href="/courses" class="as-btn as-btn-primary" style="width:auto;display:inline-flex;padding:0.5rem 1.5rem">
+      <i class="fa-solid fa-graduation-cap"></i> Xem Khóa Học
     </a>
   </div>
 <% } else { %>
-  <%
-    const ongoing = assessments.filter(a => !a.submission_id);
-    const completed = assessments.filter(a => !!a.submission_id);
-  %>
 
-  <style>
-    .assessment-tabs {
-      display: flex;
-      gap: 1rem;
-      border-bottom: 1px solid var(--border-light);
-      margin-bottom: 1.5rem;
-      padding-bottom: 0.25rem;
-    }
-    .assessment-tab-btn {
-      background: none;
-      border: none;
-      padding: 0.75rem 1.25rem;
-      font-family: var(--font-title);
-      font-weight: 700;
-      font-size: 1.05rem;
-      color: var(--text-muted);
-      cursor: pointer;
-      position: relative;
-      transition: var(--transition-smooth);
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      border-radius: 8px 8px 0 0;
-    }
-    .assessment-tab-btn:hover {
-      color: var(--text-accent);
-      background: rgba(79, 70, 229, 0.04);
-    }
-    .assessment-tab-btn.active {
-      color: var(--text-accent);
-    }
-    .assessment-tab-btn.active::after {
-      content: '';
-      position: absolute;
-      bottom: -5px;
-      left: 0;
-      width: 100%;
-      height: 3px;
-      background: var(--primary-gradient);
-      border-radius: 3px;
-    }
-    .tab-badge {
-      font-size: 0.75rem;
-      font-weight: 600;
-      padding: 0.15rem 0.5rem;
-      border-radius: 20px;
-      color: #fff;
-      transition: var(--transition-smooth);
-    }
-    .tab-badge.ongoing {
-      background: var(--alert-gradient);
-    }
-    .tab-badge.completed {
-      background: var(--secondary-gradient);
-    }
-    
-    .assessment-card {
-      padding: 1.75rem;
-      display: flex;
-      flex-direction: column;
-      gap: 1rem;
-      position: relative;
-      overflow: hidden;
-      background: var(--bg-card);
-      border: 1px solid var(--border-light);
-      border-radius: 16px;
-      box-shadow: var(--shadow-card);
-      transition: var(--transition-smooth);
-    }
-    .assessment-card:hover {
-      transform: translateY(-3px);
-      border-color: var(--border-glow);
-      box-shadow: var(--shadow-hover);
-    }
-  </style>
+  <!-- Stats strip -->
+  <div class="as-stats">
+    <div class="as-stat">
+      <div class="as-stat-icon indigo"><i class="fa-solid fa-clipboard-list"></i></div>
+      <div>
+        <span class="as-stat-val"><%= assessments.length %></span>
+        <span class="as-stat-label">Tổng bài thi</span>
+      </div>
+    </div>
+    <div class="as-stat">
+      <div class="as-stat-icon amber"><i class="fa-solid fa-hourglass-half"></i></div>
+      <div>
+        <span class="as-stat-val"><%= ongoing.length %></span>
+        <span class="as-stat-label">Cần làm bài</span>
+      </div>
+    </div>
+    <div class="as-stat">
+      <div class="as-stat-icon green"><i class="fa-solid fa-circle-check"></i></div>
+      <div>
+        <span class="as-stat-val"><%= passed.length %></span>
+        <span class="as-stat-label">Đã đạt</span>
+      </div>
+    </div>
+    <div class="as-stat">
+      <div class="as-stat-icon red"><i class="fa-solid fa-circle-xmark"></i></div>
+      <div>
+        <span class="as-stat-val"><%= completed.length - passed.length %></span>
+        <span class="as-stat-label">Chưa đạt</span>
+      </div>
+    </div>
+  </div>
 
-  <!-- Tabs Navigation -->
-  <div class="assessment-tabs">
-    <button class="assessment-tab-btn active" id="ongoing-btn" onclick="switchAssessmentTab('ongoing')">
-      <i class="fa-solid fa-hourglass-half"></i> Đang tiến hành
-      <span class="tab-badge ongoing"><%= ongoing.length %></span>
+  <!-- Tabs -->
+  <div class="as-tabs">
+    <button class="as-tab-btn active" id="as-btn-ongoing" onclick="asTab('ongoing')">
+      <i class="fa-solid fa-hourglass-half"></i>
+      Đang tiến hành
+      <span class="as-tab-count"><%= ongoing.length %></span>
     </button>
-    <button class="assessment-tab-btn" id="completed-btn" onclick="switchAssessmentTab('completed')">
-      <i class="fa-solid fa-circle-check"></i> Đã hoàn thành
-      <span class="tab-badge completed"><%= completed.length %></span>
+    <button class="as-tab-btn green-t" id="as-btn-completed" onclick="asTab('completed')">
+      <i class="fa-solid fa-circle-check"></i>
+      Đã hoàn thành
+      <span class="as-tab-count"><%= completed.length %></span>
     </button>
   </div>
 
-  <!-- Tab Content: Ongoing -->
-  <div id="ongoing-tab" class="assessment-tab-content">
+  <!-- ── Tab: Ongoing ── -->
+  <div id="as-tab-ongoing" class="as-tab-pane">
     <% if (ongoing.length === 0) { %>
-      <div style="text-align: center; padding: 3rem 1rem;">
-        <i class="fa-solid fa-circle-check fa-3x" style="color: #10b981; margin-bottom: 1rem;"></i>
-        <h3 style="color: var(--text-main); margin-bottom: 0.5rem; font-weight: 700; font-size: 1.1rem;">Không có bài kiểm tra nào cần làm</h3>
-        <p style="color: var(--text-muted); font-size: 0.95rem;">Tuyệt vời! Bạn đã hoàn thành tất cả các bài kiểm tra được giao.</p>
+      <div class="as-empty">
+        <div class="as-empty-icon"><i class="fa-solid fa-party-horn"></i></div>
+        <h3>Không có bài kiểm tra nào cần làm!</h3>
+        <p>Tuyệt vời — bạn đã hoàn thành tất cả bài kiểm tra được giao.</p>
       </div>
     <% } else { %>
-      <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 1.5rem;">
+      <div class="as-grid">
         <% ongoing.forEach(a => {
           const isNotStarted = a.start_time && new Date(a.start_time) > new Date();
-          const isExpired = a.deadline && new Date(a.deadline) < new Date();
+          const isExpired    = a.deadline   && new Date(a.deadline)   < new Date();
+          let stripeClass = 'stripe-amber';
+          let pillClass   = 'pill-amber';
+          let pillIcon    = 'fa-circle-dot';
+          let pillText    = 'Chờ làm bài';
+          if (isNotStarted) { stripeClass='stripe-gray';  pillClass='pill-gray';  pillIcon='fa-lock';             pillText='Chưa mở'; }
+          if (isExpired)    { stripeClass='stripe-red';   pillClass='pill-red';   pillIcon='fa-clock-rotate-left'; pillText='Hết hạn'; }
         %>
-          <div class="assessment-card" style="<%= isNotStarted ? 'border-color: rgba(156,163,175,0.3); opacity:0.85;' : isExpired ? 'border-color: rgba(239,68,68,0.3); opacity:0.75;' : '' %>">
-            <!-- Badge trạng thái -->
-            <div style="position: absolute; top: 1.25rem; right: 1.25rem;">
-              <% if (isNotStarted) { %>
-                <span style="padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.75rem; font-weight: 700; background: rgba(156,163,175,0.15); color: var(--text-muted); border: 1px solid rgba(156,163,175,0.3);">
-                  <i class="fa-solid fa-lock"></i> Chưa mở
-                </span>
-              <% } else if (isExpired) { %>
-                <span style="padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.75rem; font-weight: 700; background: rgba(239,68,68,0.12); color: #ef4444; border: 1px solid rgba(239,68,68,0.3);">
-                  <i class="fa-solid fa-clock-rotate-left"></i> Hết hạn
-                </span>
-              <% } else { %>
-                <span style="padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.75rem; font-weight: 700; background: rgba(245,158,11,0.15); color: #d97706; border: 1px solid rgba(251,191,36,0.3);">
-                  <i class="fa-solid fa-circle-dot"></i> Chờ làm bài
-                </span>
-              <% } %>
-            </div>
+          <div class="as-card <%= isExpired ? 'expired' : isNotStarted ? 'locked' : '' %>">
+            <div class="as-card-stripe <%= stripeClass %>"></div>
+            <div class="as-card-body">
 
-            <!-- Icon & Tiêu đề -->
-            <div style="display: flex; align-items: flex-start; gap: 1rem; padding-right: 5rem;">
-              <div style="width: 48px; height: 48px; border-radius: 12px; background: linear-gradient(135deg, rgba(99,102,241,0.1), rgba(139,92,246,0.1)); border: 1px solid rgba(99,102,241,0.2); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-                <i class="fa-solid fa-file-pen" style="color: #6366f1; font-size: 1.1rem;"></i>
-              </div>
-              <div>
-                <h3 style="font-size: 1.05rem; font-weight: 700; margin: 0 0 0.3rem; line-height: 1.3; color: var(--text-main);"><%= a.title %></h3>
-                <p style="font-size: 0.8rem; color: var(--text-muted); margin: 0;">Tạo bởi: <strong><%= a.creator_name || 'L&D Team' %></strong></p>
-              </div>
-            </div>
-
-            <!-- Thống kê -->
-            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; margin-top: 0.25rem;">
-              <div style="text-align: center; padding: 0.6rem; background: #f8fafc; border-radius: 8px; border: 1px solid var(--border-light);">
-                <div style="font-size: 1.1rem; font-weight: 800; color: #4f46e5;"><%= a.question_count %></div>
-                <div style="font-size: 0.7rem; color: var(--text-muted); font-weight: 500;">câu hỏi</div>
-              </div>
-              <div style="text-align: center; padding: 0.6rem; background: #f8fafc; border-radius: 8px; border: 1px solid var(--border-light);">
-                <div style="font-size: 1.1rem; font-weight: 800; color: #0d9488;"><%= a.duration_minutes %></div>
-                <div style="font-size: 0.7rem; color: var(--text-muted); font-weight: 500;">phút</div>
-              </div>
-              <div style="text-align: center; padding: 0.6rem; background: #f8fafc; border-radius: 8px; border: 1px solid var(--border-light);">
-                <div style="font-size: 1.1rem; font-weight: 800; color: #d97706;"><%= a.passing_score %>%</div>
-                <div style="font-size: 0.7rem; color: var(--text-muted); font-weight: 500;">điểm đạt</div>
-              </div>
-            </div>
-
-            <!-- Thời gian mở và hạn nộp -->
-            <div style="display: flex; flex-direction: column; gap: 0.3rem; margin-top: 0.25rem;">
-              <% if (a.start_time) { %>
-                <div style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.82rem; color: <%= isNotStarted ? '#4f46e5' : 'var(--text-muted)' %>;">
-                  <i class="fa-regular fa-calendar-check"></i>
-                  Thời gian mở: <strong><%= new Date(a.start_time).toLocaleDateString('vi-VN', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' }) %></strong>
+              <!-- Head -->
+              <div class="as-card-head">
+                <div class="as-card-icon ongoing"><i class="fa-solid fa-file-pen"></i></div>
+                <div class="as-card-meta">
+                  <h3 class="as-card-title"><%= a.title %></h3>
+                  <p class="as-card-creator">Tạo bởi: <strong><%= a.creator_name || 'L&D Team' %></strong></p>
                 </div>
-              <% } %>
-              <% if (a.deadline) { %>
-                <div style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.82rem; color: <%= isExpired ? '#ef4444' : 'var(--text-muted)' %>;">
-                  <i class="fa-regular fa-calendar-xmark"></i>
-                  Hạn nộp: <strong><%= new Date(a.deadline).toLocaleDateString('vi-VN', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' }) %></strong>
-                </div>
-              <% } %>
-            </div>
+                <span class="as-status-pill <%= pillClass %>">
+                  <i class="fa-solid <%= pillIcon %>"></i> <%= pillText %>
+                </span>
+              </div>
 
-            <!-- Nút hành động -->
-            <div style="margin-top: auto; padding-top: 0.5rem;">
+              <!-- Mini stats -->
+              <div class="as-mini-stats">
+                <div class="as-mini-box">
+                  <div class="as-mini-val" style="color:#6366f1"><%= a.question_count %></div>
+                  <div class="as-mini-label">câu hỏi</div>
+                </div>
+                <div class="as-mini-box">
+                  <div class="as-mini-val" style="color:#0d9488"><%= a.duration_minutes %></div>
+                  <div class="as-mini-label">phút</div>
+                </div>
+                <div class="as-mini-box">
+                  <div class="as-mini-val" style="color:#d97706"><%= a.passing_score %>%</div>
+                  <div class="as-mini-label">điểm đạt</div>
+                </div>
+              </div>
+
+              <!-- Time info -->
+              <div class="as-time-row">
+                <% if (a.start_time) { %>
+                  <div class="as-time-item <%= isNotStarted ? 'accent' : '' %>">
+                    <i class="fa-regular fa-calendar-check"></i>
+                    Mở lúc: <strong><%= new Date(a.start_time).toLocaleDateString('vi-VN', {day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}) %></strong>
+                  </div>
+                <% } %>
+                <% if (a.deadline) { %>
+                  <div class="as-time-item <%= isExpired ? 'warn' : '' %>">
+                    <i class="fa-regular fa-calendar-xmark"></i>
+                    Hạn nộp: <strong><%= new Date(a.deadline).toLocaleDateString('vi-VN', {day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}) %></strong>
+                  </div>
+                <% } %>
+              </div>
+
+            </div>
+            <div class="as-card-foot">
               <% if (isNotStarted) { %>
-                <button class="btn" disabled style="width: 100%; opacity: 0.6; cursor: not-allowed; background: #cbd5e1; color: #64748b; border: 1px solid #cbd5e1; padding: 0.7rem;">
-                  <i class="fa-solid fa-lock" style="margin-right: 0.4rem;"></i> Chưa đến giờ làm bài
-                </button>
+                <span class="as-btn as-btn-disabled"><i class="fa-solid fa-lock"></i> Chưa đến giờ làm bài</span>
               <% } else if (isExpired) { %>
-                <button class="btn" disabled style="width: 100%; opacity: 0.5; cursor: not-allowed; background: #f8fafc; border: 1px solid var(--border-light); color: var(--text-muted); padding: 0.7rem;">
-                  <i class="fa-solid fa-lock" style="margin-right: 0.4rem;"></i> Bài kiểm tra đã hết hạn
-                </button>
+                <span class="as-btn as-btn-disabled"><i class="fa-solid fa-ban"></i> Bài kiểm tra đã hết hạn</span>
               <% } else { %>
-                <a href="/assessments/<%= a.id %>/take" class="btn btn-primary" style="width: 100%; display: block; text-align: center; text-decoration: none; padding: 0.7rem;"
-                  onclick="return confirm('Bạn sắp bắt đầu bài kiểm tra này. Sau khi bắt đầu, bộ đếm thời gian sẽ chạy. Bạn có sẵn sàng không?')">
-                  <i class="fa-solid fa-play" style="margin-right: 0.4rem;"></i> Bắt Đầu Làm Bài
+                <a href="/assessments/<%= a.id %>/take" class="as-btn as-btn-primary"
+                   onclick="return confirm('Bạn sắp bắt đầu bài kiểm tra này. Sau khi bắt đầu, bộ đếm thời gian sẽ chạy. Bạn có sẵn sàng không?')">
+                  <i class="fa-solid fa-play"></i> Bắt Đầu Làm Bài
                 </a>
               <% } %>
             </div>
@@ -213,68 +436,69 @@
     <% } %>
   </div>
 
-  <!-- Tab Content: Completed -->
-  <div id="completed-tab" class="assessment-tab-content" style="display: none;">
+  <!-- ── Tab: Completed ── -->
+  <div id="as-tab-completed" class="as-tab-pane" style="display:none">
     <% if (completed.length === 0) { %>
-      <div style="text-align: center; padding: 3rem 1rem;">
-        <i class="fa-solid fa-circle-exclamation fa-3x" style="color: #cbd5e1; margin-bottom: 1rem; display: block;"></i>
-        <h3 style="color: var(--text-main); margin-bottom: 0.5rem; font-weight: 700; font-size: 1.1rem;">Chưa hoàn thành bài kiểm tra nào</h3>
-        <p style="color: var(--text-muted); font-size: 0.95rem;">Hãy hoàn thành các bài thi được giao ở tab "Đang tiến hành".</p>
+      <div class="as-empty">
+        <div class="as-empty-icon"><i class="fa-solid fa-circle-exclamation"></i></div>
+        <h3>Chưa hoàn thành bài kiểm tra nào</h3>
+        <p>Hoàn thành các bài thi ở tab "Đang tiến hành" để xem kết quả ở đây.</p>
       </div>
     <% } else { %>
-      <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 1.5rem;">
-        <% completed.forEach(a => { %>
-          <div class="assessment-card" style="border-color: rgba(16,185,129,0.3);">
-            <!-- Badge trạng thái -->
-            <div style="position: absolute; top: 1.25rem; right: 1.25rem;">
-              <span style="padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.75rem; font-weight: 700; background: rgba(16,185,129,0.1); color: #10b981; border: 1px solid rgba(16,185,129,0.2);">
-                <i class="fa-solid fa-check-circle"></i> Đã nộp
-              </span>
-            </div>
+      <div class="as-grid">
+        <% completed.forEach(a => {
+          const isPassed = !!a.is_passed;
+          const scoreVal = parseFloat(a.score);
+        %>
+          <div class="as-card done">
+            <div class="as-card-stripe <%= isPassed ? 'stripe-green' : 'stripe-red' %>"></div>
+            <div class="as-card-body">
 
-            <!-- Icon & Tiêu đề -->
-            <div style="display: flex; align-items: flex-start; gap: 1rem; padding-right: 5rem;">
-              <div style="width: 48px; height: 48px; border-radius: 12px; background: linear-gradient(135deg, rgba(16,185,129,0.1), rgba(20,184,166,0.1)); border: 1px solid rgba(16,185,129,0.2); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-                <i class="fa-solid fa-clipboard-check" style="color: #10b981; font-size: 1.1rem;"></i>
+              <!-- Head -->
+              <div class="as-card-head">
+                <div class="as-card-icon done"><i class="fa-solid fa-clipboard-check"></i></div>
+                <div class="as-card-meta">
+                  <h3 class="as-card-title"><%= a.title %></h3>
+                  <p class="as-card-creator">Tạo bởi: <strong><%= a.creator_name || 'L&D Team' %></strong></p>
+                </div>
+                <span class="as-status-pill <%= isPassed ? 'pill-green' : 'pill-red' %>">
+                  <i class="fa-solid <%= isPassed ? 'fa-circle-check' : 'fa-circle-xmark' %>"></i>
+                  <%= isPassed ? 'Đã đạt' : 'Chưa đạt' %>
+                </span>
               </div>
-              <div>
-                <h3 style="font-size: 1.05rem; font-weight: 700; margin: 0 0 0.3rem; line-height: 1.3; color: var(--text-main);"><%= a.title %></h3>
-                <p style="font-size: 0.8rem; color: var(--text-muted); margin: 0;">Tạo bởi: <strong><%= a.creator_name || 'L&D Team' %></strong></p>
-              </div>
-            </div>
 
-            <!-- Thống kê -->
-            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; margin-top: 0.25rem;">
-              <div style="text-align: center; padding: 0.6rem; background: #f8fafc; border-radius: 8px; border: 1px solid var(--border-light);">
-                <div style="font-size: 1.1rem; font-weight: 800; color: #4f46e5;"><%= a.question_count %></div>
-                <div style="font-size: 0.7rem; color: var(--text-muted); font-weight: 500;">câu hỏi</div>
-              </div>
-              <div style="text-align: center; padding: 0.6rem; background: #f8fafc; border-radius: 8px; border: 1px solid var(--border-light);">
-                <div style="font-size: 1.1rem; font-weight: 800; color: #0d9488;"><%= a.duration_minutes %></div>
-                <div style="font-size: 0.7rem; color: var(--text-muted); font-weight: 500;">phút</div>
-              </div>
-              <div style="text-align: center; padding: 0.6rem; background: #f8fafc; border-radius: 8px; border: 1px solid var(--border-light);">
-                <div style="font-size: 1.1rem; font-weight: 800; color: #d97706;"><%= a.passing_score %>%</div>
-                <div style="font-size: 0.7rem; color: var(--text-muted); font-weight: 500;">điểm đạt</div>
-              </div>
-            </div>
-
-            <!-- Kết quả làm bài -->
-            <div style="padding: 0.75rem 1rem; background: <%= parseFloat(a.score) >= a.passing_score ? 'rgba(16,185,129,0.06)' : 'rgba(239,68,68,0.06)' %>; border-radius: 8px; border: 1px solid <%= parseFloat(a.score) >= a.passing_score ? 'rgba(16,185,129,0.15)' : 'rgba(239,68,68,0.15)' %>; display: flex; align-items: center; justify-content: space-between; margin-top: 0.25rem;">
-              <div>
-                <div style="font-size: 0.78rem; color: var(--text-muted); font-weight: 500;">Kết quả của bạn</div>
-                <div style="font-size: 1.25rem; font-weight: 800; color: <%= parseFloat(a.score) >= a.passing_score ? '#10b981' : '#ef4444' %>;">
-                  <%= parseFloat(a.score).toFixed(1) %>%
-                  <span style="font-size: 0.8rem; font-weight: 600;">— <%= a.is_passed ? '✅ Đạt' : '❌ Chưa đạt' %></span>
+              <!-- Mini stats -->
+              <div class="as-mini-stats">
+                <div class="as-mini-box">
+                  <div class="as-mini-val" style="color:#6366f1"><%= a.question_count %></div>
+                  <div class="as-mini-label">câu hỏi</div>
+                </div>
+                <div class="as-mini-box">
+                  <div class="as-mini-val" style="color:#0d9488"><%= a.duration_minutes %></div>
+                  <div class="as-mini-label">phút</div>
+                </div>
+                <div class="as-mini-box">
+                  <div class="as-mini-val" style="color:#d97706"><%= a.passing_score %>%</div>
+                  <div class="as-mini-label">điểm đạt</div>
                 </div>
               </div>
-              <i class="fa-solid fa-<%= a.is_passed ? 'trophy' : 'circle-xmark' %>" style="font-size: 1.4rem; color: <%= a.is_passed ? '#fbbf24' : '#ef4444' %>;"></i>
-            </div>
 
-            <!-- Nút hành động -->
-            <div style="margin-top: auto; padding-top: 0.5rem;">
-              <a href="/assessments/<%= a.id %>/result" class="btn btn-primary" style="width: 100%; display: block; text-align: center; text-decoration: none; padding: 0.7rem;">
-                <i class="fa-solid fa-chart-bar" style="margin-right: 0.4rem;"></i> Xem Kết Quả Chi Tiết
+              <!-- Score box -->
+              <div class="as-score-box <%= isPassed ? 'pass' : 'fail' %>">
+                <div>
+                  <div class="as-score-num <%= isPassed ? 'pass' : 'fail' %>"><%= scoreVal.toFixed(1) %>%</div>
+                  <div class="as-score-label">Điểm của bạn</div>
+                </div>
+                <div class="as-score-tag <%= isPassed ? 'pass' : 'fail' %>">
+                  <i class="fa-solid <%= isPassed ? 'fa-trophy' : 'fa-circle-xmark' %>"></i>
+                  <%= isPassed ? 'Đạt yêu cầu' : 'Chưa đạt' %>
+                </div>
+              </div>
+
+            </div>
+            <div class="as-card-foot">
+              <a href="/assessments/<%= a.id %>/result" class="as-btn <%= isPassed ? 'as-btn-green' : 'as-btn-primary' %>">
+                <i class="fa-solid fa-chart-bar"></i> Xem Kết Quả Chi Tiết
               </a>
             </div>
           </div>
@@ -282,19 +506,15 @@
       </div>
     <% } %>
   </div>
+
 <% } %>
 
 <script>
-  function switchAssessmentTab(tabName) {
-    document.querySelectorAll('.assessment-tab-content').forEach(el => {
-      el.style.display = 'none';
-    });
-    document.querySelectorAll('.assessment-tab-btn').forEach(btn => {
-      btn.classList.remove('active');
-    });
-    
-    document.getElementById(tabName + '-tab').style.display = 'block';
-    document.getElementById(tabName + '-btn').classList.add('active');
+  function asTab(name) {
+    document.querySelectorAll('.as-tab-pane').forEach(p => p.style.display = 'none');
+    document.querySelectorAll('.as-tab-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('as-tab-' + name).style.display = 'block';
+    document.getElementById('as-btn-' + name).classList.add('active');
   }
 </script>
 

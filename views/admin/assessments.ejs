@@ -1,685 +1,980 @@
-﻿<%- include('../partials/header') %>
+<%- include('../partials/header') %>
 
-<div style="margin-bottom: 2rem;">
-  <h1 style="font-size: 1.55rem; font-weight: 700; color: var(--text-main);">
-    Bài Kiểm Tra Doanh Nghiệp
-  </h1>
-  <p style="color: var(--text-muted); margin-top: 0.25rem;">Tạo bài kiểm tra bằng AI từ nội dung khóa học và phân phối đến từng cá nhân hoặc phòng ban.</p>
+<style>
+  /* ── Page Header ───────────────────────────── */
+  .as-header {
+    margin-bottom: 2.25rem;
+  }
+  .as-title {
+    font-size: 1.6rem;
+    font-weight: 800;
+    color: var(--text-main);
+    letter-spacing: -0.025em;
+    margin: 0;
+  }
+  .as-subtitle {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    margin-top: 0.35rem;
+  }
+
+  /* ── Alert banners ─────────────────────────── */
+  .as-alert {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.85rem 1.25rem;
+    border-radius: 12px;
+    font-size: 0.88rem;
+    font-weight: 500;
+    margin-bottom: 1.5rem;
+  }
+  .as-alert-success {
+    background: rgba(16, 185, 129, 0.08);
+    border: 1px solid rgba(16, 185, 129, 0.25);
+    color: #059669;
+  }
+  .as-alert-error {
+    background: rgba(239, 68, 68, 0.08);
+    border: 1px solid rgba(239, 68, 68, 0.25);
+    color: #dc2626;
+  }
+
+  /* ── Assessments List Card ─────────────────── */
+  .as-card {
+    background: #fff;
+    border: 1px solid var(--border-light);
+    border-radius: 18px;
+    overflow: hidden;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.03);
+  }
+  .as-card-header {
+    padding: 1.1rem 1.5rem;
+    border-bottom: 1px solid var(--border-light);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .as-card-title {
+    font-size: 0.98rem;
+    font-weight: 700;
+    color: var(--text-main);
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+  }
+  .as-card-title i {
+    color: #8b5cf6;
+  }
+  .as-count-badge {
+    background: rgba(139, 92, 246, 0.08);
+    color: #8b5cf6;
+    border: 1px solid rgba(139, 92, 246, 0.18);
+    padding: 0.15rem 0.65rem;
+    border-radius: 12px;
+    font-size: 0.78rem;
+    font-weight: 600;
+  }
+
+  /* Tabs selection */
+  .as-tabs-bar {
+    padding: 0.85rem 1.5rem 0 1.5rem;
+    display: flex;
+    gap: 0.5rem;
+    border-bottom: 1px solid var(--border-light);
+    background: #fafbff;
+  }
+  .as-tab-btn {
+    border: none;
+    border-bottom: 2px solid transparent;
+    background: transparent;
+    padding: 0.6rem 1.1rem;
+    font-size: 0.84rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    border-radius: 8px 8px 0 0;
+    transition: all 0.15s;
+    font-family: var(--font-body);
+  }
+  .as-tab-btn:hover {
+    color: var(--text-main);
+    background: rgba(0, 0, 0, 0.02);
+  }
+  .as-tab-btn.active {
+    border-bottom-color: #8b5cf6;
+    color: #8b5cf6;
+    background: rgba(139, 92, 246, 0.05);
+  }
+
+  /* Table styling */
+  .as-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.86rem;
+  }
+  .as-table thead {
+    background: #f8fafc;
+  }
+  .as-table th {
+    padding: 0.85rem 1.25rem;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: #94a3b8;
+    border-bottom: 1px solid var(--border-light);
+  }
+  .as-table td {
+    padding: 0.95rem 1.25rem;
+    vertical-align: middle;
+    border-bottom: 1px solid #f1f5f9;
+  }
+  .as-table tbody tr:last-child td {
+    border-bottom: none;
+  }
+  .as-table tbody tr {
+    transition: background 0.15s;
+  }
+  .as-table tbody tr:hover {
+    background: #fafbff;
+  }
+
+  /* Badge styling */
+  .as-badge-pub {
+    background: rgba(16, 185, 129, 0.08);
+    color: #059669;
+    border: 1px solid rgba(16, 185, 129, 0.18);
+    padding: 0.2rem 0.55rem;
+    border-radius: 20px;
+    font-size: 0.76rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+  }
+  .as-badge-draft {
+    background: rgba(245, 158, 11, 0.08);
+    color: #d97706;
+    border: 1px solid rgba(245, 158, 11, 0.18);
+    padding: 0.2rem 0.55rem;
+    border-radius: 20px;
+    font-size: 0.76rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+  }
+
+  /* Action buttons */
+  .as-btn-action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.3rem;
+    padding: 0.4rem 0.8rem;
+    border-radius: 7px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    border: 1px solid #e2e8f0;
+    background: #fff;
+    cursor: pointer;
+    transition: all 0.18s;
+    text-decoration: none;
+    font-family: var(--font-body);
+  }
+  .as-btn-action.assign {
+    color: #4f46e5;
+    border-color: rgba(79, 70, 229, 0.2);
+    background: rgba(79, 70, 229, 0.04);
+  }
+  .as-btn-action.assign:hover {
+    background: rgba(79, 70, 229, 0.08);
+    border-color: rgba(79, 70, 229, 0.35);
+  }
+  .as-btn-action.view {
+    color: #0891b2;
+    border-color: rgba(6, 182, 212, 0.2);
+    background: rgba(6, 182, 212, 0.04);
+  }
+  .as-btn-action.view:hover {
+    background: rgba(6, 182, 212, 0.08);
+    border-color: rgba(6, 182, 212, 0.35);
+  }
+  .as-btn-action.trash {
+    color: #ef4444;
+    border: none;
+    background: none;
+    padding: 0.4rem;
+  }
+  .as-btn-action.trash:hover {
+    color: #b91c1c;
+    background: rgba(239, 68, 68, 0.06);
+  }
+
+  /* Empty state */
+  .as-empty {
+    text-align: center;
+    padding: 3.5rem 1rem;
+    color: var(--text-muted);
+  }
+  .as-empty i {
+    font-size: 2.2rem;
+    opacity: 0.25;
+    display: block;
+    margin-bottom: 0.75rem;
+  }
+
+  /* ── Modals overlay ────────────────────────── */
+  .as-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.45);
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+    z-index: 9000;
+  }
+  .as-modal {
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 600px;
+    max-width: 92vw;
+    max-height: 88vh;
+    overflow-y: auto;
+    z-index: 9001;
+    background: #fff;
+    border-radius: 18px;
+    padding: 1.75rem;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+    border: 1px solid #cbd5e1;
+  }
+  .as-modal::-webkit-scrollbar { width: 5px; }
+  .as-modal::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+  .as-modal-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.85rem;
+    border-bottom: 1px solid #f1f5f9;
+  }
+  .as-modal-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--text-main);
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    margin: 0;
+  }
+  .as-modal-close {
+    width: 28px;
+    height: 28px;
+    border-radius: 7px;
+    border: 1px solid #e2e8f0;
+    background: #fff;
+    color: #94a3b8;
+    cursor: pointer;
+    font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.18s;
+  }
+  .as-modal-close:hover {
+    background: #f8fafc;
+    color: var(--text-main);
+  }
+
+  /* Form selection grid */
+  .as-select-grid {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 0.6rem;
+    max-height: 180px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+  .as-select-grid::-webkit-scrollbar { width: 4px; }
+  .as-select-grid::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+  .as-select-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.84rem;
+    cursor: pointer;
+    color: var(--text-main);
+    padding: 0.3rem 0.5rem;
+    border-radius: 6px;
+    transition: background 0.15s;
+    user-select: none;
+  }
+  .as-select-label:hover {
+    background: rgba(99, 102, 241, 0.05);
+  }
+  .as-select-label input {
+    accent-color: #8b5cf6;
+    width: 14px;
+    height: 14px;
+    flex-shrink: 0;
+  }
+</style>
+
+<!-- ── Page Header ──────────────────────────────── -->
+<div class="as-header">
+  <h1 class="as-title">Bài Kiểm Tra Doanh Nghiệp</h1>
+  <p class="as-subtitle">Tạo bài kiểm tra bằng AI từ nội dung khóa học và phân phối đến từng cá nhân hoặc phòng ban.</p>
 </div>
 
-<!-- Flash Message -->
+<!-- ── Flash Notification ────────────────────────── -->
 <% if (flash) { %>
-  <div class="alert alert-<%= flashType === 'error' ? 'danger' : 'success' %>" style="margin-bottom: 1.5rem; padding: 1rem 1.25rem; border-radius: 10px; background: <%= flashType === 'error' ? 'rgba(239,68,68,0.12)' : 'rgba(16,185,129,0.12)' %>; border: 1px solid <%= flashType === 'error' ? '#f87171' : '#10b981' %>; color: <%= flashType === 'error' ? '#fca5a5' : '#6ee7b7' %>;">
-    <i class="fa-solid fa-<%= flashType === 'error' ? 'circle-exclamation' : 'circle-check' %>" style="margin-right: 0.5rem;"></i>
-    <%- flash %>
+  <div class="as-alert <%= flashType === 'error' ? 'as-alert-error' : 'as-alert-success' %>">
+    <i class="fa-solid fa-<%= flashType === 'error' ? 'circle-exclamation' : 'circle-check' %>"></i>
+    <span><%- flash %></span>
   </div>
 <% } %>
 <div id="flash-container"></div>
 
-<!-- Nút tạo bài kiểm tra mới -->
+<!-- ── Top Action Trigger ───────────────────────── -->
 <% if (user.permissions.includes('QUIZ_BANK_MANAGE')) { %>
-<div style="margin-bottom: 2rem;">
-  <button class="btn btn-primary" onclick="openCreateModal()" style="padding: 0.75rem 1.75rem; font-size: 1rem; display: inline-flex; align-items: center; gap: 0.6rem;">
-    <i class="fa-solid fa-plus-circle"></i> Tạo Bài Kiểm Tra Mới
-  </button>
-</div>
+  <div style="margin-bottom: 1.6rem;">
+    <button class="btn btn-primary" onclick="openCreateModal()" style="border-radius: 9px; display: inline-flex; align-items: center; gap: 0.5rem;">
+      <i class="fa-solid fa-circle-plus"></i> Tạo đề kiểm tra mới
+    </button>
+  </div>
 <% } %>
 
-<!-- Danh sách bài kiểm tra -->
-<div class="glass-card" style="padding: 0; overflow: hidden;">
-  <div style="padding: 1.5rem 1.75rem; border-bottom: 1px solid var(--border-light); display: flex; align-items: center; gap: 0.75rem;">
-    <i class="fa-solid fa-clipboard-list" style="color: #8b5cf6; font-size: 1.2rem;"></i>
-    <h3 style="font-size: 1.2rem; font-weight: 700; margin: 0;">Danh Sách Bài Kiểm Tra</h3>
-    <span style="margin-left: auto; background: rgba(99,102,241,0.15); color: #a5b4fc; border: 1px solid rgba(99,102,241,0.3); padding: 0.2rem 0.7rem; border-radius: 20px; font-size: 0.8rem; font-weight: 600;">
-      <%= assessments.length %> bài kiểm tra
+<!-- ── Main Card ────────────────────────────────── -->
+<div class="as-card">
+  <div class="as-card-header">
+    <h3 class="as-card-title">
+      <i class="fa-solid fa-clipboard-list"></i>
+      <span>Danh sách đề kiểm tra</span>
+    </h3>
+    <span class="as-count-badge">
+      <%= assessments.length %> đề thi
     </span>
   </div>
 
-  <!-- Bộ chọn Tab bài kiểm tra -->
-  <div style="padding: 1rem 1.75rem 0 1.75rem; display: flex; gap: 0.75rem; border-bottom: 1px solid var(--border-light); background: rgba(255,255,255,0.01);">
-    <button type="button" onclick="switchAssessmentTab('published')" id="tab-btn-published" class="btn" style="padding: 0.6rem 1.25rem; font-size: 0.85rem; font-weight: 600; border-radius: 8px 8px 0 0; border: none; border-bottom: 2px solid #8b5cf6; background: rgba(139,92,246,0.1); color: #a5b4fc; display: flex; align-items: center; gap: 0.4rem; cursor: pointer; margin-bottom: -1px; transition: all 0.2s;">
-      <i class="fa-solid fa-circle-check" style="color: #10b981;"></i> Đã xuất bản (<%= assessments.filter(a => a.status === 'published').length %>)
+  <!-- Tabs Selector -->
+  <div class="as-tabs-bar">
+    <button type="button" onclick="switchAssessmentTab('published')" id="tab-btn-published" class="as-tab-btn active">
+      <i class="fa-solid fa-circle-check" style="color: #059669;"></i> Đã xuất bản (<%= assessments.filter(a => a.status === 'published').length %>)
     </button>
-    <button type="button" onclick="switchAssessmentTab('draft')" id="tab-btn-draft" class="btn" style="padding: 0.6rem 1.25rem; font-size: 0.85rem; font-weight: 600; border-radius: 8px 8px 0 0; border: none; border-bottom: 2px solid transparent; background: transparent; color: var(--text-muted); display: flex; align-items: center; gap: 0.4rem; cursor: pointer; margin-bottom: -1px; transition: all 0.2s;">
-      <i class="fa-solid fa-pen-to-square" style="color: #fbbf24;"></i> Bản nháp (<%= assessments.filter(a => a.status === 'draft').length %>)
+    <button type="button" onclick="switchAssessmentTab('draft')" id="tab-btn-draft" class="as-tab-btn">
+      <i class="fa-solid fa-pen-to-square" style="color: #d97706;"></i> Bản nháp (<%= assessments.filter(a => a.status === 'draft').length %>)
     </button>
   </div>
 
   <% if (assessments.length === 0) { %>
-    <div style="text-align: center; padding: 4rem 2rem; color: var(--text-muted);">
-      <i class="fa-solid fa-file-circle-question" style="font-size: 3rem; color: #4b5563; margin-bottom: 1rem; display: block;"></i>
-      <p style="font-size: 1rem;">Chưa có bài kiểm tra nào. Hãy tạo bài kiểm tra đầu tiên bằng AI!</p>
+    <div class="as-empty">
+      <i class="fa-solid fa-inbox"></i>
+      <p style="font-size: 0.9rem;">Chưa có bài kiểm tra nào được ghi nhận.</p>
     </div>
   <% } else { %>
     <div style="overflow-x: auto;">
-      <table id="assessments-table" style="width: 100%; border-collapse: collapse;">
+      <table id="assessments-table" class="as-table">
         <thead>
-          <tr style="background: rgba(255,255,255,0.03); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted);">
-            <th style="padding: 0.85rem 1.5rem; text-align: left;">Tiêu Đề</th>
-            <th style="padding: 0.85rem 1rem; text-align: center;">Số Câu</th>
-            <th style="padding: 0.85rem 1rem; text-align: center;">Thời Gian</th>
-            <th style="padding: 0.85rem 1rem; text-align: center;">Trạng Thái</th>
-            <th style="padding: 0.85rem 1rem; text-align: center;">Đã Giao</th>
-            <th style="padding: 0.85rem 1rem; text-align: center;">Người Tạo</th>
-            <th style="padding: 0.85rem 1.5rem; text-align: right;">Thao Tác</th>
+          <tr>
+            <th style="padding-left: 1.5rem; text-align: left;">Tiêu đề đề thi</th>
+            <th style="text-align: center; width: 100px;">Số câu hỏi</th>
+            <th style="text-align: center; width: 120px;">Thời lượng</th>
+            <th style="text-align: center; width: 150px;">Trạng thái</th>
+            <th style="text-align: center; width: 100px;">Đã giao</th>
+            <th style="text-align: center; width: 140px;">Người tạo</th>
+            <th style="padding-right: 1.5rem; text-align: right; width: 280px;">Thao tác</th>
           </tr>
         </thead>
         <tbody>
           <% assessments.forEach(a => { %>
-          <tr class="assessment-row" data-status="<%= a.status %>" style="border-top: 1px solid var(--border-light); transition: background 0.15s;" onmouseover="this.style.background='rgba(255,255,255,0.025)'" onmouseout="this.style.background='transparent'">
-            <td style="padding: 1rem 1.5rem;">
-              <div style="font-weight: 600; font-size: 0.95rem; margin-bottom: 0.2rem;"><%= a.title %></div>
-              <% if (a.description) { %>
-                <div style="font-size: 0.8rem; color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 260px;"><%= a.description %></div>
-              <% } %>
-            </td>
-            <td style="padding: 1rem; text-align: center;">
-              <span style="font-size: 0.9rem; font-weight: 700; color: #a5b4fc;"><%= a.question_count_actual || a.question_count %></span>
-              <span style="font-size: 0.75rem; color: var(--text-muted);"> câu</span>
-            </td>
-            <td style="padding: 1rem; text-align: center; font-size: 0.85rem; color: var(--text-muted);">
-              <i class="fa-regular fa-clock" style="margin-right: 0.3rem;"></i><%= a.duration_minutes %> phút
-            </td>
-            <td style="padding: 1rem; text-align: center;">
-              <span style="padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.78rem; font-weight: 600;
-                background: <%= a.status === 'published' ? 'rgba(16,185,129,0.15)' : 'rgba(245,158,11,0.15)' %>;
-                color: <%= a.status === 'published' ? '#34d399' : '#fbbf24' %>;
-                border: 1px solid <%= a.status === 'published' ? 'rgba(52,211,153,0.3)' : 'rgba(251,191,36,0.3)' %>;">
-                <i class="fa-solid fa-<%= a.status === 'published' ? 'check-circle' : 'pen-to-square' %>" style="margin-right: 0.3rem;"></i>
-                <%= a.status === 'published' ? 'Đã xuất bản' : 'Bản nháp' %>
-              </span>
-            </td>
-            <td style="padding: 1rem; text-align: center;">
-              <span style="font-size: 0.9rem; font-weight: 700; color: #6ee7b7;"><%= a.assignment_count %></span>
-            </td>
-            <td style="padding: 1rem; text-align: center; font-size: 0.85rem; color: var(--text-muted);">
-              <i class="fa-solid fa-user" style="margin-right: 0.3rem;"></i><%= a.creator_name || 'Hệ thống' %>
-            </td>
-            <td style="padding: 1rem 1.5rem; text-align: right;">
-              <div style="display: flex; gap: 0.5rem; justify-content: flex-end; flex-wrap: wrap;">
-                <% if (user.permissions.includes('ENROLL_ASSIGN') && a.status === 'published') { %>
-                  <button class="btn" onclick="openAssignModal(<%= a.id %>, '<%= a.title.replace(/'/g, "\\'") %>')"
-                    style="padding: 0.4rem 0.9rem; font-size: 0.8rem; background: rgba(99,102,241,0.15); border: 1px solid rgba(99,102,241,0.4); color: #a5b4fc;">
-                    <i class="fa-solid fa-paper-plane"></i> Phân phối
-                  </button>
+            <tr class="assessment-row" data-status="<%= a.status %>">
+              <td style="padding-left: 1.5rem;">
+                <div style="font-weight: 700; color: var(--text-main); font-size: 0.9rem;"><%= a.title %></div>
+                <% if (a.description) { %>
+                  <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 0.15rem; max-width: 280px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="<%= a.description %>">
+                    <%= a.description %>
+                  </div>
                 <% } %>
-                <% if (user.permissions.includes('QUIZ_BANK_MANAGE') && a.status === 'draft') { %>
-                  <form action="/admin/assessments/<%= a.id %>/publish" method="POST" style="display:inline;" onsubmit="return confirm('Xuất bản bài kiểm tra này? Học viên sẽ thấy và làm bài sau khi được giao.')">
-                    <button type="submit" class="btn btn-primary" style="padding: 0.4rem 0.9rem; font-size: 0.8rem;">
-                      <i class="fa-solid fa-rocket"></i> Xuất bản
+              </td>
+              <td style="text-align: center;">
+                <span style="font-weight: 700; color: #4f46e5; font-size: 0.9rem;"><%= a.question_count_actual || a.question_count %></span>
+                <span style="font-size: 0.78rem; color: var(--text-muted);"> câu</span>
+              </td>
+              <td style="text-align: center; font-size: 0.82rem; color: #475569;">
+                <i class="fa-regular fa-clock" style="margin-right: 0.25rem;"></i><%= a.duration_minutes %> phút
+              </td>
+              <td style="text-align: center;">
+                <% if (a.status === 'published') { %>
+                  <span class="as-badge-pub">
+                    <i class="fa-solid fa-circle-check"></i> Đã xuất bản
+                  </span>
+                <% } else { %>
+                  <span class="as-badge-draft">
+                    <i class="fa-solid fa-pen-to-square"></i> Bản nháp
+                  </span>
+                <% } %>
+              </td>
+              <td style="text-align: center; font-weight: 700; color: #0d9488; font-size: 0.9rem;">
+                <%= a.assignment_count %>
+              </td>
+              <td style="text-align: center; font-size: 0.82rem; color: var(--text-muted);">
+                <%= a.creator_name || 'Hệ thống' %>
+              </td>
+              <td style="padding-right: 1.5rem; text-align: right;">
+                <div style="display: flex; gap: 0.4rem; justify-content: flex-end;">
+                  <% if (user.permissions.includes('ENROLL_ASSIGN') && a.status === 'published') { %>
+                    <button class="as-btn-action assign" onclick="openAssignModal(<%= a.id %>, '<%= a.title.replace(/'/g, "\\'") %>')">
+                      <i class="fa-solid fa-paper-plane"></i> Phân phối
                     </button>
-                  </form>
-                <% } %>
-                <% if (user.permissions.includes('QUIZ_BANK_VIEW')) { %>
-                  <a href="/admin/assessments/<%= a.id %>" class="btn" style="padding: 0.4rem 0.9rem; font-size: 0.8rem; background: rgba(6,182,212,0.1); border: 1px solid rgba(6,182,212,0.3); color: #67e8f9;">
-                    <i class="fa-solid fa-eye"></i> Xem
-                  </a>
-                <% } %>
-                <% if (user.permissions.includes('QUIZ_BANK_MANAGE')) { %>
-                  <form action="/admin/assessments/<%= a.id %>/delete" method="POST" style="display:inline;" onsubmit="return confirm('Xóa bài kiểm tra này? Hành động không thể hoàn tác.')">
-                    <button type="submit" style="background: none; border: none; color: #f87171; cursor: pointer; padding: 0.4rem 0.5rem;">
-                      <i class="fa-solid fa-trash-can"></i>
-                    </button>
-                  </form>
-                <% } %>
-              </div>
-            </td>
-          </tr>
+                  <% } %>
+                  <% if (user.permissions.includes('QUIZ_BANK_MANAGE') && a.status === 'draft') { %>
+                    <form action="/admin/assessments/<%= a.id %>/publish" method="POST" style="margin: 0;" onsubmit="return confirm('Xuất bản đề kiểm tra này?')">
+                      <button type="submit" class="btn btn-primary" style="padding: 0.4rem 0.8rem; font-size: 0.78rem; border-radius: 7px;">
+                        <i class="fa-solid fa-circle-check"></i> Xuất bản
+                      </button>
+                    </form>
+                  <% } %>
+                  <% if (user.permissions.includes('QUIZ_BANK_VIEW')) { %>
+                    <a href="/admin/assessments/<%= a.id %>" class="as-btn-action view">
+                      <i class="fa-solid fa-eye"></i> Xem đề
+                    </a>
+                  <% } %>
+                  <% if (user.permissions.includes('QUIZ_BANK_MANAGE')) { %>
+                    <form action="/admin/assessments/<%= a.id %>/delete" method="POST" style="margin: 0;" onsubmit="return confirm('Xác nhận xóa đề kiểm tra này?')">
+                      <button type="submit" class="as-btn-action trash" title="Xóa đề thi">
+                        <i class="fa-solid fa-trash-can"></i>
+                      </button>
+                    </form>
+                  <% } %>
+                </div>
+              </td>
+            </tr>
           <% }) %>
         </tbody>
       </table>
     </div>
 
-    <!-- Khung trống khi không có bài kiểm tra đã xuất bản -->
-    <div id="empty-published" style="display: none; text-align: center; padding: 4rem 2rem; color: var(--text-muted);">
-      <i class="fa-solid fa-circle-check" style="font-size: 3rem; color: #10b981; opacity: 0.6; margin-bottom: 1rem; display: block;"></i>
-      <p style="font-size: 1rem;">Không có bài kiểm tra nào đã xuất bản.</p>
+    <!-- Tab empty states -->
+    <div id="empty-published" class="as-empty" style="display: none;">
+      <i class="fa-solid fa-circle-check"></i>
+      <p style="font-size: 0.9rem;">Không có đề kiểm tra nào đã xuất bản.</p>
     </div>
 
-    <!-- Khung trống khi không có bài kiểm tra nháp -->
-    <div id="empty-draft" style="display: none; text-align: center; padding: 4rem 2rem; color: var(--text-muted);">
-      <i class="fa-solid fa-pen-to-square" style="font-size: 3rem; color: #fbbf24; opacity: 0.6; margin-bottom: 1rem; display: block;"></i>
-      <p style="font-size: 1rem;">Không có bài kiểm tra nháp nào.</p>
+    <div id="empty-draft" class="as-empty" style="display: none;">
+      <i class="fa-solid fa-pen-to-square"></i>
+      <p style="font-size: 0.9rem;">Không có đề kiểm tra nháp nào.</p>
     </div>
   <% } %>
 </div>
 
-<!-- ====================== MODAL TẠO BÀI KIỂM TRA ====================== -->
-<div id="modal-create" style="display:none; position:fixed; inset:0; z-index:9000; background:rgba(0,0,0,0.65); backdrop-filter:blur(4px); overflow-y:auto;">
-  <div style="max-width: 680px; margin: 3rem auto; padding: 0 1rem;">
-    <div class="glass-card" style="padding: 2rem; border-color: var(--border-glow);">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.75rem;">
-        <h3 style="font-size: 1.3rem; font-weight: 700; display: flex; align-items: center; gap: 0.6rem;">
-          <i id="header-create-icon" class="fa-solid fa-wand-magic-sparkles" style="color: #8b5cf6;"></i>
-          <span id="header-create-text">Tạo Bài Kiểm Tra Mới</span>
-        </h3>
-        <button onclick="closeCreateModal()" style="background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:1.25rem;">
-          <i class="fa-solid fa-xmark"></i>
-        </button>
-      </div>
+<!-- ── Backdrop Overlay ─────────────────────────── -->
+<div id="as-overlay" class="as-overlay" onclick="closeAllModals()"></div>
 
-      <!-- Lựa chọn hình thức tạo -->
-      <div style="display: flex; gap: 1rem; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border-light); padding-bottom: 1rem;">
-        <button type="button" onclick="switchCreateType('ai')" id="btn-create-type-ai" class="btn" style="flex: 1; padding: 0.75rem; border-radius: 8px; font-weight: 600; border: 2px solid #8b5cf6; background: rgba(139,92,246,0.1); color: #a5b4fc; display: flex; align-items: center; justify-content: center; gap: 0.5rem; cursor: pointer; transition: all 0.15s;">
-          <i class="fa-solid fa-wand-magic-sparkles"></i> Tạo bằng AI
-        </button>
-        <button type="button" onclick="switchCreateType('manual')" id="btn-create-type-manual" class="btn" style="flex: 1; padding: 0.75rem; border-radius: 8px; font-weight: 600; border: 1px solid var(--border-light); background: transparent; color: var(--text-muted); display: flex; align-items: center; justify-content: center; gap: 0.5rem; cursor: pointer; transition: all 0.15s;">
-          <i class="fa-solid fa-keyboard"></i> Tạo thủ công
-        </button>
-      </div>
+<!-- ── Modal: Create Assessment ─────────────────── -->
+<div id="modal-create" class="as-modal">
+  <div class="as-modal-head">
+    <h3 class="as-modal-title">
+      <i id="header-create-icon" class="fa-solid fa-wand-magic-sparkles" style="color: #8b5cf6;"></i>
+      <span id="header-create-text">Tạo Bài Kiểm Tra Mới</span>
+    </h3>
+    <button class="as-modal-close" onclick="closeCreateModal()"><i class="fa-solid fa-xmark"></i></button>
+  </div>
 
-      <div class="form-group">
-        <label class="form-label">Tiêu đề bài kiểm tra <span style="color:#f87171">*</span></label>
-        <input type="text" id="create-title" placeholder="VD: Kiểm tra năng lực Quý II/2025 — Phòng IT" style="width:100%;">
-      </div>
+  <!-- Create modes selector -->
+  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 1.25rem;">
+    <button type="button" onclick="switchCreateType('ai')" id="btn-create-type-ai" class="as-btn-action assign" style="padding: 0.65rem; justify-content: center; font-size: 0.84rem;">
+      <i class="fa-solid fa-wand-magic-sparkles"></i> Tạo tự động bằng AI
+    </button>
+    <button type="button" onclick="switchCreateType('manual')" id="btn-create-type-manual" class="as-btn-action" style="padding: 0.65rem; justify-content: center; font-size: 0.84rem;">
+      <i class="fa-solid fa-keyboard"></i> Soạn đề thủ công
+    </button>
+  </div>
 
-      <div class="form-group">
-        <label class="form-label">Mô tả (tuỳ chọn)</label>
-        <textarea id="create-desc" rows="2" placeholder="Mô tả mục tiêu bài kiểm tra..." style="width:100%;"></textarea>
-      </div>
+  <div class="form-group">
+    <label class="form-label">Tiêu đề bài kiểm tra <span style="color:#ef4444">*</span></label>
+    <input type="text" id="create-title" placeholder="VD: Đánh giá năng lực Backend Quý II">
+  </div>
 
-      <div class="form-group" id="create-section-ai">
-        <label class="form-label">Chọn khóa học làm nguồn câu hỏi <span style="color:#f87171">*</span></label>
-        <p style="font-size:0.8rem; color:var(--text-muted); margin-bottom:0.75rem;">AI sẽ đọc nội dung tất cả bài học trong các khóa này để sinh câu hỏi kiểm tra.</p>
-        <div style="display: grid; gap: 0.5rem; max-height: 200px; overflow-y: auto; padding-right: 0.5rem;">
-          <% courses.forEach(c => { %>
-          <label style="display: flex; align-items: center; gap: 0.6rem; padding: 0.6rem 0.75rem; border-radius: 8px; border: 1px solid var(--border-light); cursor: pointer; transition: border-color 0.15s;" onmouseover="this.style.borderColor='rgba(99,102,241,0.5)'" onmouseout="this.style.borderColor='var(--border-light)'">
-            <input type="checkbox" name="courseIds" value="<%= c.id %>" id="course-<%= c.id %>" style="width:16px; height:16px; accent-color:#8b5cf6;">
-            <span style="font-size:0.9rem;"><%= c.title %></span>
-          </label>
-          <% }) %>
-        </div>
-      </div>
+  <div class="form-group">
+    <label class="form-label">Mô tả mục tiêu</label>
+    <textarea id="create-desc" rows="2" placeholder="Nhập mục tiêu đánh giá..."></textarea>
+  </div>
 
-      <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem;">
-        <div class="form-group">
-          <label class="form-label">Số câu hỏi</label>
-          <input type="number" id="create-count" value="50" min="10" max="100">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Thời gian (phút)</label>
-          <input type="number" id="create-duration" value="60" min="5" max="180">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Điểm đạt (%)</label>
-          <input type="number" id="create-passing" value="70" min="0" max="100">
-        </div>
-      </div>
+  <div class="form-group" id="create-section-ai">
+    <label class="form-label">Chọn khóa học làm dữ liệu nguồn <span style="color:#ef4444">*</span></label>
+    <p style="font-size:0.76rem; color:var(--text-muted); margin-bottom:0.5rem; line-height: 1.4;">AI sẽ quét dữ liệu bài giảng của khóa học được chọn để sinh câu hỏi trắc nghiệm tự động.</p>
+    <div class="as-select-grid">
+      <% courses.forEach(c => { %>
+        <label class="as-select-label">
+          <input type="checkbox" name="courseIds" value="<%= c.id %>" id="course-<%= c.id %>">
+          <span><%= c.title %></span>
+        </label>
+      <% }) %>
+    </div>
+  </div>
 
-      <!-- Loading state -->
-      <div id="create-loading" style="display:none; text-align:center; padding: 1.5rem; background: rgba(139,92,246,0.08); border-radius: 10px; border: 1px solid rgba(139,92,246,0.25); margin-bottom: 1.5rem;">
-        <div style="display: flex; align-items: center; justify-content: center; gap: 0.75rem; color: #a5b4fc;">
-          <i class="fa-solid fa-spinner fa-spin" style="font-size: 1.25rem; color: #8b5cf6;"></i>
-          <div>
-            <div style="font-weight: 600; margin-bottom: 0.2rem;">AI đang phân tích nội dung bài học...</div>
-            <div style="font-size: 0.8rem; color: var(--text-muted);">Quá trình này có thể mất 30-60 giây. Vui lòng không đóng cửa sổ.</div>
-          </div>
-        </div>
-        <div style="margin-top: 1rem; height: 4px; background: rgba(255,255,255,0.05); border-radius: 4px; overflow: hidden;">
-          <div style="height: 100%; width: 0; background: linear-gradient(90deg, #8b5cf6, #6366f1); border-radius: 4px; animation: progress-anim 45s linear forwards;" id="progress-bar"></div>
-        </div>
-      </div>
+  <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.85rem; margin-bottom: 1.25rem;">
+    <div class="form-group" style="margin-bottom: 0;">
+      <label class="form-label">Số câu hỏi</label>
+      <input type="number" id="create-count" value="10" min="5" max="100">
+    </div>
+    <div class="form-group" style="margin-bottom: 0;">
+      <label class="form-label">Thời gian (phút)</label>
+      <input type="number" id="create-duration" value="30" min="5" max="180">
+    </div>
+    <div class="form-group" style="margin-bottom: 0;">
+      <label class="form-label">Điểm đạt (%)</label>
+      <input type="number" id="create-passing" value="70" min="0" max="100">
+    </div>
+  </div>
 
-      <div style="display: flex; gap: 1rem; justify-content: flex-end;">
-        <button onclick="closeCreateModal()" class="btn" style="background: rgba(255,255,255,0.05); border: 1px solid var(--border-light); color: var(--text-muted);">
-          Huỷ
-        </button>
-        <button id="btn-create-submit" onclick="submitCreateAssessment()" class="btn btn-primary" style="padding: 0.75rem 1.75rem; display: inline-flex; align-items: center; gap: 0.5rem;">
-          <i id="icon-create-submit" class="fa-solid fa-brain"></i> <span id="text-create-submit">AI Sinh Câu Hỏi & Tạo Bài</span>
-        </button>
+  <!-- Loading bar element -->
+  <div id="create-loading" style="display:none; padding: 1.1rem; background: rgba(139,92,246,0.06); border: 1px solid rgba(139,92,246,0.18); border-radius: 10px; margin-bottom: 1.25rem;">
+    <div style="display: flex; align-items: center; gap: 0.65rem;">
+      <i class="fa-solid fa-spinner fa-spin" style="font-size: 1.1rem; color: #8b5cf6;"></i>
+      <div style="font-size: 0.82rem;">
+        <div style="font-weight: 700; color: var(--text-main);">AI đang phân tích và biên soạn câu hỏi...</div>
+        <div style="color: var(--text-muted); margin-top: 0.1rem;">Lên tới 1 phút. Xin vui lòng đợi.</div>
       </div>
     </div>
+    <div style="margin-top: 0.75rem; height: 4px; background: #e2e8f0; border-radius: 4px; overflow: hidden;">
+      <div style="height: 100%; width: 0; background: linear-gradient(90deg, #8b5cf6, #6366f1); border-radius: 4px; animation: progress-anim 45s linear forwards;" id="progress-bar"></div>
+    </div>
+  </div>
+
+  <div style="display: flex; gap: 0.5rem; justify-content: flex-end; border-top: 1px solid #f1f5f9; padding-top: 1.1rem; margin-top: 0.5rem;">
+    <button onclick="closeCreateModal()" class="btn btn-secondary" style="border-radius: 8px;">Hủy</button>
+    <button id="btn-create-submit" onclick="submitCreateAssessment()" class="btn btn-primary" style="border-radius: 8px; display: inline-flex; align-items: center; gap: 0.45rem;">
+      <i id="icon-create-submit" class="fa-solid fa-brain"></i>
+      <span id="text-create-submit">Tạo đề thi bằng AI</span>
+    </button>
   </div>
 </div>
 
-<!-- ====================== MODAL PHÂN PHỐI ====================== -->
-<div id="modal-assign" style="display:none; position:fixed; inset:0; z-index:9000; background:rgba(0,0,0,0.65); backdrop-filter:blur(4px); overflow-y:auto;">
-  <div style="max-width: 560px; margin: 3rem auto; padding: 0 1rem;">
-    <div class="glass-card" style="padding: 2rem; border-color: var(--border-glow);">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.75rem;">
-        <h3 style="font-size: 1.2rem; font-weight: 700; display: flex; align-items: center; gap: 0.6rem;">
-          <i class="fa-solid fa-paper-plane" style="color: #6366f1;"></i>
-          Phân Phối Bài Kiểm Tra
-        </h3>
-        <button onclick="closeAssignModal()" style="background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:1.25rem;">
-          <i class="fa-solid fa-xmark"></i>
-        </button>
-      </div>
-      <div style="margin-bottom: 1.25rem; padding: 0.75rem 1rem; background: rgba(99,102,241,0.08); border-radius: 8px; border: 1px solid rgba(99,102,241,0.2);">
-        <div style="font-size: 0.8rem; color: var(--text-muted);">Bài kiểm tra được chọn</div>
-        <div id="assign-title-display" style="font-weight: 600; color: #a5b4fc; margin-top: 0.2rem;"></div>
-      </div>
-      <input type="hidden" id="assign-assessment-id">
+<!-- ── Modal: Assign Assessment ─────────────────── -->
+<div id="modal-assign" class="as-modal" style="width: 520px;">
+  <div class="as-modal-head">
+    <h3 class="as-modal-title">
+      <i class="fa-solid fa-paper-plane" style="color: #6366f1;"></i>
+      <span>Phân Phối Bài Kiểm Tra</span>
+    </h3>
+    <button class="as-modal-close" onclick="closeAssignModal()"><i class="fa-solid fa-xmark"></i></button>
+  </div>
+  
+  <div style="margin-bottom: 1.25rem; padding: 0.75rem 1rem; background: rgba(99,102,241,0.06); border-radius: 8px; border: 1px solid rgba(99,102,241,0.18);">
+    <div style="font-size: 0.76rem; color: var(--text-muted);">Đề thi được phân phối</div>
+    <div id="assign-title-display" style="font-weight: 700; color: #4f46e5; margin-top: 0.15rem; font-size: 0.9rem;"></div>
+  </div>
+  <input type="hidden" id="assign-assessment-id">
 
-      <div class="form-group">
-        <label class="form-label">Phân phối theo</label>
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
-          <label onclick="switchAssignType('user')" id="tab-user" style="display:flex; align-items:center; gap:0.5rem; padding:0.75rem 1rem; border-radius:8px; border: 2px solid #8b5cf6; cursor:pointer; background: rgba(139,92,246,0.1);">
-            <input type="radio" name="targetType" value="user" checked style="display:none;">
-            <i class="fa-solid fa-user" style="color:#8b5cf6;"></i> <span style="font-weight:600;">Cá nhân</span>
-          </label>
-          <label onclick="switchAssignType('department')" id="tab-dept" style="display:flex; align-items:center; gap:0.5rem; padding:0.75rem 1rem; border-radius:8px; border: 1px solid var(--border-light); cursor:pointer;">
-            <input type="radio" name="targetType" value="department" style="display:none;">
-            <i class="fa-solid fa-building" style="color:#64748b;"></i> <span>Phòng ban</span>
-          </label>
-        </div>
-      </div>
-
-      <div class="form-group" id="assign-user-section">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
-          <label class="form-label" style="margin-bottom: 0;">Chọn người dùng</label>
-          <label style="display: flex; align-items: center; gap: 0.35rem; font-size: 0.8rem; cursor: pointer; user-select: none; color: var(--text-accent); font-weight: 600;">
-            <input type="checkbox" id="user-select-all" onchange="toggleSelectAllUsers(this)" style="width: 14px; height: 14px; accent-color: #8b5cf6;"> Chọn tất cả
-          </label>
-        </div>
-        <input type="text" id="user-search" placeholder="🔍 Nhập tên hoặc email để tìm..." oninput="filterUsers()" style="margin-bottom: 0.75rem; padding: 0.55rem 0.85rem; font-size: 0.85rem; border-radius: 8px;">
-        <div id="user-list-container" style="max-height: 200px; overflow-y: auto; display: grid; gap: 0.4rem; padding-right:0.5rem;">
-          <% users.forEach(u => { %>
-          <label class="user-item" data-search="<%= u.username.toLowerCase() %> <%= u.email.toLowerCase() %>" style="display:flex; align-items:center; gap:0.6rem; padding:0.5rem 0.75rem; border-radius:7px; border:1px solid var(--border-light); cursor:pointer; font-size:0.87rem; transition: border-color 0.15s;">
-            <input type="checkbox" class="assign-user-cb" value="<%= u.id %>" style="accent-color:#8b5cf6;" onchange="updateSelectAllState('user')">
-            <i class="fa-solid fa-user-circle" style="color: #6366f1;"></i> <%= u.username %> <span style="color:var(--text-muted); font-size:0.8rem;">— <%= u.email %></span>
-          </label>
-          <% }) %>
-        </div>
-      </div>
-
-      <div class="form-group" id="assign-dept-section" style="display:none;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
-          <label class="form-label" style="margin-bottom: 0;">Chọn phòng ban</label>
-          <label style="display: flex; align-items: center; gap: 0.35rem; font-size: 0.8rem; cursor: pointer; user-select: none; color: var(--text-accent); font-weight: 600;">
-            <input type="checkbox" id="dept-select-all" onchange="toggleSelectAllDepts(this)" style="width: 14px; height: 14px; accent-color: #8b5cf6;"> Chọn tất cả
-          </label>
-        </div>
-        <input type="text" id="dept-search" placeholder="🔍 Nhập tên phòng ban để tìm..." oninput="filterDepts()" style="margin-bottom: 0.75rem; padding: 0.55rem 0.85rem; font-size: 0.85rem; border-radius: 8px;">
-        <div id="dept-list-container" style="max-height: 200px; overflow-y: auto; display: grid; gap: 0.4rem; padding-right:0.5rem;">
-          <% departments.forEach(d => { %>
-          <label class="dept-item" data-search="<%= d.name.toLowerCase() %>" style="display:flex; align-items:center; gap:0.6rem; padding:0.5rem 0.75rem; border-radius:7px; border:1px solid var(--border-light); cursor:pointer; font-size:0.87rem; transition: border-color 0.15s;">
-            <input type="checkbox" class="assign-dept-cb" value="<%= d.id %>" style="accent-color:#8b5cf6;" onchange="updateSelectAllState('dept')">
-            <i class="fa-solid fa-building" style="color:#6366f1;"></i> <%= d.name %>
-          </label>
-          <% }) %>
-        </div>
-      </div>
-
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.25rem;">
-        <div class="form-group" style="margin-bottom: 0;">
-          <label class="form-label">Thời gian mở đề (tuỳ chọn)</label>
-          <input type="datetime-local" id="assign-starttime" style="width:100%;">
-        </div>
-        <div class="form-group" style="margin-bottom: 0;">
-          <label class="form-label">Hạn hoàn thành (tuỳ chọn)</label>
-          <input type="datetime-local" id="assign-deadline" style="width:100%;">
-        </div>
-      </div>
-
-      <div style="display: flex; gap: 1rem; justify-content: flex-end;">
-        <button onclick="closeAssignModal()" class="btn" style="background: rgba(255,255,255,0.05); border: 1px solid var(--border-light); color: var(--text-muted);">Huỷ</button>
-        <button onclick="submitAssign()" class="btn btn-primary" id="btn-assign-submit" style="padding: 0.75rem 1.5rem;">
-          <i class="fa-solid fa-paper-plane" style="margin-right:0.4rem;"></i> Gửi Bài Kiểm Tra
-        </button>
-      </div>
+  <div class="form-group">
+    <label class="form-label" style="font-size: 0.8rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em;">Hình thức giao</label>
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+      <label onclick="switchAssignType('user')" id="tab-user" class="as-btn-action assign" style="padding: 0.65rem; justify-content: center; font-size: 0.85rem; cursor: pointer;">
+        <input type="radio" name="targetType" value="user" checked style="display:none;">
+        <i class="fa-solid fa-user"></i> <span style="font-weight: 700; margin-left: 0.35rem;">Giao cá nhân</span>
+      </label>
+      <label onclick="switchAssignType('department')" id="tab-dept" class="as-btn-action" style="padding: 0.65rem; justify-content: center; font-size: 0.85rem; cursor: pointer;">
+        <input type="radio" name="targetType" value="department" style="display:none;">
+        <i class="fa-solid fa-building"></i> <span style="font-weight: 700; margin-left: 0.35rem;">Giao phòng ban</span>
+      </label>
     </div>
   </div>
-</div>
 
-<style>
-@keyframes progress-anim {
-  from { width: 0; }
-  to { width: 100%; }
-}
-</style>
+  <!-- User list selection -->
+  <div class="form-group" id="assign-user-section">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.45rem;">
+      <label class="form-label" style="margin: 0;">Danh sách nhân sự</label>
+      <label style="display: flex; align-items: center; gap: 0.3rem; font-size: 0.78rem; cursor: pointer; user-select: none; color: #4f46e5; font-weight: 700;">
+        <input type="checkbox" id="user-select-all" onchange="toggleSelectAllUsers(this)" style="width: 14px; height: 14px; accent-color: #8b5cf6;"> Chọn hết
+      </label>
+    </div>
+    <div style="position: relative; margin-bottom: 0.5rem;">
+      <input type="text" id="user-search" placeholder="Tìm tên hoặc email..." oninput="filterUsers()" style="padding-left: 2rem;">
+      <i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 0.75rem; top: 50%; transform: translateY(-50%); color: #94a3b8; font-size: 0.8rem;"></i>
+    </div>
+    <div id="user-list-container" class="as-select-grid">
+      <% users.forEach(u => { %>
+        <label class="as-select-label user-item" data-search="<%= u.username.toLowerCase() %> <%= u.email.toLowerCase() %>">
+          <input type="checkbox" class="assign-user-cb" value="<%= u.id %>" onchange="updateSelectAllState('user')">
+          <span><%= u.username %> <span style="color:var(--text-muted); font-size:0.76rem; font-weight:normal;">(<%= u.email %>)</span></span>
+        </label>
+      <% }) %>
+    </div>
+  </div>
+
+  <!-- Department list selection -->
+  <div class="form-group" id="assign-dept-section" style="display:none;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.45rem;">
+      <label class="form-label" style="margin: 0;">Danh sách phòng ban</label>
+      <label style="display: flex; align-items: center; gap: 0.3rem; font-size: 0.78rem; cursor: pointer; user-select: none; color: #4f46e5; font-weight: 700;">
+        <input type="checkbox" id="dept-select-all" onchange="toggleSelectAllDepts(this)" style="width: 14px; height: 14px; accent-color: #8b5cf6;"> Chọn hết
+      </label>
+    </div>
+    <div style="position: relative; margin-bottom: 0.5rem;">
+      <input type="text" id="dept-search" placeholder="Tìm tên phòng ban..." oninput="filterDepts()" style="padding-left: 2rem;">
+      <i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 0.75rem; top: 50%; transform: translateY(-50%); color: #94a3b8; font-size: 0.8rem;"></i>
+    </div>
+    <div id="dept-list-container" class="as-select-grid">
+      <% departments.forEach(d => { %>
+        <label class="as-select-label dept-item" data-search="<%= d.name.toLowerCase() %>">
+          <input type="checkbox" class="assign-dept-cb" value="<%= d.id %>" onchange="updateSelectAllState('dept')">
+          <span><%= d.name %></span>
+        </label>
+      <% }) %>
+    </div>
+  </div>
+
+  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.85rem; margin-bottom: 1.25rem;">
+    <div class="form-group" style="margin-bottom: 0;">
+      <label class="form-label">Thời điểm mở đề</label>
+      <input type="datetime-local" id="assign-starttime">
+    </div>
+    <div class="form-group" style="margin-bottom: 0;">
+      <label class="form-label">Hạn hoàn thành</label>
+      <input type="datetime-local" id="assign-deadline">
+    </div>
+  </div>
+
+  <div style="display: flex; gap: 0.5rem; justify-content: flex-end; border-top: 1px solid #f1f5f9; padding-top: 1.1rem; margin-top: 0.5rem;">
+    <button onclick="closeAssignModal()" class="btn btn-secondary" style="border-radius: 8px;">Hủy</button>
+    <button onclick="submitAssign()" class="btn btn-primary" id="btn-assign-submit" style="border-radius: 8px; display: inline-flex; align-items: center; gap: 0.45rem;">
+      <i class="fa-solid fa-paper-plane"></i> Giao bài thi
+    </button>
+  </div>
+</div>
 
 <script>
-let currentAssignType = 'user';
-let currentCreateType = 'ai';
+  let currentAssignType = 'user';
+  let currentCreateType = 'ai';
 
-function openCreateModal() {
-  document.getElementById('modal-create').style.display = 'block';
-  document.body.style.overflow = 'hidden';
-  switchCreateType('ai'); // Default to AI
-}
-
-function switchCreateType(type) {
-  currentCreateType = type;
-  const btnAi = document.getElementById('btn-create-type-ai');
-  const btnManual = document.getElementById('btn-create-type-manual');
-  const sectionAi = document.getElementById('create-section-ai');
-  const countInput = document.getElementById('create-count');
-  const countGroup = countInput ? countInput.closest('.form-group') : null;
-  const textSubmit = document.getElementById('text-create-submit');
-  const iconSubmit = document.getElementById('icon-create-submit');
-  const headerIcon = document.getElementById('header-create-icon');
-  const headerText = document.getElementById('header-create-text');
-  
-  if (type === 'ai') {
-    btnAi.style.border = '2px solid #8b5cf6';
-    btnAi.style.background = 'rgba(139,92,246,0.1)';
-    btnAi.style.color = '#a5b4fc';
-    btnManual.style.border = '1px solid var(--border-light)';
-    btnManual.style.background = 'transparent';
-    btnManual.style.color = 'var(--text-muted)';
-    
-    if (sectionAi) sectionAi.style.display = '';
-    if (countGroup) countGroup.style.display = '';
-    if (textSubmit) textSubmit.textContent = 'AI Sinh Câu Hỏi & Tạo Bài';
-    if (iconSubmit) {
-      iconSubmit.className = 'fa-solid fa-brain';
-    }
-    if (headerIcon) {
-      headerIcon.className = 'fa-solid fa-wand-magic-sparkles';
-      headerIcon.style.color = '#8b5cf6';
-    }
-    if (headerText) headerText.textContent = 'Tạo Bài Kiểm Tra Mới Bằng AI';
-  } else {
-    btnManual.style.border = '2px solid #8b5cf6';
-    btnManual.style.background = 'rgba(139,92,246,0.1)';
-    btnManual.style.color = '#a5b4fc';
-    btnAi.style.border = '1px solid var(--border-light)';
-    btnAi.style.background = 'transparent';
-    btnAi.style.color = 'var(--text-muted)';
-    
-    if (sectionAi) sectionAi.style.display = 'none';
-    if (countGroup) countGroup.style.display = 'none';
-    if (textSubmit) textSubmit.textContent = 'Tạo Bài & Tự Soạn Câu Hỏi';
-    if (iconSubmit) {
-      iconSubmit.className = 'fa-solid fa-keyboard';
-    }
-    if (headerIcon) {
-      headerIcon.className = 'fa-solid fa-keyboard';
-      headerIcon.style.color = '#6366f1';
-    }
-    if (headerText) headerText.textContent = 'Tạo Bài Kiểm Tra Thủ Công';
+  function showModal(id) {
+    document.getElementById(id).style.display = 'block';
+    document.getElementById('as-overlay').style.display = 'block';
+    document.body.style.overflow = 'hidden';
   }
-}
-function closeCreateModal() {
-  document.getElementById('modal-create').style.display = 'none';
-  document.body.style.overflow = '';
-}
-function openAssignModal(id, title) {
-  document.getElementById('assign-assessment-id').value = id;
-  document.getElementById('assign-title-display').textContent = title;
-  
-  // Reset checkboxes
-  document.querySelectorAll('.assign-user-cb, .assign-dept-cb').forEach(cb => cb.checked = false);
-  document.getElementById('user-select-all').checked = false;
-  document.getElementById('dept-select-all').checked = false;
-  
-  // Reset search inputs
-  document.getElementById('user-search').value = '';
-  document.getElementById('dept-search').value = '';
-  filterUsers();
-  filterDepts();
-  
-  // Reset date times
-  document.getElementById('assign-starttime').value = '';
-  document.getElementById('assign-deadline').value = '';
-  
-  document.getElementById('modal-assign').style.display = 'block';
-  document.body.style.overflow = 'hidden';
-}
-
-function filterUsers() {
-  const query = document.getElementById('user-search').value.toLowerCase().trim();
-  const items = document.querySelectorAll('#user-list-container .user-item');
-  items.forEach(item => {
-    const text = item.getAttribute('data-search') || '';
-    if (text.includes(query)) {
-      item.style.display = 'flex';
-    } else {
-      item.style.display = 'none';
-    }
-  });
-  updateSelectAllState('user');
-}
-
-function toggleSelectAllUsers(selectAllCb) {
-  const items = document.querySelectorAll('#user-list-container .user-item');
-  items.forEach(item => {
-    if (item.style.display !== 'none') {
-      const cb = item.querySelector('.assign-user-cb');
-      cb.checked = selectAllCb.checked;
-    }
-  });
-}
-
-function filterDepts() {
-  const query = document.getElementById('dept-search').value.toLowerCase().trim();
-  const items = document.querySelectorAll('#dept-list-container .dept-item');
-  items.forEach(item => {
-    const text = item.getAttribute('data-search') || '';
-    if (text.includes(query)) {
-      item.style.display = 'flex';
-    } else {
-      item.style.display = 'none';
-    }
-  });
-  updateSelectAllState('dept');
-}
-
-function toggleSelectAllDepts(selectAllCb) {
-  const items = document.querySelectorAll('#dept-list-container .dept-item');
-  items.forEach(item => {
-    if (item.style.display !== 'none') {
-      const cb = item.querySelector('.assign-dept-cb');
-      cb.checked = selectAllCb.checked;
-    }
-  });
-}
-
-function updateSelectAllState(type) {
-  const items = document.querySelectorAll(type === 'user' ? '#user-list-container .user-item' : '#dept-list-container .dept-item');
-  const visibleItems = Array.from(items).filter(item => item.style.display !== 'none');
-  const selectAllCb = document.getElementById(type === 'user' ? 'user-select-all' : 'dept-select-all');
-  
-  if (visibleItems.length === 0) {
-    selectAllCb.checked = false;
-    return;
+  function hideModal(id) {
+    document.getElementById(id).style.display = 'none';
+    document.getElementById('as-overlay').style.display = 'none';
+    document.body.style.overflow = '';
   }
-  
-  const cbClass = type === 'user' ? '.assign-user-cb' : '.assign-dept-cb';
-  const allChecked = visibleItems.every(item => item.querySelector(cbClass).checked);
-  selectAllCb.checked = allChecked;
-}
-
-function closeAssignModal() {
-  document.getElementById('modal-assign').style.display = 'none';
-  document.body.style.overflow = '';
-}
-function switchAssignType(type) {
-  currentAssignType = type;
-  const userSection = document.getElementById('assign-user-section');
-  const deptSection = document.getElementById('assign-dept-section');
-  const tabUser = document.getElementById('tab-user');
-  const tabDept = document.getElementById('tab-dept');
-  if (type === 'user') {
-    userSection.style.display = '';
-    deptSection.style.display = 'none';
-    tabUser.style.border = '2px solid #8b5cf6';
-    tabUser.style.background = 'rgba(139,92,246,0.1)';
-    tabDept.style.border = '1px solid var(--border-light)';
-    tabDept.style.background = 'transparent';
-  } else {
-    userSection.style.display = 'none';
-    deptSection.style.display = '';
-    tabDept.style.border = '2px solid #8b5cf6';
-    tabDept.style.background = 'rgba(139,92,246,0.1)';
-    tabUser.style.border = '1px solid var(--border-light)';
-    tabUser.style.background = 'transparent';
-  }
-}
-
-function showFlash(msg, type = 'success') {
-  const fc = document.getElementById('flash-container');
-  fc.innerHTML = `<div style="margin-bottom:1.5rem; padding:1rem 1.25rem; border-radius:10px; background:${type==='error'?'rgba(239,68,68,0.12)':'rgba(16,185,129,0.12)'}; border:1px solid ${type==='error'?'#f87171':'#10b981'}; color:${type==='error'?'#fca5a5':'#6ee7b7'};">
-    <i class="fa-solid fa-${type==='error'?'circle-exclamation':'circle-check'}" style="margin-right:0.5rem;"></i>${msg}
-  </div>`;
-  fc.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  setTimeout(() => { fc.innerHTML = ''; }, 7000);
-}
-
-async function submitCreateAssessment() {
-  const title = document.getElementById('create-title').value.trim();
-  const description = document.getElementById('create-desc').value.trim();
-  const checkedCourses = [...document.querySelectorAll('input[name="courseIds"]:checked')].map(cb => cb.value);
-  const count = document.getElementById('create-count').value;
-  const duration = document.getElementById('create-duration').value;
-  const passing = document.getElementById('create-passing').value;
-
-  if (!title) return alert('Vui lòng nhập tiêu đề bài kiểm tra.');
-  if (currentCreateType === 'ai' && checkedCourses.length === 0) {
-    return alert('Vui lòng chọn ít nhất 1 khóa học nguồn.');
-  }
-
-  // Show loading
-  const textSubmit = document.getElementById('text-create-submit');
-  if (currentCreateType === 'ai') {
-    document.getElementById('create-loading').style.display = 'block';
-    const bar = document.getElementById('progress-bar');
-    bar.style.animation = 'none'; bar.offsetHeight;
-    bar.style.animation = 'progress-anim 60s linear forwards';
-  }
-  
-  document.getElementById('btn-create-submit').disabled = true;
-  if (textSubmit) textSubmit.textContent = 'Đang xử lý...';
-
-  try {
-    const res = await fetch('/admin/assessments/create', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        type: currentCreateType,
-        title,
-        description,
-        courseIds: currentCreateType === 'ai' ? checkedCourses : [],
-        questionCount: count,
-        durationMinutes: duration,
-        passingScore: passing
-      })
-    });
-    const data = await res.json();
+  function closeAllModals() {
     closeCreateModal();
-    if (data.success) {
-      showFlash(data.message);
-      // Chuyển hướng đến trang chi tiết của bài kiểm tra mới tạo
-      setTimeout(() => window.location.href = `/admin/assessments/${data.assessmentId}`, 1000);
+    closeAssignModal();
+  }
+
+  function openCreateModal() {
+    showModal('modal-create');
+    switchCreateType('ai');
+  }
+  function closeCreateModal() {
+    hideModal('modal-create');
+  }
+
+  function switchCreateType(type) {
+    currentCreateType = type;
+    const btnAi = document.getElementById('btn-create-type-ai');
+    const btnManual = document.getElementById('btn-create-type-manual');
+    const sectionAi = document.getElementById('create-section-ai');
+    const countInput = document.getElementById('create-count');
+    const countGroup = countInput ? countInput.closest('.form-group') : null;
+    const textSubmit = document.getElementById('text-create-submit');
+    const iconSubmit = document.getElementById('icon-create-submit');
+    const headerIcon = document.getElementById('header-create-icon');
+    const headerText = document.getElementById('header-create-text');
+    
+    if (type === 'ai') {
+      btnAi.className = "as-btn-action assign";
+      btnAi.style.borderWidth = "2px";
+      btnManual.className = "as-btn-action";
+      btnManual.style.borderWidth = "1px";
+      
+      if (sectionAi) sectionAi.style.display = '';
+      if (countGroup) countGroup.style.display = '';
+      if (textSubmit) textSubmit.textContent = 'Tạo đề thi bằng AI';
+      if (iconSubmit) iconSubmit.className = 'fa-solid fa-brain';
+      if (headerIcon) {
+        headerIcon.className = 'fa-solid fa-wand-magic-sparkles';
+        headerIcon.style.color = '#8b5cf6';
+      }
+      if (headerText) headerText.textContent = 'Tạo Bài Kiểm Tra Bằng AI';
     } else {
-      showFlash(data.error || 'Có lỗi xảy ra.', 'error');
-    }
-  } catch (err) {
-    closeCreateModal();
-    showFlash('Lỗi kết nối máy chủ: ' + err.message, 'error');
-  } finally {
-    document.getElementById('create-loading').style.display = 'none';
-    document.getElementById('btn-create-submit').disabled = false;
-    if (textSubmit) {
-      textSubmit.textContent = currentCreateType === 'ai' ? 'AI Sinh Câu Hỏi & Tạo Bài' : 'Tạo Bài & Tự Soạn Câu Hỏi';
+      btnManual.className = "as-btn-action assign";
+      btnManual.style.borderWidth = "2px";
+      btnAi.className = "as-btn-action";
+      btnAi.style.borderWidth = "1px";
+      
+      if (sectionAi) sectionAi.style.display = 'none';
+      if (countGroup) countGroup.style.display = 'none';
+      if (textSubmit) textSubmit.textContent = 'Tạo đề thi thủ công';
+      if (iconSubmit) iconSubmit.className = 'fa-solid fa-keyboard';
+      if (headerIcon) {
+        headerIcon.className = 'fa-solid fa-keyboard';
+        headerIcon.style.color = '#6366f1';
+      }
+      if (headerText) headerText.textContent = 'Tạo Bài Kiểm Tra Thủ Công';
     }
   }
-}
 
-async function submitAssign() {
-  const assessmentId = document.getElementById('assign-assessment-id').value;
-  const startTime = document.getElementById('assign-starttime').value;
-  const deadline = document.getElementById('assign-deadline').value;
-  const cbClass = currentAssignType === 'user' ? '.assign-user-cb' : '.assign-dept-cb';
-  const targetIds = [...document.querySelectorAll(`${cbClass}:checked`)].map(cb => cb.value);
+  function openAssignModal(id, title) {
+    document.getElementById('assign-assessment-id').value = id;
+    document.getElementById('assign-title-display').textContent = title;
+    
+    // Reset checkboxes
+    document.querySelectorAll('.assign-user-cb, .assign-dept-cb').forEach(cb => cb.checked = false);
+    document.getElementById('user-select-all').checked = false;
+    document.getElementById('dept-select-all').checked = false;
+    
+    // Reset search
+    document.getElementById('user-search').value = '';
+    document.getElementById('dept-search').value = '';
+    filterUsers();
+    filterDepts();
+    
+    // Reset dates
+    document.getElementById('assign-starttime').value = '';
+    document.getElementById('assign-deadline').value = '';
+    
+    showModal('modal-assign');
+  }
 
-  if (targetIds.length === 0) return alert('Vui lòng chọn ít nhất 1 ' + (currentAssignType === 'user' ? 'người dùng' : 'phòng ban') + '.');
+  function closeAssignModal() {
+    hideModal('modal-assign');
+  }
 
-  document.getElementById('btn-assign-submit').disabled = true;
-  document.getElementById('btn-assign-submit').innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Đang gửi...';
-
-  try {
-    const res = await fetch(`/admin/assessments/${assessmentId}/assign`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ assessmentId, targetType: currentAssignType, targetIds, startTime: startTime || null, deadline: deadline || null })
+  function filterUsers() {
+    const query = document.getElementById('user-search').value.toLowerCase().trim();
+    const items = document.querySelectorAll('#user-list-container .user-item');
+    items.forEach(item => {
+      const text = item.getAttribute('data-search') || '';
+      item.style.display = text.includes(query) ? 'flex' : 'none';
     });
-    const data = await res.json();
-    closeAssignModal();
-    if (data.success) {
-      showFlash(data.message);
-    } else {
-      showFlash(data.error || 'Có lỗi xảy ra.', 'error');
-    }
-  } catch (err) {
-    closeAssignModal();
-    showFlash('Lỗi kết nối: ' + err.message, 'error');
-  } finally {
-    document.getElementById('btn-assign-submit').disabled = false;
-    document.getElementById('btn-assign-submit').innerHTML = '<i class="fa-solid fa-paper-plane" style="margin-right:0.4rem;"></i> Gửi Bài Kiểm Tra';
+    updateSelectAllState('user');
   }
-}
 
-function switchAssessmentTab(tab) {
-  // Cập nhật kiểu dáng cho nút tab tích cực
-  const btnPublished = document.getElementById('tab-btn-published');
-  const btnDraft = document.getElementById('tab-btn-draft');
-  
-  if (!btnPublished || !btnDraft) return;
-
-  if (tab === 'published') {
-    btnPublished.style.borderBottom = '2px solid #8b5cf6';
-    btnPublished.style.background = 'rgba(139,92,246,0.1)';
-    btnPublished.style.color = '#a5b4fc';
-    
-    btnDraft.style.borderBottom = '2px solid transparent';
-    btnDraft.style.background = 'transparent';
-    btnDraft.style.color = 'var(--text-muted)';
-  } else {
-    btnDraft.style.borderBottom = '2px solid #8b5cf6';
-    btnDraft.style.background = 'rgba(139,92,246,0.1)';
-    btnDraft.style.color = '#a5b4fc';
-    
-    btnPublished.style.borderBottom = '2px solid transparent';
-    btnPublished.style.background = 'transparent';
-    btnPublished.style.color = 'var(--text-muted)';
+  function toggleSelectAllUsers(selectAllCb) {
+    const items = document.querySelectorAll('#user-list-container .user-item');
+    items.forEach(item => {
+      if (item.style.display !== 'none') {
+        item.querySelector('.assign-user-cb').checked = selectAllCb.checked;
+      }
+    });
   }
-  
-  // Lọc hiển thị các dòng tương ứng
-  let visibleCount = 0;
-  const rows = document.querySelectorAll('.assessment-row');
-  rows.forEach(row => {
-    if (row.dataset.status === tab) {
-      row.style.display = '';
-      visibleCount++;
-    } else {
-      row.style.display = 'none';
+
+  function filterDepts() {
+    const query = document.getElementById('dept-search').value.toLowerCase().trim();
+    const items = document.querySelectorAll('#dept-list-container .dept-item');
+    items.forEach(item => {
+      const text = item.getAttribute('data-search') || '';
+      item.style.display = text.includes(query) ? 'flex' : 'none';
+    });
+    updateSelectAllState('dept');
+  }
+
+  function toggleSelectAllDepts(selectAllCb) {
+    const items = document.querySelectorAll('#dept-list-container .dept-item');
+    items.forEach(item => {
+      if (item.style.display !== 'none') {
+        item.querySelector('.assign-dept-cb').checked = selectAllCb.checked;
+      }
+    });
+  }
+
+  function updateSelectAllState(type) {
+    const items = document.querySelectorAll(type === 'user' ? '#user-list-container .user-item' : '#dept-list-container .dept-item');
+    const visibleItems = Array.from(items).filter(item => item.style.display !== 'none');
+    const selectAllCb = document.getElementById(type === 'user' ? 'user-select-all' : 'dept-select-all');
+    
+    if (visibleItems.length === 0) {
+      selectAllCb.checked = false;
+      return;
     }
+    
+    const cbClass = type === 'user' ? '.assign-user-cb' : '.assign-dept-cb';
+    const allChecked = visibleItems.every(item => item.querySelector(cbClass).checked);
+    selectAllCb.checked = allChecked;
+  }
+
+  function switchAssignType(type) {
+    currentAssignType = type;
+    const userSection = document.getElementById('assign-user-section');
+    const deptSection = document.getElementById('assign-dept-section');
+    const tabUser = document.getElementById('tab-user');
+    const tabDept = document.getElementById('tab-dept');
+    if (type === 'user') {
+      userSection.style.display = '';
+      deptSection.style.display = 'none';
+      tabUser.className = 'as-btn-action assign';
+      tabUser.style.borderWidth = '2px';
+      tabDept.className = 'as-btn-action';
+      tabDept.style.borderWidth = '1px';
+    } else {
+      userSection.style.display = 'none';
+      deptSection.style.display = '';
+      tabDept.className = 'as-btn-action assign';
+      tabDept.style.borderWidth = '2px';
+      tabUser.className = 'as-btn-action';
+      tabUser.style.borderWidth = '1px';
+    }
+  }
+
+  function showFlash(msg, type = 'success') {
+    const fc = document.getElementById('flash-container');
+    fc.innerHTML = `<div class="as-alert ${type === 'error' ? 'as-alert-error' : 'as-alert-success'}">
+      <i class="fa-solid fa-${type === 'error' ? 'circle-exclamation' : 'circle-check'}"></i>
+      <span>${msg}</span>
+    </div>`;
+    fc.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    setTimeout(() => { fc.innerHTML = ''; }, 6000);
+  }
+
+  async function submitCreateAssessment() {
+    const title = document.getElementById('create-title').value.trim();
+    const description = document.getElementById('create-desc').value.trim();
+    const checkedCourses = [...document.querySelectorAll('input[name="courseIds"]:checked')].map(cb => cb.value);
+    const count = document.getElementById('create-count').value;
+    const duration = document.getElementById('create-duration').value;
+    const passing = document.getElementById('create-passing').value;
+
+    if (!title) return alert('Vui lòng nhập tiêu đề bài kiểm tra.');
+    if (currentCreateType === 'ai' && checkedCourses.length === 0) {
+      return alert('Vui lòng chọn ít nhất 1 khóa học nguồn.');
+    }
+
+    const textSubmit = document.getElementById('text-create-submit');
+    if (currentCreateType === 'ai') {
+      document.getElementById('create-loading').style.display = 'block';
+      const bar = document.getElementById('progress-bar');
+      bar.style.animation = 'none'; bar.offsetHeight;
+      bar.style.animation = 'progress-anim 60s linear forwards';
+    }
+    
+    document.getElementById('btn-create-submit').disabled = true;
+    if (textSubmit) textSubmit.textContent = 'Đang xử lý...';
+
+    try {
+      const res = await fetch('/admin/assessments/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: currentCreateType,
+          title,
+          description,
+          courseIds: currentCreateType === 'ai' ? checkedCourses : [],
+          questionCount: count,
+          durationMinutes: duration,
+          passingScore: passing
+        })
+      });
+      const data = await res.json();
+      closeCreateModal();
+      if (data.success) {
+        showFlash(data.message);
+        setTimeout(() => window.location.href = `/admin/assessments/${data.assessmentId}`, 1000);
+      } else {
+        showFlash(data.error || 'Có lỗi xảy ra.', 'error');
+      }
+    } catch (err) {
+      closeCreateModal();
+      showFlash('Lỗi kết nối máy chủ: ' + err.message, 'error');
+    } finally {
+      document.getElementById('create-loading').style.display = 'none';
+      document.getElementById('btn-create-submit').disabled = false;
+      if (textSubmit) {
+        textSubmit.textContent = currentCreateType === 'ai' ? 'Tạo đề thi bằng AI' : 'Tạo đề thi thủ công';
+      }
+    }
+  }
+
+  async function submitAssign() {
+    const assessmentId = document.getElementById('assign-assessment-id').value;
+    const startTime = document.getElementById('assign-starttime').value;
+    const deadline = document.getElementById('assign-deadline').value;
+    const cbClass = currentAssignType === 'user' ? '.assign-user-cb' : '.assign-dept-cb';
+    const targetIds = [...document.querySelectorAll(`${cbClass}:checked`)].map(cb => cb.value);
+
+    if (targetIds.length === 0) return alert('Vui lòng chọn ít nhất 1 ' + (currentAssignType === 'user' ? 'nhân sự' : 'phòng ban') + '.');
+
+    const submitBtn = document.getElementById('btn-assign-submit');
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Đang giao...';
+
+    try {
+      const res = await fetch(`/admin/assessments/${assessmentId}/assign`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ assessmentId, targetType: currentAssignType, targetIds, startTime: startTime || null, deadline: deadline || null })
+      });
+      const data = await res.json();
+      closeAssignModal();
+      if (data.success) {
+        showFlash(data.message);
+      } else {
+        showFlash(data.error || 'Có lỗi xảy ra.', 'error');
+      }
+    } catch (err) {
+      closeAssignModal();
+      showFlash('Lỗi kết nối: ' + err.message, 'error');
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Giao bài thi';
+    }
+  }
+
+  function switchAssessmentTab(tab) {
+    const btnPublished = document.getElementById('tab-btn-published');
+    const btnDraft = document.getElementById('tab-btn-draft');
+    if (!btnPublished || !btnDraft) return;
+
+    if (tab === 'published') {
+      btnPublished.classList.add('active');
+      btnDraft.classList.remove('active');
+    } else {
+      btnDraft.classList.add('active');
+      btnPublished.classList.remove('active');
+    }
+    
+    let visibleCount = 0;
+    const rows = document.querySelectorAll('.assessment-row');
+    rows.forEach(row => {
+      const match = row.dataset.status === tab;
+      row.style.display = match ? '' : 'none';
+      if (match) visibleCount++;
+    });
+    
+    const emptyPublished = document.getElementById('empty-published');
+    const emptyDraft = document.getElementById('empty-draft');
+    const tableEl = document.getElementById('assessments-table');
+    
+    if (emptyPublished) emptyPublished.style.display = 'none';
+    if (emptyDraft) emptyDraft.style.display = 'none';
+    
+    if (visibleCount === 0) {
+      if (tableEl) tableEl.style.display = 'none';
+      if (tab === 'published' && emptyPublished) {
+        emptyPublished.style.display = 'block';
+      } else if (tab === 'draft' && emptyDraft) {
+        emptyDraft.style.display = 'block';
+      }
+    } else {
+      if (tableEl) tableEl.style.display = '';
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    switchAssessmentTab('published');
   });
-  
-  // Hiển thị/ẩn trạng thái trống (empty state)
-  const emptyPublished = document.getElementById('empty-published');
-  const emptyDraft = document.getElementById('empty-draft');
-  const tableEl = document.getElementById('assessments-table');
-  
-  if (emptyPublished) emptyPublished.style.display = 'none';
-  if (emptyDraft) emptyDraft.style.display = 'none';
-  
-  if (visibleCount === 0) {
-    if (tableEl) tableEl.style.display = 'none';
-    if (tab === 'published' && emptyPublished) {
-      emptyPublished.style.display = 'block';
-    } else if (tab === 'draft' && emptyDraft) {
-      emptyDraft.style.display = 'block';
-    }
-  } else {
-    if (tableEl) tableEl.style.display = '';
-  }
-}
-
-// Khởi chạy tab đã xuất bản khi tải trang hoàn tất
-document.addEventListener('DOMContentLoaded', () => {
-  switchAssessmentTab('published');
-});
-
-// Đóng modal khi click nền
-document.getElementById('modal-create').addEventListener('click', function(e) {
-  if (e.target === this) closeCreateModal();
-});
-document.getElementById('modal-assign').addEventListener('click', function(e) {
-  if (e.target === this) closeAssignModal();
-});
 </script>
 
 <%- include('../partials/footer') %>

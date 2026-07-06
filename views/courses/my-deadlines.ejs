@@ -1,269 +1,405 @@
-﻿<%- include('../partials/header') %>
-
-<div style="margin-bottom: 2rem;">
-  <h1 style="font-size: 1.55rem; font-weight: 700; color: var(--text-main);">
-    Lịch Học & Deadline
-  </h1>
-  <p style="color: var(--text-muted); margin-top: 0.25rem;">
-    Theo dõi thời hạn và lịch trình học tập bắt buộc để đảm bảo hoàn thành KPI đào tạo doanh nghiệp.
-  </p>
-</div>
+<%- include('../partials/header') %>
 
 <style>
-  .deadline-tabs {
-    display: flex;
-    gap: 1rem;
+  /* ── Page header ── */
+  .dl-header {
+    padding: 2rem 0 1.5rem;
     border-bottom: 1px solid var(--border-light);
-    margin-bottom: 1.5rem;
-    padding-bottom: 0.25rem;
+    margin-bottom: 1.75rem;
   }
-  .deadline-tab-btn {
-    background: none;
-    border: none;
-    padding: 0.75rem 1.25rem;
-    font-family: var(--font-title);
-    font-weight: 700;
-    font-size: 1.05rem;
-    color: var(--text-muted);
-    cursor: pointer;
-    position: relative;
-    transition: var(--transition-smooth);
+  .dl-title { font-size: 1.45rem; font-weight: 700; color: var(--text-main); margin: 0 0 0.3rem; letter-spacing: -0.3px; }
+  .dl-sub   { font-size: 0.88rem; color: var(--text-muted); margin: 0; }
+
+  /* ── Stats strip ── */
+  .dl-stats {
     display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    border-radius: 8px 8px 0 0;
-  }
-  .deadline-tab-btn:hover {
-    color: var(--text-accent);
-    background: rgba(79, 70, 229, 0.04);
-  }
-  .deadline-tab-btn.active {
-    color: var(--text-accent);
-  }
-  .deadline-tab-btn.active::after {
-    content: '';
-    position: absolute;
-    bottom: -5px;
-    left: 0;
-    width: 100%;
-    height: 3px;
-    background: var(--primary-gradient);
-    border-radius: 3px;
-  }
-  .tab-badge {
-    font-size: 0.75rem;
-    font-weight: 600;
-    padding: 0.15rem 0.5rem;
-    border-radius: 20px;
-    color: #fff;
-    transition: var(--transition-smooth);
-  }
-  .tab-badge.incomplete {
-    background: var(--alert-gradient);
-  }
-  .tab-badge.completed {
-    background: var(--secondary-gradient);
-  }
-  
-  .deadline-item-card {
-    background: var(--bg-card);
     border: 1px solid var(--border-light);
     border-radius: 12px;
-    padding: 1.25rem;
+    overflow: hidden;
+    background: #fff;
+    margin-bottom: 1.75rem;
+  }
+  .dl-stat {
+    flex: 1;
+    padding: 0.9rem 1.1rem;
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    gap: 1.5rem;
-    flex-wrap: wrap;
-    transition: var(--transition-smooth);
+    gap: 0.7rem;
+    border-right: 1px solid var(--border-light);
+    transition: background 0.18s;
   }
-  .deadline-item-card:hover {
+  .dl-stat:last-child { border-right: none; }
+  .dl-stat:hover { background: #f8fafc; }
+  .dl-stat-icon {
+    width: 34px; height: 34px;
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.8rem; flex-shrink: 0;
+  }
+  .dl-stat-icon.red    { background: #fff1f2; color: #ef4444; }
+  .dl-stat-icon.amber  { background: #fffbeb; color: #f59e0b; }
+  .dl-stat-icon.green  { background: #f0fdf4; color: #22c55e; }
+  .dl-stat-icon.blue   { background: #eff6ff; color: #3b82f6; }
+  .dl-stat-val   { font-size: 1.15rem; font-weight: 700; color: var(--text-main); display: block; line-height: 1; }
+  .dl-stat-label { font-size: 0.72rem; color: var(--text-muted); margin-top: 0.15rem; display: block; }
+
+  /* ── Tabs ── */
+  .dl-tabs {
+    display: flex;
+    gap: 0;
+    border-bottom: 2px solid var(--border-light);
+    margin-bottom: 1.5rem;
+  }
+  .dl-tab-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.7rem 1.15rem;
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -2px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: color 0.18s, border-color 0.18s;
+    white-space: nowrap;
+  }
+  .dl-tab-btn:hover { color: var(--text-main); }
+  .dl-tab-btn.active { color: #6366f1; border-bottom-color: #6366f1; }
+  .dl-tab-btn.active.red-tab  { color: #ef4444; border-bottom-color: #ef4444; }
+  .dl-tab-btn.active.green-tab{ color: #22c55e; border-bottom-color: #22c55e; }
+  .dl-tab-count {
+    font-size: 0.68rem; font-weight: 700;
+    padding: 0.1rem 0.4rem;
+    border-radius: 20px;
+    background: #f1f5f9; color: var(--text-muted);
+    transition: all 0.18s;
+  }
+  .dl-tab-btn.active.red-tab   .dl-tab-count { background: #fee2e2; color: #ef4444; }
+  .dl-tab-btn.active.green-tab .dl-tab-count { background: #dcfce7; color: #16a34a; }
+
+  /* ── Item card ── */
+  .dl-item {
+    background: #fff;
+    border: 1px solid var(--border-light);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    padding: 1rem 1.15rem;
+    flex-wrap: wrap;
+    transition: box-shadow 0.2s, transform 0.2s;
+  }
+  .dl-item:hover {
+    box-shadow: 0 4px 16px rgba(0,0,0,0.06);
     transform: translateY(-2px);
-    border-color: var(--border-glow);
-    box-shadow: var(--shadow-hover);
-    background: rgba(255, 255, 255, 0.98);
+  }
+  .dl-item.overdue  { border-left: 4px solid #ef4444; }
+  .dl-item.warning  { border-left: 4px solid #f59e0b; }
+  .dl-item.active-c { border-left: 4px solid #3b82f6; }
+  .dl-item.unlimited{ border-left: 4px solid #0d9488; }
+  .dl-item.done     { border-left: 4px solid #22c55e; }
+
+  /* Thumbnail */
+  .dl-thumb {
+    width: 64px; height: 46px;
+    border-radius: 8px;
+    object-fit: cover;
+    border: 1px solid var(--border-light);
+    flex-shrink: 0;
+    background: #f1f5f9;
+  }
+
+  /* Info block */
+  .dl-info { flex: 2; min-width: 200px; }
+  .dl-info-title {
+    font-size: 0.92rem; font-weight: 700;
+    color: var(--text-main); margin: 0 0 0.25rem;
+    display: -webkit-box; -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical; overflow: hidden;
+  }
+  .dl-info-sub { font-size: 0.75rem; color: var(--text-muted); margin: 0; }
+  .dl-type-tag {
+    display: inline-flex; align-items: center; gap: 0.2rem;
+    font-size: 0.65rem; font-weight: 600;
+    padding: 0.12rem 0.4rem; border-radius: 4px; margin-left: 0.4rem;
+  }
+  .dl-type-tag.assigned { background: #fff1f2; color: #dc2626; }
+  .dl-type-tag.self     { background: #f0fdf4; color: #16a34a; }
+
+  /* Progress block */
+  .dl-progress { flex: 1; min-width: 130px; }
+  .dl-progress-row {
+    display: flex; justify-content: space-between;
+    font-size: 0.72rem; color: var(--text-muted); margin-bottom: 0.3rem;
+  }
+  .dl-progress-pct { font-weight: 700; color: #22c55e; }
+  .dl-bar-wrap { height: 5px; background: #f1f5f9; border-radius: 99px; overflow: hidden; }
+  .dl-bar-fill { height: 100%; border-radius: 99px; background: #22c55e; transition: width 0.4s; }
+
+  /* Deadline block */
+  .dl-deadline { flex: 1; min-width: 160px; }
+  .dl-deadline-label { font-size: 0.72rem; color: var(--text-muted); margin-bottom: 0.2rem; }
+  .dl-deadline-date  { font-size: 0.85rem; font-weight: 700; color: var(--text-main); margin-bottom: 0.35rem; display: flex; align-items: center; gap: 0.3rem; }
+  .dl-status-badge {
+    display: inline-flex; align-items: center; gap: 0.25rem;
+    font-size: 0.68rem; font-weight: 700;
+    padding: 0.18rem 0.5rem; border-radius: 5px;
+  }
+  .dl-status-badge.overdue   { background: #fff1f2; color: #ef4444; border: 1px solid #fecdd3; }
+  .dl-status-badge.warning   { background: #fffbeb; color: #d97706; border: 1px solid #fde68a; }
+  .dl-status-badge.active-s  { background: #eff6ff; color: #3b82f6; border: 1px solid #bfdbfe; }
+  .dl-status-badge.unlimited { background: #f0fdfa; color: #0d9488; border: 1px solid #99f6e4; }
+  .dl-status-badge.done      { background: #f0fdf4; color: #16a34a; border: 1px solid #bbf7d0; }
+
+  /* Action button */
+  .dl-action { flex-shrink: 0; }
+  .dl-btn {
+    display: inline-flex; align-items: center; gap: 0.3rem;
+    padding: 0.4rem 0.9rem;
+    border-radius: 8px; font-size: 0.78rem; font-weight: 600;
+    text-decoration: none; border: none; cursor: pointer; transition: all 0.18s;
+  }
+  .dl-btn-primary { background: #6366f1; color: #fff; }
+  .dl-btn-primary:hover { background: #4f46e5; }
+  .dl-btn-outline { background: #f1f5f9; color: var(--text-main); }
+  .dl-btn-outline:hover { background: #e2e8f0; }
+
+  /* List gap */
+  .dl-list { display: flex; flex-direction: column; gap: 0.75rem; }
+
+  /* Empty state */
+  .dl-empty { text-align: center; padding: 3.5rem 2rem; border: 1px dashed var(--border-light); border-radius: 12px; background: #fafafa; }
+  .dl-empty-icon { font-size: 1.75rem; color: var(--text-muted); opacity: 0.3; margin-bottom: 0.75rem; }
+  .dl-empty h3 { font-size: 0.95rem; color: var(--text-main); margin: 0 0 0.35rem; }
+  .dl-empty p  { font-size: 0.82rem; color: var(--text-muted); margin: 0 0 1rem; }
+
+  @media (max-width: 640px) {
+    .dl-stats { flex-direction: column; }
+    .dl-stat  { border-right: none; border-bottom: 1px solid var(--border-light); }
+    .dl-stat:last-child { border-bottom: none; }
+    .dl-item  { flex-direction: column; align-items: flex-start; }
+    .dl-action { width: 100%; }
+    .dl-btn   { width: 100%; justify-content: center; }
   }
 </style>
 
-<div class="glass-card" style="padding: 2rem;">
-  <h2 style="font-size: 1.3rem; font-weight: 700; color: var(--text-main); margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem;">
-    <i class="fa-solid fa-calendar-check" style="color: #ef4444;"></i> Lịch trình hoàn thành bắt buộc
-  </h2>
-
-  <% if (deadlines.length === 0) { %>
-    <div style="text-align: center; padding: 4rem 1rem;">
-      <i class="fa-solid fa-calendar-xmark fa-3x" style="color: var(--text-muted); margin-bottom: 1rem;"></i>
-      <p style="color: var(--text-muted); font-size: 0.9rem;">Bạn chưa đăng ký hoặc chưa được giao khóa học bắt buộc nào.</p>
-      <a href="/courses" class="btn btn-primary" style="margin-top: 1rem;">Đăng ký khóa học ngay</a>
-    </div>
-  <% } else { %>
-    <%
-      const incomplete = deadlines.filter(item => item.progress < 100);
-      const completed = deadlines.filter(item => item.progress === 100);
-    %>
-
-    <!-- Tabs Navigation -->
-    <div class="deadline-tabs">
-      <button class="deadline-tab-btn active" id="incomplete-btn" onclick="switchDeadlineTab('incomplete')">
-        <i class="fa-solid fa-hourglass-half"></i> Chưa hoàn thành
-        <span class="tab-badge incomplete"><%= incomplete.length %></span>
-      </button>
-      <button class="deadline-tab-btn" id="completed-btn" onclick="switchDeadlineTab('completed')">
-        <i class="fa-solid fa-circle-check"></i> Đã hoàn thành
-        <span class="tab-badge completed"><%= completed.length %></span>
-      </button>
-    </div>
-
-    <!-- Tab content: Incomplete -->
-    <div id="incomplete-tab" class="deadline-tab-content">
-      <% if (incomplete.length === 0) { %>
-        <div style="text-align: center; padding: 3rem 1rem;">
-          <i class="fa-solid fa-circle-check fa-3x" style="color: #10b981; margin-bottom: 1rem;"></i>
-          <p style="color: var(--text-muted); font-size: 0.95rem; font-weight: 600;">Tuyệt vời! Bạn đã hoàn thành tất cả các khóa học hiện tại.</p>
-        </div>
-      <% } else { %>
-        <div style="display: flex; flex-direction: column; gap: 1rem;">
-          <% incomplete.forEach(item => { %>
-            <div class="deadline-item-card" style="
-              <% if (item.status === 'overdue') { %> border-left: 4px solid #ef4444; <% } %>
-              <% if (item.status === 'warning') { %> border-left: 4px solid #f59e0b; <% } %>
-              <% if (item.status === 'active') { %> border-left: 4px solid #3b82f6; <% } %>
-              <% if (item.status === 'unlimited') { %> border-left: 4px solid #0d9488; <% } %>
-            ">
-              <!-- Thông tin khóa học -->
-              <div style="display: flex; align-items: center; gap: 1rem; flex: 2; min-width: 250px;">
-                <img src="<%= item.image_url %>" alt="<%= item.title %>" style="width: 70px; height: 50px; object-fit: cover; border-radius: 8px; border: 1px solid var(--border-light); flex-shrink: 0;">
-                <div>
-                  <h4 style="font-size: 1.05rem; font-weight: 700; margin: 0; color: var(--text-main);"><%= item.title %></h4>
-                  <p style="font-size: 0.8rem; color: var(--text-muted); margin: 0.25rem 0 0 0;">
-                    Thể loại: <strong><%= item.is_assigned ? 'HR Chỉ định bắt buộc' : 'Đăng ký tự nguyện' %></strong>
-                  </p>
-                </div>
-              </div>
-
-              <!-- Tiến độ -->
-              <div style="flex: 1; min-width: 150px;">
-                <div style="display: flex; justify-content: space-between; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.25rem;">
-                  <span>Tiến độ:</span>
-                  <span style="font-weight: 700; color: #10b981;"><%= item.progress %>%</span>
-                </div>
-                <div class="progress-container" style="height: 6px;">
-                  <div class="progress-bar" style="width: <%= item.progress %>%;"></div>
-                </div>
-              </div>
-
-              <!-- Mốc Deadline và Số ngày còn lại -->
-              <div style="flex: 1; min-width: 180px; text-align: left;">
-                <div style="font-size: 0.8rem; color: var(--text-muted);">Hạn chót hoàn thành:</div>
-                <div style="font-size: 0.95rem; font-weight: 700; color: var(--text-main); margin-top: 0.15rem;">
-                  <i class="fa-solid <%= item.status === 'unlimited' ? 'fa-infinity' : 'fa-clock' %>" style="margin-right: 0.25rem;"></i> <%= item.deadlineDate %>
-                </div>
-                
-                <div style="margin-top: 0.4rem;">
-                  <% if (item.status === 'unlimited') { %>
-                    <span style="font-size: 0.72rem; font-weight: 700; background: rgba(13, 148, 136, 0.1); color: #0d9488; border: 1px solid rgba(13, 148, 136, 0.2); padding: 0.2rem 0.5rem; border-radius: 6px;">
-                      <i class="fa-solid fa-infinity"></i> Tự học: Không giới hạn
-                    </span>
-                  <% } else if (item.status === 'overdue') { %>
-                    <span style="font-size: 0.72rem; font-weight: 700; background: rgba(239, 68, 68, 0.1); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.2); padding: 0.2rem 0.5rem; border-radius: 6px;">
-                      <i class="fa-solid fa-circle-exclamation"></i> Quá hạn <%= Math.abs(item.daysRemaining) %> ngày
-                    </span>
-                  <% } else if (item.status === 'warning') { %>
-                    <span style="font-size: 0.72rem; font-weight: 700; background: rgba(245, 158, 11, 0.1); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.2); padding: 0.2rem 0.5rem; border-radius: 6px;">
-                      <i class="fa-solid fa-circle-nodes"></i> Cấp bách: Còn <%= item.daysRemaining %> ngày
-                    </span>
-                  <% } else { %>
-                    <span style="font-size: 0.72rem; font-weight: 700; background: rgba(59, 130, 246, 0.1); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.2); padding: 0.2rem 0.5rem; border-radius: 6px;">
-                      <i class="fa-solid fa-circle-play"></i> Đang học: Còn <%= item.daysRemaining %> ngày
-                    </span>
-                  <% } %>
-                </div>
-              </div>
-
-              <!-- Nút hành động -->
-              <div style="flex-shrink: 0; min-width: 100px; text-align: right;">
-                <a href="/courses/<%= item.course_id %>/lessons/1" class="btn btn-primary" style="padding: 0.5rem 1rem; font-size: 0.8rem;">
-                  <i class="fa-solid fa-door-open"></i> Vào học
-                </a>
-              </div>
-            </div>
-          <% }) %>
-        </div>
-      <% } %>
-    </div>
-
-    <!-- Tab content: Completed -->
-    <div id="completed-tab" class="deadline-tab-content" style="display: none;">
-      <% if (completed.length === 0) { %>
-        <div style="text-align: center; padding: 3rem 1rem;">
-          <i class="fa-solid fa-hourglass-start fa-3x" style="color: var(--text-muted); margin-bottom: 1rem;"></i>
-          <p style="color: var(--text-muted); font-size: 0.95rem;">Bạn chưa hoàn thành khóa học nào trong danh sách này.</p>
-        </div>
-      <% } else { %>
-        <div style="display: flex; flex-direction: column; gap: 1rem;">
-          <% completed.forEach(item => { %>
-            <div class="deadline-item-card" style="border-left: 4px solid #10b981;">
-              <!-- Thông tin khóa học -->
-              <div style="display: flex; align-items: center; gap: 1rem; flex: 2; min-width: 250px;">
-                <img src="<%= item.image_url %>" alt="<%= item.title %>" style="width: 70px; height: 50px; object-fit: cover; border-radius: 8px; border: 1px solid var(--border-light); flex-shrink: 0;">
-                <div>
-                  <h4 style="font-size: 1.05rem; font-weight: 700; margin: 0; color: var(--text-main);"><%= item.title %></h4>
-                  <p style="font-size: 0.8rem; color: var(--text-muted); margin: 0.25rem 0 0 0;">
-                    Thể loại: <strong><%= item.is_assigned ? 'HR Chỉ định bắt buộc' : 'Đăng ký tự nguyện' %></strong>
-                  </p>
-                </div>
-              </div>
-
-              <!-- Tiến độ -->
-              <div style="flex: 1; min-width: 150px;">
-                <div style="display: flex; justify-content: space-between; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.25rem;">
-                  <span>Tiến độ:</span>
-                  <span style="font-weight: 700; color: #10b981;"><%= item.progress %>%</span>
-                </div>
-                <div class="progress-container" style="height: 6px;">
-                  <div class="progress-bar" style="width: <%= item.progress %>%;"></div>
-                </div>
-              </div>
-
-              <!-- Mốc Deadline và Số ngày còn lại -->
-              <div style="flex: 1; min-width: 180px; text-align: left;">
-                <div style="font-size: 0.8rem; color: var(--text-muted);">Hạn chót hoàn thành:</div>
-                <div style="font-size: 0.95rem; font-weight: 700; color: var(--text-main); margin-top: 0.15rem;">
-                  <i class="fa-solid <%= item.status === 'unlimited' ? 'fa-infinity' : 'fa-clock' %>" style="margin-right: 0.25rem;"></i> <%= item.deadlineDate %>
-                </div>
-                
-                <div style="margin-top: 0.4rem;">
-                  <span style="font-size: 0.72rem; font-weight: 700; background: rgba(16, 185, 129, 0.1); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.2); padding: 0.2rem 0.5rem; border-radius: 6px;">
-                    <i class="fa-solid fa-circle-check"></i> Đã hoàn thành
-                  </span>
-                </div>
-              </div>
-
-              <!-- Nút hành động -->
-              <div style="flex-shrink: 0; min-width: 100px; text-align: right;">
-                <a href="/courses/<%= item.course_id %>/lessons/1" class="btn btn-primary" style="padding: 0.5rem 1rem; font-size: 0.8rem;">
-                  <i class="fa-solid fa-door-open"></i> Vào học
-                </a>
-              </div>
-            </div>
-          <% }) %>
-        </div>
-      <% } %>
-    </div>
-  <% } %>
+<!-- Page header -->
+<div class="dl-header">
+  <h1 class="dl-title">Lịch Học & Deadline</h1>
+  <p class="dl-sub">Theo dõi thời hạn và lịch trình học tập bắt buộc để đảm bảo hoàn thành KPI đào tạo doanh nghiệp.</p>
 </div>
 
+<%
+  const incomplete = deadlines.filter(d => d.progress < 100);
+  const completed  = deadlines.filter(d => d.progress === 100);
+  const overdue    = incomplete.filter(d => d.status === 'overdue');
+  const warning    = incomplete.filter(d => d.status === 'warning');
+%>
+
+<!-- Stats strip -->
+<div class="dl-stats">
+  <div class="dl-stat">
+    <div class="dl-stat-icon red"><i class="fa-solid fa-circle-exclamation"></i></div>
+    <div>
+      <span class="dl-stat-val"><%= overdue.length %></span>
+      <span class="dl-stat-label">Quá hạn</span>
+    </div>
+  </div>
+  <div class="dl-stat">
+    <div class="dl-stat-icon amber"><i class="fa-solid fa-triangle-exclamation"></i></div>
+    <div>
+      <span class="dl-stat-val"><%= warning.length %></span>
+      <span class="dl-stat-label">Sắp đến hạn</span>
+    </div>
+  </div>
+  <div class="dl-stat">
+    <div class="dl-stat-icon blue"><i class="fa-solid fa-spinner"></i></div>
+    <div>
+      <span class="dl-stat-val"><%= incomplete.length %></span>
+      <span class="dl-stat-label">Chưa hoàn thành</span>
+    </div>
+  </div>
+  <div class="dl-stat">
+    <div class="dl-stat-icon green"><i class="fa-solid fa-circle-check"></i></div>
+    <div>
+      <span class="dl-stat-val"><%= completed.length %></span>
+      <span class="dl-stat-label">Đã hoàn thành</span>
+    </div>
+  </div>
+</div>
+
+<% if (deadlines.length === 0) { %>
+  <div class="dl-empty">
+    <div class="dl-empty-icon"><i class="fa-solid fa-calendar-xmark"></i></div>
+    <h3>Bạn chưa có khóa học nào trong danh sách</h3>
+    <p>Đăng ký hoặc được giao khóa học để theo dõi lịch học và deadline.</p>
+    <a href="/courses" class="dl-btn dl-btn-primary"><i class="fa-solid fa-book"></i> Khám phá khóa học</a>
+  </div>
+<% } else { %>
+
+  <!-- Tabs -->
+  <div class="dl-tabs">
+    <button class="dl-tab-btn red-tab active" id="dl-btn-incomplete" onclick="dlTab('incomplete')">
+      <i class="fa-solid fa-hourglass-half"></i>
+      Chưa hoàn thành
+      <span class="dl-tab-count"><%= incomplete.length %></span>
+    </button>
+    <button class="dl-tab-btn green-tab" id="dl-btn-completed" onclick="dlTab('completed')">
+      <i class="fa-solid fa-circle-check"></i>
+      Đã hoàn thành
+      <span class="dl-tab-count"><%= completed.length %></span>
+    </button>
+  </div>
+
+  <!-- ── Tab: Incomplete ── -->
+  <div id="dl-tab-incomplete" class="dl-tab-pane">
+    <% if (incomplete.length === 0) { %>
+      <div class="dl-empty">
+        <div class="dl-empty-icon"><i class="fa-solid fa-party-horn"></i></div>
+        <h3>Tuyệt vời! Bạn đã hoàn thành tất cả khóa học.</h3>
+        <p>Không còn deadline nào đang chờ bạn. Tiếp tục duy trì phong độ nhé!</p>
+      </div>
+    <% } else { %>
+      <div class="dl-list">
+        <% incomplete.forEach(item => { %>
+          <div class="dl-item <%= item.status === 'overdue' ? 'overdue' : item.status === 'warning' ? 'warning' : item.status === 'unlimited' ? 'unlimited' : 'active-c' %>">
+
+            <!-- Thumbnail -->
+            <img class="dl-thumb"
+              src="<%= item.image_url %>"
+              onerror="this.onerror=null;this.src='/images/default_course.svg'"
+              alt="<%= item.title %>">
+
+            <!-- Info -->
+            <div class="dl-info">
+              <div class="dl-info-title"><%= item.title %></div>
+              <p class="dl-info-sub">
+                Loại:
+                <span class="dl-type-tag <%= item.is_assigned ? 'assigned' : 'self' %>">
+                  <i class="fa-solid <%= item.is_assigned ? 'fa-thumbtack' : 'fa-user-plus' %>"></i>
+                  <%= item.is_assigned ? 'Bắt buộc' : 'Tự nguyện' %>
+                </span>
+              </p>
+            </div>
+
+            <!-- Progress -->
+            <div class="dl-progress">
+              <div class="dl-progress-row">
+                <span>Tiến độ</span>
+                <span class="dl-progress-pct"><%= item.progress %>%</span>
+              </div>
+              <div class="dl-bar-wrap">
+                <div class="dl-bar-fill" style="width:<%= item.progress %>%"></div>
+              </div>
+            </div>
+
+            <!-- Deadline -->
+            <div class="dl-deadline">
+              <div class="dl-deadline-label">Hạn chót</div>
+              <div class="dl-deadline-date">
+                <i class="fa-solid <%= item.status === 'unlimited' ? 'fa-infinity' : 'fa-clock' %>"></i>
+                <%= item.deadlineDate %>
+              </div>
+              <% if (item.status === 'unlimited') { %>
+                <span class="dl-status-badge unlimited"><i class="fa-solid fa-infinity"></i> Không giới hạn</span>
+              <% } else if (item.status === 'overdue') { %>
+                <span class="dl-status-badge overdue"><i class="fa-solid fa-circle-exclamation"></i> Quá hạn <%= Math.abs(item.daysRemaining) %> ngày</span>
+              <% } else if (item.status === 'warning') { %>
+                <span class="dl-status-badge warning"><i class="fa-solid fa-triangle-exclamation"></i> Còn <%= item.daysRemaining %> ngày</span>
+              <% } else { %>
+                <span class="dl-status-badge active-s"><i class="fa-solid fa-circle-play"></i> Còn <%= item.daysRemaining %> ngày</span>
+              <% } %>
+            </div>
+
+            <!-- Action -->
+            <div class="dl-action">
+              <a href="/courses/<%= item.course_id %>/lessons/1" class="dl-btn dl-btn-primary">
+                <i class="fa-solid fa-play"></i> Vào học
+              </a>
+            </div>
+
+          </div>
+        <% }) %>
+      </div>
+    <% } %>
+  </div>
+
+  <!-- ── Tab: Completed ── -->
+  <div id="dl-tab-completed" class="dl-tab-pane" style="display:none">
+    <% if (completed.length === 0) { %>
+      <div class="dl-empty">
+        <div class="dl-empty-icon"><i class="fa-solid fa-hourglass-start"></i></div>
+        <h3>Bạn chưa hoàn thành khóa học nào</h3>
+        <p>Hãy bắt đầu học để hoàn thành và ghi nhận thành tựu của bạn.</p>
+      </div>
+    <% } else { %>
+      <div class="dl-list">
+        <% completed.forEach(item => { %>
+          <div class="dl-item done">
+
+            <!-- Thumbnail -->
+            <img class="dl-thumb"
+              src="<%= item.image_url %>"
+              onerror="this.onerror=null;this.src='/images/default_course.svg'"
+              alt="<%= item.title %>">
+
+            <!-- Info -->
+            <div class="dl-info">
+              <div class="dl-info-title"><%= item.title %></div>
+              <p class="dl-info-sub">
+                Loại:
+                <span class="dl-type-tag <%= item.is_assigned ? 'assigned' : 'self' %>">
+                  <i class="fa-solid <%= item.is_assigned ? 'fa-thumbtack' : 'fa-user-plus' %>"></i>
+                  <%= item.is_assigned ? 'Bắt buộc' : 'Tự nguyện' %>
+                </span>
+              </p>
+            </div>
+
+            <!-- Progress -->
+            <div class="dl-progress">
+              <div class="dl-progress-row">
+                <span>Tiến độ</span>
+                <span class="dl-progress-pct">100%</span>
+              </div>
+              <div class="dl-bar-wrap">
+                <div class="dl-bar-fill" style="width:100%"></div>
+              </div>
+            </div>
+
+            <!-- Deadline -->
+            <div class="dl-deadline">
+              <div class="dl-deadline-label">Hạn chót</div>
+              <div class="dl-deadline-date">
+                <i class="fa-solid <%= item.status === 'unlimited' ? 'fa-infinity' : 'fa-clock' %>"></i>
+                <%= item.deadlineDate %>
+              </div>
+              <span class="dl-status-badge done"><i class="fa-solid fa-circle-check"></i> Đã hoàn thành</span>
+            </div>
+
+            <!-- Action -->
+            <div class="dl-action">
+              <a href="/courses/<%= item.course_id %>/lessons/1" class="dl-btn dl-btn-outline">
+                <i class="fa-solid fa-rotate-right"></i> Ôn tập
+              </a>
+            </div>
+
+          </div>
+        <% }) %>
+      </div>
+    <% } %>
+  </div>
+
+<% } %>
+
 <script>
-  function switchDeadlineTab(tabName) {
-    document.querySelectorAll('.deadline-tab-content').forEach(el => {
-      el.style.display = 'none';
-    });
-    document.querySelectorAll('.deadline-tab-btn').forEach(btn => {
-      btn.classList.remove('active');
-    });
-    
-    document.getElementById(tabName + '-tab').style.display = 'block';
-    document.getElementById(tabName + '-btn').classList.add('active');
+  function dlTab(name) {
+    document.querySelectorAll('.dl-tab-pane').forEach(p => p.style.display = 'none');
+    document.querySelectorAll('.dl-tab-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('dl-tab-' + name).style.display = 'block';
+    document.getElementById('dl-btn-' + name).classList.add('active');
   }
 </script>
 

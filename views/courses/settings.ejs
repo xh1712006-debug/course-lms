@@ -1,142 +1,323 @@
-﻿<%- include('../partials/header') %>
+<%- include('../partials/header') %>
 
-<div style="margin-bottom: 2rem;">
-  <h1 style="font-size: 1.55rem; font-weight: 700; color: var(--text-main);">
-    Cài Đặt Tài Khoản
-  </h1>
-  <p style="color: var(--text-muted); margin-top: 0.25rem;">
-    Quản lý thông tin cá nhân và thay đổi mật khẩu đăng nhập hệ thống LMS.
-  </p>
+<style>
+  /* ── Page header ── */
+  .set-header {
+    padding: 2rem 0 1.5rem;
+    border-bottom: 1px solid var(--border-light);
+    margin-bottom: 1.75rem;
+  }
+  .set-title  { font-size: 1.45rem; font-weight: 700; color: var(--text-main); margin: 0 0 0.3rem; letter-spacing: -0.3px; }
+  .set-sub    { font-size: 0.88rem; color: var(--text-muted); margin: 0; }
+
+  /* ── Alert ── */
+  .set-alert {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    padding: 0.75rem 1rem;
+    border-radius: 9px;
+    font-size: 0.84rem;
+    font-weight: 500;
+    margin-bottom: 1.5rem;
+  }
+  .set-alert-success { background: #f0fdf4; border: 1px solid #bbf7d0; color: #16a34a; }
+  .set-alert-error   { background: #fff1f2; border: 1px solid #fecdd3; color: #dc2626; }
+
+  /* ── Grid ── */
+  .set-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.25rem;
+    align-items: start;
+  }
+  @media (max-width: 860px) { .set-grid { grid-template-columns: 1fr; } }
+
+  /* ── Cards ── */
+  .set-card {
+    background: #fff;
+    border: 1px solid var(--border-light);
+    border-radius: 14px;
+    overflow: hidden;
+  }
+  .set-card-head {
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid var(--border-light);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.92rem;
+    font-weight: 700;
+    color: var(--text-main);
+  }
+  .set-card-head i { font-size: 0.85rem; }
+  .set-card-body  { padding: 1.25rem; }
+
+  /* ── Profile card ── */
+  .set-avatar-row {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding-bottom: 1.1rem;
+    margin-bottom: 1.1rem;
+    border-bottom: 1px solid var(--border-light);
+  }
+  .set-avatar {
+    width: 56px; height: 56px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #e0e7ff, #ddd6fe);
+    border: 1px solid #c7d2fe;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: #4f46e5;
+    flex-shrink: 0;
+  }
+  .set-username { font-size: 1.05rem; font-weight: 700; color: var(--text-main); margin: 0 0 0.15rem; }
+  .set-email    { font-size: 0.8rem;  color: var(--text-muted); margin: 0; }
+
+  .set-meta-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+  }
+  .set-meta-item {}
+  .set-meta-label {
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #94a3b8;
+    display: block;
+    margin-bottom: 0.25rem;
+  }
+  .set-meta-value {
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--text-main);
+    display: block;
+  }
+  .set-status-ok {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    color: #16a34a;
+    font-size: 0.88rem;
+    font-weight: 600;
+  }
+
+  /* ── Password form ── */
+  .set-form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    margin-bottom: 1rem;
+  }
+  .set-form-label {
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #94a3b8;
+  }
+  .set-input-wrap {
+    position: relative;
+  }
+  .set-input-wrap i {
+    position: absolute;
+    left: 0.875rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #94a3b8;
+    font-size: 0.78rem;
+    pointer-events: none;
+  }
+  .set-input-wrap input {
+    width: 100%;
+    padding: 0.62rem 0.875rem 0.62rem 2.35rem;
+    border: 1px solid var(--border-light);
+    border-radius: 9px;
+    font-size: 0.875rem;
+    color: var(--text-main);
+    background: #fff;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    box-sizing: border-box;
+  }
+  .set-input-wrap input:focus {
+    border-color: #6366f1;
+    box-shadow: 0 0 0 3px rgba(99,102,241,0.1);
+  }
+  .set-hint {
+    font-size: 0.72rem;
+    color: #94a3b8;
+    margin: 0;
+  }
+  .set-submit {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    width: 100%;
+    padding: 0.65rem 1rem;
+    background: #6366f1;
+    color: #fff;
+    border: none;
+    border-radius: 9px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.18s;
+    margin-top: 0.5rem;
+  }
+  .set-submit:hover { background: #4f46e5; }
+
+  /* ── Info notice ── */
+  .set-notice {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.55rem;
+    padding: 0.7rem 0.875rem;
+    background: #f8fafc;
+    border: 1px solid var(--border-light);
+    border-radius: 8px;
+    font-size: 0.77rem;
+    color: var(--text-muted);
+    margin-top: 1rem;
+  }
+  .set-notice i { margin-top: 1px; flex-shrink: 0; color: #94a3b8; }
+</style>
+
+<!-- Page header -->
+<div class="set-header">
+  <h1 class="set-title">Cài Đặt Tài Khoản</h1>
+  <p class="set-sub">Quản lý thông tin cá nhân và thay đổi mật khẩu đăng nhập hệ thống LMS.</p>
 </div>
 
-<!-- Thông báo thành công / lỗi -->
+<!-- Alerts -->
 <% if (success) { %>
-  <div class="alert-banner alert-success" style="margin-bottom: 1.5rem; padding: 1rem 1.5rem; border-radius: 12px; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); color: #10b981; display: flex; align-items: center; gap: 0.75rem;">
+  <div class="set-alert set-alert-success" id="set-alert">
     <i class="fa-solid fa-circle-check"></i>
     <span><%= success %></span>
   </div>
 <% } %>
 <% if (error) { %>
-  <div class="alert-banner alert-error" style="margin-bottom: 1.5rem; padding: 1rem 1.5rem; border-radius: 12px; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); color: #f87171; display: flex; align-items: center; gap: 0.75rem;">
+  <div class="set-alert set-alert-error" id="set-alert">
     <i class="fa-solid fa-circle-exclamation"></i>
     <span><%= error %></span>
   </div>
 <% } %>
 
-<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; align-items: start;">
-  
-  <!-- Hồ sơ người dùng -->
-  <div class="glass-card" style="padding: 2rem;">
-    <h2 style="font-size: 1.3rem; font-weight: 700; color: #f1f5f9; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem;">
-      <i class="fa-solid fa-user-gear" style="color: #6366f1;"></i> Thông tin tài khoản
-    </h2>
-    
-    <div style="display: flex; flex-direction: column; gap: 1.25rem;">
-      <div style="display: flex; align-items: center; gap: 1.25rem; border-bottom: 1px solid var(--border-light); padding-bottom: 1.25rem;">
-        <div style="width: 64px; height: 64px; border-radius: 50%; background: linear-gradient(135deg, rgba(99,102,241,0.2), rgba(139,92,246,0.2)); border: 1px solid rgba(99,102,241,0.3); display: flex; align-items: center; justify-content: center; font-size: 1.8rem; color: #818cf8; font-weight: 800;">
-          <%= userDetails.username.charAt(0).toUpperCase() %>
-        </div>
+<!-- Grid -->
+<div class="set-grid">
+
+  <!-- ── Left: Profile info ── -->
+  <div class="set-card">
+    <div class="set-card-head">
+      <i class="fa-solid fa-user-gear" style="color:#6366f1"></i>
+      Thông tin tài khoản
+    </div>
+    <div class="set-card-body">
+
+      <!-- Avatar + name -->
+      <div class="set-avatar-row">
+        <div class="set-avatar"><%= userDetails.username.charAt(0).toUpperCase() %></div>
         <div>
-          <h3 style="font-size: 1.2rem; font-weight: 700; margin: 0; color: #f8fafc;"><%= userDetails.username %></h3>
-          <span style="font-size: 0.8rem; color: var(--text-muted);"><%= userDetails.email %></span>
+          <p class="set-username"><%= userDetails.username %></p>
+          <p class="set-email"><%= userDetails.email %></p>
         </div>
       </div>
-      
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-        <div>
-          <span style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; display: block;">Vai trò hiện tại</span>
-          <strong style="color: #f1f5f9; font-size: 0.95rem; display: block; margin-top: 0.2rem;"><%= userDetails.role_name %></strong>
+
+      <!-- Meta grid -->
+      <div class="set-meta-grid">
+        <div class="set-meta-item">
+          <span class="set-meta-label">Vai trò</span>
+          <span class="set-meta-value"><%= userDetails.role_name %></span>
         </div>
-        <div>
-          <span style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; display: block;">Phòng ban</span>
-          <strong style="color: #f1f5f9; font-size: 0.95rem; display: block; margin-top: 0.2rem;"><%= userDetails.department_name || 'Chưa chỉ định' %></strong>
+        <div class="set-meta-item">
+          <span class="set-meta-label">Phòng ban</span>
+          <span class="set-meta-value"><%= userDetails.department_name || 'Chưa gán' %></span>
         </div>
-        <div>
-          <span style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; display: block;">Trạng thái hoạt động</span>
-          <strong style="color: #10b981; font-size: 0.95rem; display: block; margin-top: 0.2rem;">
-            <i class="fa-solid fa-circle-check" style="margin-right: 0.2rem;"></i> Đang hoạt động
-          </strong>
+        <div class="set-meta-item">
+          <span class="set-meta-label">Trạng thái</span>
+          <span class="set-status-ok">
+            <i class="fa-solid fa-circle" style="font-size:0.45rem"></i> Đang hoạt động
+          </span>
         </div>
-        <div>
-          <span style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; display: block;">Ngày tham gia</span>
-          <strong style="color: #cbd5e1; font-size: 0.95rem; display: block; margin-top: 0.2rem;">
+        <div class="set-meta-item">
+          <span class="set-meta-label">Ngày tham gia</span>
+          <span class="set-meta-value" style="color:#64748b">
             <%= new Date(userDetails.created_at).toLocaleDateString('vi-VN') %>
-          </strong>
+          </span>
         </div>
       </div>
+
+      <!-- Notice -->
+      <div class="set-notice">
+        <i class="fa-solid fa-circle-info"></i>
+        <span>Thông tin tài khoản được quản lý bởi bộ phận HR. Liên hệ Admin nếu cần thay đổi.</span>
+      </div>
+
     </div>
   </div>
-  
-  <!-- Thay đổi mật khẩu -->
-  <div class="glass-card" style="padding: 2rem;">
-    <h2 style="font-size: 1.3rem; font-weight: 700; color: #f1f5f9; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem;">
-      <i class="fa-solid fa-lock" style="color: #a78bfa;"></i> Bảo mật & Đổi mật khẩu
-    </h2>
-    
-    <form action="/settings/change-password" method="POST">
-      <div style="display: flex; flex-direction: column; gap: 1.25rem;">
-        
-        <div>
-          <label style="display: block; font-size: 0.8rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.4rem; text-transform: uppercase; letter-spacing: 0.05em;" for="oldPassword">
-            Mật khẩu hiện tại
-          </label>
-          <input 
-            type="password" 
-            name="oldPassword" 
-            id="oldPassword"
-            placeholder="Nhập mật khẩu hiện tại"
-            required
-            style="width: 100%; padding: 0.75rem 1rem; background: rgba(255,255,255,0.05); border: 1px solid var(--border-light); border-radius: 10px; color: var(--text-main); font-size: 0.9rem; outline: none;"
-          >
+
+  <!-- ── Right: Change password ── -->
+  <div class="set-card">
+    <div class="set-card-head">
+      <i class="fa-solid fa-lock" style="color:#8b5cf6"></i>
+      Bảo mật & Đổi mật khẩu
+    </div>
+    <div class="set-card-body">
+      <form action="/settings/change-password" method="POST">
+
+        <div class="set-form-group">
+          <label class="set-form-label" for="oldPassword">Mật khẩu hiện tại</label>
+          <div class="set-input-wrap">
+            <i class="fa-solid fa-key"></i>
+            <input type="password" name="oldPassword" id="oldPassword"
+                   placeholder="Nhập mật khẩu hiện tại" required>
+          </div>
         </div>
-        
-        <div>
-          <label style="display: block; font-size: 0.8rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.4rem; text-transform: uppercase; letter-spacing: 0.05em;" for="newPassword">
-            Mật khẩu mới
-          </label>
-          <input 
-            type="password" 
-            name="newPassword" 
-            id="newPassword"
-            placeholder="Nhập mật khẩu mới (từ 6 ký tự trở lên)"
-            required
-            style="width: 100%; padding: 0.75rem 1rem; background: rgba(255,255,255,0.05); border: 1px solid var(--border-light); border-radius: 10px; color: var(--text-main); font-size: 0.9rem; outline: none;"
-          >
+
+        <div class="set-form-group">
+          <label class="set-form-label" for="newPassword">Mật khẩu mới</label>
+          <div class="set-input-wrap">
+            <i class="fa-solid fa-lock"></i>
+            <input type="password" name="newPassword" id="newPassword"
+                   placeholder="Từ 6 ký tự trở lên" required>
+          </div>
+          <p class="set-hint">Tối thiểu 6 ký tự, nên kết hợp chữ và số.</p>
         </div>
-        
-        <div>
-          <label style="display: block; font-size: 0.8rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.4rem; text-transform: uppercase; letter-spacing: 0.05em;" for="confirmPassword">
-            Xác nhận mật khẩu mới
-          </label>
-          <input 
-            type="password" 
-            name="confirmPassword" 
-            id="confirmPassword"
-            placeholder="Nhập lại mật khẩu mới"
-            required
-            style="width: 100%; padding: 0.75rem 1rem; background: rgba(255,255,255,0.05); border: 1px solid var(--border-light); border-radius: 10px; color: var(--text-main); font-size: 0.9rem; outline: none;"
-          >
+
+        <div class="set-form-group">
+          <label class="set-form-label" for="confirmPassword">Xác nhận mật khẩu mới</label>
+          <div class="set-input-wrap">
+            <i class="fa-solid fa-shield-check"></i>
+            <input type="password" name="confirmPassword" id="confirmPassword"
+                   placeholder="Nhập lại mật khẩu mới" required>
+          </div>
         </div>
-        
-        <button type="submit" class="btn btn-primary" style="padding: 0.85rem; font-size: 0.95rem; margin-top: 0.5rem;">
-          <i class="fa-solid fa-key"></i> Xác nhận đổi mật khẩu
+
+        <button type="submit" class="set-submit">
+          <i class="fa-solid fa-shield-halved"></i> Xác nhận đổi mật khẩu
         </button>
-        
-      </div>
-    </form>
+
+      </form>
+    </div>
   </div>
 
 </div>
 
 <script>
-  // Tự động ẩn alert sau 5 giây
-  setTimeout(() => {
-    document.querySelectorAll('.alert-banner').forEach(el => {
-      el.style.transition = 'opacity 0.5s';
-      el.style.opacity = '0';
-      setTimeout(() => el.remove(), 500);
-    });
-  }, 5000);
+  // Auto-hide alert after 5s
+  const alertEl = document.getElementById('set-alert');
+  if (alertEl) {
+    setTimeout(() => {
+      alertEl.style.transition = 'opacity 0.4s';
+      alertEl.style.opacity = '0';
+      setTimeout(() => alertEl.remove(), 400);
+    }, 5000);
+  }
 </script>
 
 <%- include('../partials/footer') %>

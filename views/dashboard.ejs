@@ -1,4 +1,4 @@
-﻿<%- include('partials/header') %>
+<%- include('partials/header') %>
 
 <div style="margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
   <div>
@@ -347,9 +347,22 @@
         <div style="display: grid; grid-template-columns: 1.8fr 1.2fr; gap: 2.5rem;" class="analytics-grid">
           <!-- Canvas 1: Thống kê đăng ký và hoàn thành của từng khóa học -->
           <div style="position: relative; width: 100%; display: flex; flex-direction: column; justify-content: space-between; overflow: hidden;">
-            <h4 style="font-size: 0.95rem; font-weight: 700; color: var(--text-main); margin-bottom: 1rem; display: flex; align-items: center; gap: 0.4rem;">
+            <h4 style="font-size: 0.95rem; font-weight: 700; color: var(--text-main); margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.4rem;">
               <i class="fa-solid fa-chart-bar" style="color: #4f46e5;"></i> Thống kê lượt đăng ký & hoàn thành của từng khóa học
             </h4>
+            
+            <!-- Custom HTML Legend that is centered and static (does not scroll) -->
+            <div style="display: flex; justify-content: center; gap: 1.5rem; margin-bottom: 0.75rem; font-size: 0.8rem; font-weight: 600; color: #64748b;">
+              <div style="display: flex; align-items: center; gap: 0.4rem;">
+                <span style="display: inline-block; width: 12px; height: 12px; background: rgba(99, 102, 241, 0.8); border: 1px solid #6366f1; border-radius: 3px;"></span>
+                <span>Tổng lượt đăng ký</span>
+              </div>
+              <div style="display: flex; align-items: center; gap: 0.4rem;">
+                <span style="display: inline-block; width: 12px; height: 12px; background: rgba(16, 185, 129, 0.8); border: 1px solid #10b981; border-radius: 3px;"></span>
+                <span>Đã hoàn thành</span>
+              </div>
+            </div>
+
             <div style="display: flex; position: relative; width: 100%; height: 258px; overflow: hidden;">
               <!-- Cột Y-Axis cố định bên trái (nếu có cuộn) -->
               <div style="width: 50px; height: 250px; flex-shrink: 0; position: relative;">
@@ -430,46 +443,200 @@
 
     <!-- Xem nhật ký vết (Audit Logs) gần đây -->
     <% if (hasAuditLog) { %>
+      <%
+        const dashboardActionLabels = {
+          'USER_LOGIN': 'Đăng nhập',
+          'USER_LOGOUT': 'Đăng xuất',
+          'PASSWORD_RESET_REQUESTED': 'Yêu cầu OTP quên mật khẩu',
+          'PASSWORD_RESET_SUCCESS': 'Đặt lại mật khẩu thành công',
+          'USER_CREATE': 'Tạo tài khoản nhân viên',
+          'USER_PROFILE_UPDATE': 'Cập nhật tài khoản',
+          'ROLE_CREATE': 'Tạo vai trò mới',
+          'ROLE_DELETE': 'Xóa vai trò',
+          'ROLE_PERMISSIONS_UPDATE': 'Cập nhật phân quyền',
+          'ROLE_PERMISSION_TOGGLE': 'Thay đổi phân quyền nhanh',
+          'COURSE_CREATE': 'Tạo khóa học mới',
+          'COURSE_UPDATE': 'Cập nhật khóa học',
+          'COURSE_DELETE': 'Xóa khóa học',
+          'COURSE_PUBLISH': 'Thay đổi trạng thái khóa học',
+          'LESSON_CREATE': 'Thêm bài giảng',
+          'LESSON_UPDATE': 'Sửa bài giảng',
+          'LESSON_DELETE': 'Xóa bài giảng',
+          'PATH_CREATE': 'Tạo lộ trình đào tạo',
+          'DEPARTMENT_CREATE': 'Tạo phòng ban mới',
+          'DEPARTMENT_DELETE': 'Xóa phòng ban',
+          'DEPARTMENT_UPDATE': 'Cập nhật phòng ban',
+          'ENROLLMENT_APPROVED': 'Phê duyệt đăng ký khóa học',
+          'ENROLLMENT_REJECTED': 'Từ chối đăng ký khóa học',
+          'USER_IMPERSONATE_START': 'Bắt đầu đóng vai',
+          'USER_IMPERSONATE_END': 'Thoát đóng vai',
+          'RUN_EXPERIMENT_SUCCESS': 'Huấn luyện AI thành công',
+          'RUN_EXPERIMENT_FAILED': 'Huấn luyện AI thất bại',
+          'AI_SUMMARIZE_LESSON': 'AI tóm tắt bài giảng',
+          'AI_CHAT_ASSISTANT': 'Trò chuyện với trợ lý AI',
+          'AI_GENERATE_QUICK_QUIZ': 'AI sinh đề trắc nghiệm nhanh',
+          'AI_GENERATE_QUIZ_TO_BANK': 'AI lưu trắc nghiệm vào DB',
+          'COURSE_ASSIGN_USER': 'Giao khóa học cho nhân sự',
+          'COURSE_ASSIGN_DEPARTMENT': 'Giao khóa học cho phòng ban',
+          'QUIZ_SETTING_UPDATE': 'Cập nhật cài đặt đề thi',
+          'QUIZ_GRADE': 'Chấm điểm đề thi',
+          'QUIZ_SUBMIT': 'Nộp bài thi trắc nghiệm',
+          'PATH_ASSIGN_BULK': 'Giao lộ trình hàng loạt',
+          'ENROLL_REQUEST': 'Yêu cầu đăng ký khóa học',
+          'ENROLL_DIRECT': 'Vào học trực tiếp',
+          'ASSESSMENT_CREATE_MANUAL': 'Tạo bài kiểm tra thủ công',
+          'ASSESSMENT_CREATE_AI': 'Tạo bài kiểm tra bằng AI',
+          'ASSESSMENT_QUESTION_ADD': 'Thêm câu hỏi kiểm tra',
+          'ASSESSMENT_QUESTION_DELETE': 'Xóa câu hỏi kiểm tra',
+          'ASSESSMENT_PUBLISH': 'Xuất bản bài kiểm tra',
+          'ASSESSMENT_DELETE': 'Xóa bài kiểm tra',
+          'ASSESSMENT_ASSIGN': 'Phân phối bài kiểm tra',
+          'ASSESSMENT_SUBMIT': 'Nộp bài kiểm tra doanh nghiệp'
+        };
+
+        const dashboardDetailKeys = {
+          'reason': 'Lý do',
+          'role_id': 'Mã vai trò',
+          'role_name': 'Tên vai trò',
+          'permission': 'Quyền hạn',
+          'is_assigned': 'Gán quyền',
+          'lesson_id': 'Mã bài học',
+          'lesson_title': 'Tên bài học',
+          'course_id': 'Mã khóa học',
+          'course_title': 'Tên khóa học',
+          'user_id': 'Mã nhân viên',
+          'target_user_id': 'Mã nhân viên mục tiêu',
+          'new_user_id': 'Mã nhân viên mới',
+          'username': 'Tên tài khoản',
+          'email': 'Email',
+          'status': 'Trạng thái',
+          'name': 'Tên phòng ban',
+          'parent_id': 'Mã phòng ban cha',
+          'department_id': 'Mã phòng ban',
+          'enrollment_id': 'Mã đăng ký',
+          'experiment_id': 'Mã thực nghiệm',
+          'accuracy': 'Độ chính xác',
+          'loss': 'Độ hao hụt (Loss)',
+          'message_length': 'Độ dài tin nhắn',
+          'questions_count': 'Số lượng câu hỏi',
+          'count': 'Số lượng',
+          'title': 'Tiêu đề',
+          'has_essay': 'Có câu tự luận',
+          'score': 'Điểm số',
+          'is_passed': 'Kết quả đạt',
+          'submission_id': 'Mã bài nộp',
+          'path_id': 'Mã lộ trình',
+          'courses': 'Mã các khóa học',
+          'users': 'Số nhân sự nhận',
+          'target_username': 'Tài khoản bị đóng vai',
+          'original_user_id': 'Mã người quản trị',
+          'original_username': 'Tài khoản quản trị',
+          'error': 'Lỗi chi tiết',
+          'permissions': 'Danh sách quyền',
+          'target_ids': 'Mã đối tượng nhận',
+          'target_type': 'Loại đối tượng giao',
+          'assessment_id': 'Mã bài kiểm tra',
+          'question_id': 'Mã câu hỏi'
+        };
+
+        const dashboardDetailValues = {
+          'user_settings_change': 'Thay đổi cài đặt tài khoản',
+          'active': 'Đang hoạt động',
+          'disabled': 'Vô hiệu hóa',
+          'approved': 'Đã duyệt',
+          'rejected': 'Từ chối',
+          'pending': 'Đang chờ duyệt',
+          'true': 'Đúng / Có / Đạt',
+          'false': 'Sai / Không / Không đạt',
+          'null': 'Không có',
+          'published': 'Xuất bản',
+          'draft': 'Bản nháp',
+          'user': 'Nhân sự',
+          'department': 'Phòng ban'
+        };
+
+        function formatDashboardAuditDetails(details) {
+          if (!details) {
+            return '<span style="color:#94a3b8; font-style:italic;">Không có chi tiết</span>';
+          }
+          
+          let parsedDetails = details;
+          if (typeof details === 'string') {
+            try {
+              parsedDetails = JSON.parse(details);
+            } catch (e) {
+              return details;
+            }
+          }
+          
+          if (!parsedDetails || typeof parsedDetails !== 'object' || Object.keys(parsedDetails).length === 0) {
+            return '<span style="color:#94a3b8; font-style:italic;">Không có chi tiết</span>';
+          }
+          
+          return Object.entries(parsedDetails).map(([key, val]) => {
+            const label = dashboardDetailKeys[key] || key;
+            let displayVal = val;
+            
+            if (val === true) {
+              displayVal = 'Có';
+            } else if (val === false) {
+              displayVal = 'Không';
+            } else if (val === null || val === undefined) {
+              displayVal = 'Rỗng';
+            } else if (Array.isArray(val)) {
+              displayVal = val.join(', ');
+            } else {
+              displayVal = dashboardDetailValues[val] !== undefined ? dashboardDetailValues[val] : val;
+            }
+            
+            return `<span style="display:inline-block; background:#f1f5f9; border:1px solid #e2e8f0; padding:0.1rem 0.35rem; border-radius:5px; margin:0.1rem 0.15rem 0.1rem 0; font-size:0.75rem; color:#475569;"><strong>${label}</strong>: ${displayVal}</span>`;
+          }).join(' ');
+        }
+      %>
       <div>
         <h2 style="font-size: 1.4rem; margin-bottom: 1.25rem; display: flex; align-items: center; justify-content: space-between; color: var(--text-main);">
           <span><i class="fa-solid fa-clock-rotate-left" style="color: #4f46e5;"></i> Nhật ký hoạt động gần đây</span>
-          <a href="/audit" style="font-size: 0.8rem; color: var(--text-accent);">Xem tất cả <i class="fa-solid fa-arrow-right"></i></a>
+          <a href="/audit" style="font-size: 0.8rem; color: var(--text-accent); font-weight: 600; text-decoration: none;">Xem tất cả <i class="fa-solid fa-arrow-right"></i></a>
         </h2>
 
-        <div class="glass-card" style="padding: 1.5rem; overflow-x: auto;">
+        <div class="glass-card" style="padding: 1.5rem; overflow-x: auto; border-radius: 16px;">
           <% if (recentLogs.length === 0) { %>
             <div style="text-align: center; color: var(--text-muted); padding: 2rem;">Chưa có lịch sử hoạt động ghi nhận.</div>
           <% } else { %>
-            <table class="custom-table" style="margin-top: 0; font-size: 0.85rem;">
+            <table class="custom-table" style="margin-top: 0; font-size: 0.85rem; width: 100%;">
               <thead>
                 <tr>
-                  <th>Thời gian</th>
-                  <th>Nhân sự</th>
-                  <th>Hành động</th>
+                  <th style="width: 110px;">Thời gian</th>
+                  <th style="width: 120px;">Nhân sự</th>
+                  <th style="width: 180px;">Hành động</th>
                   <th>Chi tiết</th>
                 </tr>
               </thead>
               <tbody>
                 <% recentLogs.forEach(log => { %>
                   <tr>
-                    <td style="color: var(--text-muted);"><%= new Date(log.created_at).toLocaleTimeString() %></td>
+                    <td style="color: var(--text-muted); white-space: nowrap;"><%= new Date(log.created_at).toLocaleTimeString('vi-VN') %></td>
                     <td><strong><%= log.username || 'Hệ thống' %></strong></td>
                     <td>
                       <% 
-                        let badgeStyle = "background: rgba(79, 70, 229, 0.08); color: var(--text-accent); border: 1px solid rgba(79, 70, 229, 0.2);";
-                        if (log.action.includes('SUCCESS') || log.action === 'USER_LOGIN') {
-                          badgeStyle = "background: rgba(13, 148, 136, 0.08); color: #0d9488; border: 1px solid rgba(13, 148, 136, 0.2);";
-                        } else if (log.action.includes('REQUESTED') || log.action.includes('FAIL')) {
-                          badgeStyle = "background: rgba(234, 88, 12, 0.08); color: #ea580c; border: 1px solid rgba(234, 88, 12, 0.2);";
+                        let badgeStyle = "background: rgba(79, 70, 229, 0.08); color: var(--text-accent); border: 1px solid rgba(79, 70, 229, 0.16);";
+                        if (log.action.includes('SUCCESS') || log.action === 'USER_LOGIN' || log.action.includes('APPROVED')) {
+                          badgeStyle = "background: rgba(16, 185, 129, 0.08); color: #059669; border: 1px solid rgba(16, 185, 129, 0.18);";
+                        } else if (log.action.includes('REQUESTED') || log.action.includes('FAIL') || log.action.includes('REJECTED')) {
+                          badgeStyle = "background: rgba(239, 68, 68, 0.08); color: #dc2626; border: 1px solid rgba(239, 68, 68, 0.18);";
                         } else if (log.action === 'USER_LOGOUT') {
-                          badgeStyle = "background: rgba(100, 116, 139, 0.08); color: #64748b; border: 1px solid rgba(100, 116, 139, 0.2);";
+                          badgeStyle = "background: rgba(100, 116, 139, 0.08); color: #64748b; border: 1px solid rgba(100, 116, 139, 0.18);";
                         }
                       %>
-                      <span style="<%= badgeStyle %> padding: 0.2rem 0.5rem; border-radius: 4px; font-family: monospace; font-size: 0.75rem;">
-                        <%= log.action %>
+                      <span style="<%= badgeStyle %> padding: 0.25rem 0.55rem; border-radius: 6px; font-size: 0.74rem; font-weight: 600; display: inline-block;">
+                        <%= dashboardActionLabels[log.action] || log.action %>
                       </span>
                     </td>
-                    <td style="color: var(--text-muted); font-size: 0.8rem; font-family: monospace; max-width: 300px; overflow-x: auto; white-space: nowrap;"><%= JSON.stringify(log.details) %></td>
+                    <td>
+                      <div style="max-width: 420px; line-height: 1.4; word-break: break-word;">
+                        <%- formatDashboardAuditDetails(log.details) %>
+                      </div>
+                    </td>
                   </tr>
                 <% }) %>
               </tbody>
@@ -930,9 +1097,7 @@
             layout: { padding: { top: 8, bottom: 8 } },
             plugins: {
               legend: {
-                display: true,
-                position: 'top',
-                labels: { boxWidth: 10, font: { family: 'Inter', size: 10 } }
+                display: false
               },
               tooltip: {
                 callbacks: {

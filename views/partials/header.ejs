@@ -254,22 +254,17 @@
 
       <% if (user) { %>
         <!-- Card thông tin cá nhân tích hợp Đăng xuất ở dưới cùng Sidebar -->
-        <div class="user-profile-card" style="padding: 0.85rem 1rem; margin-top: auto; margin-bottom: 0.5rem; display: flex; flex-direction: column; gap: 0.4rem;">
-          <div style="display: flex; align-items: center; justify-content: space-between; gap: 0.5rem;">
-            <div style="display: flex; flex-direction: column; gap: 0.2rem; min-width: 0;">
-              <div style="font-weight: 700; color: var(--text-main); display: flex; align-items: center; gap: 0.4rem; font-size: 0.88rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-                <i class="fa-solid fa-user-astronaut" style="color: #4f46e5; font-size: 0.95rem; flex-shrink: 0;"></i>
-                <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"><%= user.username %></span>
-              </div>
-              <div style="font-size: 0.72rem; color: var(--text-muted); display: flex; align-items: center; gap: 0.4rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-                <i class="fa-solid fa-tag" style="color: #fb7185; font-size: 0.78rem; flex-shrink: 0;"></i>
-                <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"><%= user.roleName %></span>
-              </div>
-            </div>
-            <a href="/auth/logout" class="nav-logout" title="Đăng xuất" style="width: 32px; height: 32px; background: rgba(220, 38, 38, 0.08); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #dc2626; transition: all 0.2s; flex-shrink: 0;" onmouseover="this.style.background='rgba(220, 38, 38, 0.15)'" onmouseout="this.style.background='rgba(220, 38, 38, 0.08)'">
-              <i class="fa-solid fa-arrow-right-from-bracket" style="font-size: 0.9rem;"></i>
-            </a>
+        <div class="sb-profile-card">
+          <div class="sb-avatar">
+            <%= user.username.charAt(0).toUpperCase() %>
           </div>
+          <div class="sb-profile-meta">
+            <span class="sb-profile-name" title="<%= user.username %>"><%= user.username %></span>
+            <span class="sb-profile-role" title="<%= user.roleName %>"><%= user.roleName %></span>
+          </div>
+          <a href="/auth/logout" class="sb-logout-btn" title="Đăng xuất">
+            <i class="fa-solid fa-arrow-right-from-bracket"></i>
+          </a>
         </div>
       <% } %>
 
