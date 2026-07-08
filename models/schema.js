@@ -1165,6 +1165,96 @@ module.exports = {
       `;
       const res = await db.query(sql, [assessmentId]);
       return res.rows;
+    },
+
+    findPagedSubmissions: async ({ search, status, assessmentId, limit = 20, offset = 0 }) => {
+      let whereClauses = [];
+      let params = [];
+      
+      if (search) {
+        params.push(`%${search}%`);
+        whereClauses.push(`(u.username ILIKE $${params.length} OR u.email ILIKE $${params.length} OR a.title ILIKE $${params.length})`);
+      }
+      
+      if (status) {
+        if (status === 'passed') {
+          whereClauses.push(`asub.is_passed = true`);
+        } else if (status === 'failed') {
+          whereClauses.push(`asub.is_passed = false`);
+        }
+      }
+      
+      if (assessmentId) {
+        params.push(parseInt(assessmentId));
+        whereClauses.push(`asub.assessment_id = $${params.length}`);
+      }
+      
+      const whereSQL = whereClauses.length > 0 ? `WHERE ${whereClauses.join(' AND ')}` : '';
+      
+      const countSql = `
+        SELECT COUNT(*)::integer as total
+        FROM assessment_submissions asub
+        JOIN users u ON asub.user_id = u.id
+        JOIN assessments a ON asub.assessment_id = a.id
+        ${whereSQL}
+      `;
+      const countRes = await db.query(countSql, params);
+      const total = countRes.rows[0] ? countRes.rows[0].total : 0;
+      
+      params.push(limit);
+      const limitParamIndex = params.length;
+      params.push(offset);
+      const offsetParamIndex = params.length;
+      
+      const dataSql = `
+        SELECT asub.id, asub.score, asub.is_passed, asub.submitted_at as created_at,
+               u.username, u.email,
+               a.title as quiz_title
+        FROM assessment_submissions asub
+        JOIN users u ON asub.user_id = u.id
+        JOIN assessments a ON asub.assessment_id = a.id
+        ${whereSQL}
+        ORDER BY asub.submitted_at DESC
+        LIMIT $${limitParamIndex} OFFSET $${offsetParamIndex}
+      `;
+      
+      const dataRes = await db.query(dataSql, params);
+      return {
+        total,
+        submissions: dataRes.rows
+      };
+    }
+  },
+
+  // 11. Theo dõi Hoàn thành Bài học (Lesson Completions)
+  LessonCompletion: {
+    create: async (userId, lessonId, courseId) => {
+      const sql = `
+        INSERT INTO lesson_completions (user_id, lesson_id, course_id)
+        VALUES ($1, $2, $3)
+        ON CONFLICT (user_id, lesson_id) DO NOTHING
+        RETURNING *
+      `;
+      const res = await db.query(sql, [userId, lessonId, courseId]);
+      return res.rows[0];
+    },
+
+    findByUserAndCourse: async (userId, courseId) => {
+      const sql = `
+        SELECT lesson_id FROM lesson_completions
+        WHERE user_id = $1 AND course_id = $2
+      `;
+      const res = await db.query(sql, [userId, courseId]);
+      return res.rows.map(row => row.lesson_id);
+    },
+
+    isCompleted: async (userId, lessonId) => {
+      const sql = `
+        SELECT 1 FROM lesson_completions
+        WHERE user_id = $1 AND lesson_id = $2
+      `;
+      const res = await db.query(sql, [userId, lessonId]);
+      return res.rows.length > 0;
     }
   }
 };

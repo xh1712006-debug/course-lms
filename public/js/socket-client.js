@@ -94,23 +94,82 @@ function appendCommentToContainer(username, content, time) {
   const container = document.getElementById('chat-messages-container');
   if (!container) return;
 
+  const isSelf = window.currentUser && (username === window.currentUser.username);
   const msgDiv = document.createElement('div');
-  msgDiv.className = 'chat-msg';
+  msgDiv.className = `chat-msg ${isSelf ? 'self' : 'other'}`;
   
-  const senderDiv = document.createElement('div');
-  senderDiv.className = 'chat-msg-sender';
-  senderDiv.textContent = username;
+  // Thiết lập phong cách bong bóng tin nhắn trùng với EJS
+  msgDiv.style.display = 'flex';
+  msgDiv.style.flexDirection = 'column';
+  msgDiv.style.maxWidth = '75%';
+  msgDiv.style.padding = '0.75rem 1rem';
+  msgDiv.style.borderRadius = '14px';
+  msgDiv.style.boxShadow = '0 1px 3px rgba(0,0,0,0.05)';
+  msgDiv.style.transition = 'all 0.2s ease';
+  
+  if (isSelf) {
+    msgDiv.style.alignSelf = 'flex-end';
+    msgDiv.style.background = 'linear-gradient(135deg, #4f46e5 0%, #6366f1 100%)';
+    msgDiv.style.color = '#ffffff';
+    msgDiv.style.borderBottomRightRadius = '4px';
+  } else {
+    msgDiv.style.alignSelf = 'flex-start';
+    msgDiv.style.background = '#ffffff';
+    msgDiv.style.color = '#0f172a';
+    msgDiv.style.borderBottomLeftRadius = '4px';
+    msgDiv.style.border = '1px solid #e2e8f0';
+  }
+
+  if (!isSelf) {
+    const senderDiv = document.createElement('div');
+    senderDiv.className = 'chat-msg-sender';
+    senderDiv.style.fontWeight = '800';
+    senderDiv.style.fontSize = '0.78rem';
+    senderDiv.style.color = '#4f46e5';
+    senderDiv.style.marginBottom = '0.25rem';
+    senderDiv.textContent = username;
+    msgDiv.appendChild(senderDiv);
+  }
 
   const textDiv = document.createElement('div');
   textDiv.className = 'chat-msg-text';
+  textDiv.style.fontSize = '0.92rem';
+  textDiv.style.lineHeight = '1.45';
+  textDiv.style.wordBreak = 'break-word';
   textDiv.textContent = content;
-
-  msgDiv.appendChild(senderDiv);
   msgDiv.appendChild(textDiv);
+
+  // Thêm nhãn mốc thời gian
+  const timeDiv = document.createElement('div');
+  timeDiv.className = 'chat-msg-time';
+  timeDiv.style.fontSize = '0.68rem';
+  timeDiv.style.textAlign = 'right';
+  timeDiv.style.marginTop = '0.35rem';
+  timeDiv.style.opacity = '0.75';
+  timeDiv.style.color = isSelf ? 'rgba(255,255,255,0.85)' : '#64748b';
+  
+  timeDiv.textContent = formatChatTime(time || new Date());
+  msgDiv.appendChild(timeDiv);
+
   container.appendChild(msgDiv);
   
   // Tự động cuộn xuống cuối khung chat
   container.scrollTop = container.scrollHeight;
+}
+
+// Hàm format thời gian hiển thị trong khung chat
+function formatChatTime(dateVal) {
+  if (!dateVal) return '';
+  const date = new Date(dateVal);
+  const now = new Date();
+  const timeStr = date.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+  const isToday = date.toDateString() === now.toDateString();
+  if (isToday) {
+    return timeStr;
+  } else {
+    const dateStr = date.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' });
+    return timeStr + ' ' + dateStr;
+  }
 }
 
 // Tạo thông báo đẩy đẹp (Toast Notification)

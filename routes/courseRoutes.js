@@ -23,9 +23,12 @@ router.get('/courses/:id/enroll', requirePermission('COURSE_ENROLL_REQUEST'), co
 // Xem chi tiết bài giảng
 router.get('/courses/:courseId/lessons/:lessonId', courseController.getLesson);
 
+// Đánh dấu hoàn thành bài học
+router.post('/courses/:courseId/lessons/:lessonId/complete', courseController.completeLesson);
+
 // Các trang Suite học viên mới
 router.get('/my-paths', requirePermission('PATH_VIEW'), courseController.getMyPaths);
-router.get('/my-history', requirePermission('HISTORY_VIEW'), courseController.getMyHistory);
+
 router.get('/my-deadlines', requirePermission('PROGRESS_TRACK'), courseController.getMyDeadlines);
 router.get('/my-groups', courseController.getMyGroups);
 router.get('/settings', courseController.getSettings);
@@ -106,16 +109,16 @@ router.post('/courses/quiz/submit', async (req, res) => {
         if (quiz.lesson_id) {
           // Bài kiểm tra trắc nghiệm của riêng bài học
           const lesson = await Lesson.findById(quiz.lesson_id);
-          const lessons = await Lesson.findByCourseId(lesson.course_id);
-          const currentIdx = lessons.findIndex(l => l.id === lesson.id);
-          const totalLessons = lessons.length;
           
-          const enrollment = await Enrollment.findByUserAndCourse(userId, lesson.course_id);
-          const calculatedProgress = Math.max(
-            enrollment ? enrollment.progress : 0,
-            Math.round(((currentIdx + 1) / totalLessons) * 100)
-          );
-          await Enrollment.updateProgress(userId, lesson.course_id, calculatedProgress);
+          // Đánh dấu hoàn thành bài học
+          const { LessonCompletion } = require('../models/schema');
+          await LessonCompletion.create(userId, lesson.id, lesson.course_id);
+          
+          // Tính toán lại tiến trình của khóa học
+          const lessons = await Lesson.findByCourseId(lesson.course_id);
+          const completedLessonIds = await LessonCompletion.findByUserAndCourse(userId, lesson.course_id);
+          const progress = Math.min(100, Math.round((completedLessonIds.length / lessons.length) * 100));
+          await Enrollment.updateProgress(userId, lesson.course_id, progress);
         } else {
           // Thi cuối khóa: Cập nhật tiến độ hoàn thành 100%
           await Enrollment.updateProgress(userId, quiz.course_id, 100);

@@ -1,17 +1,19 @@
 <%- include('partials/header') %>
 
-<div style="margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+<div style="margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1.5rem; border-bottom: 1px solid var(--border-light); padding-bottom: 1.5rem;">
   <div>
-    <h1 style="font-size: 1.55rem; font-weight: 700; color: var(--text-main); margin: 0;">
-      Chào <%= user.username %>!
+    <h1 style="font-size: 1.75rem; font-weight: 800; color: var(--text-main); margin: 0;">
+      Chào mừng trở lại, <%= user.username %>!
     </h1>
-    <p style="color: var(--text-muted); margin-top: 0.25rem; margin-bottom: 0;">Chào mừng bạn trở lại không gian học tập và quản lý của doanh nghiệp.</p>
+    <p style="color: var(--text-muted); margin-top: 0.35rem; margin-bottom: 0; font-size: 0.92rem; font-weight: 500;">Không gian học tập và quản lý đào tạo nội bộ doanh nghiệp.</p>
   </div>
   
   <% if (hasAdminAccess) { %>
-    <div id="online-counter-card" class="glass-card" style="padding: 0.75rem 1.25rem; display: flex; align-items: center; gap: 0.75rem;">
-      <i class="fa-solid fa-circle-nodes" style="color: #0d9488; animation: pulse 2s infinite;"></i>
-      <span style="font-size: 0.9rem; font-weight: 600;">Đang trực tuyến: <strong id="online-counter" style="color: #0d9488;"><%= stats.onlineCount || 1 %></strong> nhân sự</span>
+    <div id="online-counter-card" style="padding: 0.6rem 1.1rem; border-radius: 9999px; background: rgba(16, 185, 129, 0.06); border: 1px solid rgba(16, 185, 129, 0.15); display: flex; align-items: center; gap: 0.6rem; transition: var(--transition-smooth);">
+      <span class="online-indicator-pulsing"></span>
+      <span style="font-size: 0.85rem; font-weight: 700; color: #059669;">
+        Đang trực tuyến: <strong id="online-counter" style="color: #059669; font-weight: 800;"><%= stats.onlineCount || 1 %></strong> nhân sự
+      </span>
     </div>
   <% } %>
 </div>
@@ -397,31 +399,58 @@
   <!-- Grid KPI Quản trị -->
   <div class="kpi-grid">
     <% if (stats.totalUsers !== null) { %>
-      <div class="glass-card kpi-card">
-        <div class="kpi-title">Tổng nhân sự</div>
-        <div class="kpi-value"><%= stats.totalUsers %></div>
+      <div class="kpi-card-modern">
+        <div class="kpi-icon-container blue">
+          <i class="fa-solid fa-users"></i>
+        </div>
+        <div class="kpi-card-modern-info">
+          <div class="kpi-title" style="margin:0;">Tổng nhân sự</div>
+          <div class="kpi-value" style="color:var(--text-main); font-size:1.8rem;"><%= stats.totalUsers %></div>
+          <div class="kpi-card-subtext">Nhân sự trong tổ chức</div>
+        </div>
       </div>
     <% } %>
     
-    <div class="glass-card kpi-card">
-      <div class="kpi-title">Đang online (Socket)</div>
-      <div class="kpi-value" style="background: var(--secondary-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
-        <%= stats.onlineCount %>
+    <div class="kpi-card-modern">
+      <div class="kpi-icon-container green">
+        <i class="fa-solid fa-users-viewfinder"></i>
+      </div>
+      <div class="kpi-card-modern-info">
+        <div class="kpi-title" style="margin:0;">Đang online</div>
+        <div class="kpi-value" style="color:#10b981; font-size:1.8rem;"><%= stats.onlineCount %></div>
+        <div class="kpi-card-subtext">Kết nối thời gian thực</div>
       </div>
     </div>
 
     <% if (stats.totalCourses !== null) { %>
-      <div class="glass-card kpi-card">
-        <div class="kpi-title">Tổng khóa học</div>
-        <div class="kpi-value"><%= stats.totalCourses %></div>
+      <div class="kpi-card-modern">
+        <div class="kpi-icon-container purple">
+          <i class="fa-solid fa-book-open"></i>
+        </div>
+        <div class="kpi-card-modern-info">
+          <div class="kpi-title" style="margin:0;">Tổng khóa học</div>
+          <div class="kpi-value" style="color:var(--text-main); font-size:1.8rem;"><%= stats.totalCourses %></div>
+          <div class="kpi-card-subtext">Khóa học được xuất bản</div>
+        </div>
       </div>
     <% } %>
 
     <% if (stats.pendingApprovals !== null) { %>
-      <div class="glass-card kpi-card">
-        <div class="kpi-title">Chờ HR duyệt đăng ký</div>
-        <div class="kpi-value" style="background: var(--alert-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
-          <%= stats.pendingApprovals %>
+      <% 
+        const isPendingEmpty = stats.pendingApprovals === 0;
+        const colorClass = isPendingEmpty ? 'green' : 'amber';
+        const textColor = isPendingEmpty ? '#10b981' : '#f97316';
+        const subtext = isPendingEmpty ? 'Đã duyệt hết yêu cầu' : 'Yêu cầu cần duyệt gấp';
+        const icon = isPendingEmpty ? 'fa-solid fa-circle-check' : 'fa-solid fa-clock';
+      %>
+      <div class="kpi-card-modern">
+        <div class="kpi-icon-container <%= colorClass %>">
+          <i class="<%= icon %>"></i>
+        </div>
+        <div class="kpi-card-modern-info">
+          <div class="kpi-title" style="margin:0;">Chờ duyệt học</div>
+          <div class="kpi-value" style="color:<%= textColor %>; font-size:1.8rem;"><%= stats.pendingApprovals %></div>
+          <div class="kpi-card-subtext"><%= subtext %></div>
         </div>
       </div>
     <% } %>
@@ -430,54 +459,63 @@
   <!-- Bảng phân tích thống kê quản trị (Admin/L&D Analytics) -->
   <% if (user.permissions.includes('REPORT_VIEW') && stats.completionStats && stats.departmentStats) { %>
     <div style="margin-top: 2rem; margin-bottom: 2rem;">
-      <h2 style="font-size: 1.4rem; display: flex; align-items: center; gap: 0.5rem; color: var(--text-main); margin-bottom: 1.25rem;">
-        <i class="fa-solid fa-chart-line" style="color: #6366f1;"></i> Báo cáo phân tích hệ thống đào tạo
-      </h2>
-      
-      <div class="glass-card" style="padding: 2rem; border-radius: 16px;">
-        <div style="display: grid; grid-template-columns: 1.8fr 1.2fr; gap: 2.5rem;" class="analytics-grid">
-          <!-- Canvas 1: Thống kê đăng ký và hoàn thành của từng khóa học -->
-          <div style="position: relative; width: 100%; display: flex; flex-direction: column; justify-content: space-between; overflow: hidden;">
-            <h4 style="font-size: 0.95rem; font-weight: 700; color: var(--text-main); margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.4rem;">
-              <i class="fa-solid fa-chart-bar" style="color: #4f46e5;"></i> Thống kê lượt đăng ký & hoàn thành của từng khóa học
-            </h4>
-            
-            <!-- Custom HTML Legend that is centered and static (does not scroll) -->
-            <div style="display: flex; justify-content: center; gap: 1.5rem; margin-bottom: 0.75rem; font-size: 0.8rem; font-weight: 600; color: #64748b;">
-              <div style="display: flex; align-items: center; gap: 0.4rem;">
-                <span style="display: inline-block; width: 12px; height: 12px; background: rgba(99, 102, 241, 0.8); border: 1px solid #6366f1; border-radius: 3px;"></span>
-                <span>Tổng lượt đăng ký</span>
+      <div style="display: grid; grid-template-columns: 1.7fr 1.3fr; gap: 1.5rem;" class="dashboard-main-grid-override">
+        
+        <!-- Cột trái: Thống kê lượt đăng ký & hoàn thành của từng khóa học -->
+        <div class="glass-card" style="padding: 1.5rem; display: flex; flex-direction: column; justify-content: space-between; overflow: hidden; border-radius: 12px;">
+          <div>
+            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 0.5rem;">
+              <div>
+                <h3 style="font-size: 1.05rem; font-weight: 700; color: var(--text-main); margin: 0; display: flex; align-items: center; gap: 0.5rem;">
+                  <i class="fa-solid fa-chart-column" style="color: #4f46e5;"></i> Thống kê Khóa học
+                </h3>
+                <p style="font-size: 0.78rem; color: var(--text-muted); margin: 0.15rem 0 0 0;">Lượt đăng ký và hoàn thành của nhân sự</p>
               </div>
-              <div style="display: flex; align-items: center; gap: 0.4rem;">
-                <span style="display: inline-block; width: 12px; height: 12px; background: rgba(16, 185, 129, 0.8); border: 1px solid #10b981; border-radius: 3px;"></span>
-                <span>Đã hoàn thành</span>
+              
+              <!-- Custom HTML Legend -->
+              <div style="display: flex; gap: 1rem; font-size: 0.78rem; font-weight: 600;">
+                <div style="display: flex; align-items: center; gap: 0.35rem;">
+                  <span style="display: inline-block; width: 10px; height: 10px; background: #6366f1; border-radius: 3px;"></span>
+                  <span style="color: var(--text-muted);">Tổng đăng ký</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 0.35rem;">
+                  <span style="display: inline-block; width: 10px; height: 10px; background: #10b981; border-radius: 3px;"></span>
+                  <span style="color: var(--text-muted);">Đã hoàn thành</span>
+                </div>
               </div>
             </div>
-
-            <div style="display: flex; position: relative; width: 100%; height: 258px; overflow: hidden;">
-              <!-- Cột Y-Axis cố định bên trái (nếu có cuộn) -->
-              <div style="width: 50px; height: 250px; flex-shrink: 0; position: relative;">
+            
+            <div style="display: flex; position: relative; width: 100%; height: 260px; overflow: hidden;">
+              <!-- Cột Y-Axis cố định bên trái -->
+              <div style="width: 35px; height: 250px; flex-shrink: 0; position: relative;">
                 <canvas id="adminCourseChartTicks" style="width: 100%; height: 100%;"></canvas>
               </div>
               <!-- Khung cuộn chứa các cột dữ liệu bên phải -->
-              <div class="chart-scroll-container" style="flex-grow: 1; overflow-x: auto; overflow-y: hidden; -webkit-overflow-scrolling: touch; height: 258px;">
+              <div class="chart-scroll-container" style="flex-grow: 1; overflow-x: auto; overflow-y: hidden; -webkit-overflow-scrolling: touch; height: 260px;">
                 <div style="position: relative; height: 250px; min-width: 100%;" id="adminCourseChartWrapper">
                   <canvas id="adminCourseChart"></canvas>
                 </div>
               </div>
             </div>
           </div>
-          
-          <!-- Canvas 2: Phân bổ nhân sự theo phòng ban -->
-          <div style="position: relative; width: 100%; display: flex; flex-direction: column; justify-content: space-between; border-left: 1px solid var(--border-light); padding-left: 2rem;" class="status-chart-container">
-            <h4 style="font-size: 0.95rem; font-weight: 700; color: var(--text-main); margin-bottom: 1rem; display: flex; align-items: center; gap: 0.4rem;">
-              <i class="fa-solid fa-chart-pie" style="color: #0d9488;"></i> Tỉ lệ phân bổ nhân sự theo phòng ban
-            </h4>
-            <div style="position: relative; width: 100%;">
-              <canvas id="adminDeptChart"></canvas>
+        </div>
+        
+        <!-- Cột phải: Phân bổ nhân sự theo phòng ban -->
+        <div class="glass-card" style="padding: 1.5rem; display: flex; flex-direction: column; justify-content: space-between; border-radius: 12px;">
+          <div>
+            <div style="margin-bottom: 1.25rem;">
+              <h3 style="font-size: 1.05rem; font-weight: 700; color: var(--text-main); margin: 0; display: flex; align-items: center; gap: 0.5rem;">
+                <i class="fa-solid fa-chart-pie" style="color: #0d9488;"></i> Nhân sự theo Phòng ban
+              </h3>
+              <p style="font-size: 0.78rem; color: var(--text-muted); margin: 0.15rem 0 0 0;">Tỉ lệ phân bổ nhân sự trong doanh nghiệp</p>
+            </div>
+            
+            <div style="position: relative; width: 100%; display: flex; justify-content: center; align-items: center; height: 260px;">
+              <canvas id="adminDeptChart" style="max-height: 240px;"></canvas>
             </div>
           </div>
         </div>
+        
       </div>
     </div>
   <% } %>
@@ -503,29 +541,45 @@
     <!-- Phao tác nhanh -->
     <% if (hasQuickAction) { %>
       <div>
-        <h2 style="font-size: 1.4rem; margin-bottom: 1.25rem; color: var(--text-main);"><i class="fa-solid fa-bolt" style="color: #ea580c;"></i> Thao tác nhanh</h2>
-        <div class="glass-card" style="display: flex; flex-direction: column; gap: 1rem; padding: 1.5rem;">
+        <h2 style="font-size: 1.25rem; font-weight: 800; margin-bottom: 1.25rem; color: var(--text-main);"><i class="fa-solid fa-bolt" style="color: #ea580c;"></i> Thao tác nhanh</h2>
+        <div style="display: grid; grid-template-columns: 1fr; gap: 0.85rem;">
           <% if (user.permissions.includes('COURSE_CREATE')) { %>
-            <a href="/course-management" class="btn btn-primary" style="justify-content: flex-start; padding: 0.85rem 1rem;">
-              <i class="fa-solid fa-plus"></i> Tạo khóa học mới
+            <a href="/course-management" class="quick-action-tile">
+              <div style="display:flex; align-items:center; gap:0.6rem;">
+                <div class="quick-action-icon" style="color:#6366f1;"><i class="fa-solid fa-circle-plus"></i></div>
+                <h4 class="quick-action-title">Tạo khóa học mới</h4>
+              </div>
+              <p class="quick-action-desc">Thiết lập giáo trình, tải lên bài giảng video/tài liệu học tập.</p>
             </a>
           <% } %>
           
           <% if (user.permissions.includes('USER_MANAGE')) { %>
-            <a href="/users" class="btn btn-secondary" style="justify-content: flex-start; padding: 0.85rem 1rem;">
-              <i class="fa-solid fa-user-plus"></i> Quản lý & giao khóa học
+            <a href="/users" class="quick-action-tile">
+              <div style="display:flex; align-items:center; gap:0.6rem;">
+                <div class="quick-action-icon" style="color:#0d9488;"><i class="fa-solid fa-user-plus"></i></div>
+                <h4 class="quick-action-title">Quản lý nhân sự</h4>
+              </div>
+              <p class="quick-action-desc">Giao khóa học, phân quyền & quản lý hồ sơ năng lực nhân viên.</p>
             </a>
           <% } %>
 
           <% if (user.permissions.includes('ROLE_MANAGE')) { %>
-            <a href="/permissions" class="btn btn-secondary" style="justify-content: flex-start; padding: 0.85rem 1rem;">
-              <i class="fa-solid fa-shield-halved"></i> Cấu hình Phân quyền & Matrix
+            <a href="/permissions" class="quick-action-tile">
+              <div style="display:flex; align-items:center; gap:0.6rem;">
+                <div class="quick-action-icon" style="color:#8b5cf6;"><i class="fa-solid fa-key"></i></div>
+                <h4 class="quick-action-title">Cấu hình phân quyền</h4>
+              </div>
+              <p class="quick-action-desc">Cài đặt ma trận quyền (RBAC) linh hoạt cho các bộ phận.</p>
             </a>
           <% } %>
 
           <% if (user.permissions.includes('REPORT_VIEW')) { %>
-            <a href="/reports" class="btn btn-secondary" style="justify-content: flex-start; padding: 0.85rem 1rem;">
-              <i class="fa-solid fa-chart-pie"></i> Xem báo cáo thống kê Excel
+            <a href="/reports" class="quick-action-tile">
+              <div style="display:flex; align-items:center; gap:0.6rem;">
+                <div class="quick-action-icon" style="color:#ec4899;"><i class="fa-solid fa-file-invoice-dollar"></i></div>
+                <h4 class="quick-action-title">Báo cáo & Thống kê</h4>
+              </div>
+              <p class="quick-action-desc">Xem bảng tổng hợp dữ liệu học tập và xuất file Excel chi tiết.</p>
             </a>
           <% } %>
         </div>
@@ -680,58 +734,78 @@
               displayVal = dashboardDetailValues[val] !== undefined ? dashboardDetailValues[val] : val;
             }
             
-            return `<span style="display:inline-block; background:#f1f5f9; border:1px solid #e2e8f0; padding:0.1rem 0.35rem; border-radius:5px; margin:0.1rem 0.15rem 0.1rem 0; font-size:0.75rem; color:#475569;"><strong>${label}</strong>: ${displayVal}</span>`;
+            return `<span class="chip-badge gray" style="margin-right: 0.25rem; margin-bottom: 0.25rem;"><strong>${label}</strong>: ${displayVal}</span>`;
           }).join(' ');
         }
       %>
       <div>
-        <h2 style="font-size: 1.4rem; margin-bottom: 1.25rem; display: flex; align-items: center; justify-content: space-between; color: var(--text-main);">
+        <h2 style="font-size: 1.25rem; font-weight: 800; margin-bottom: 1.25rem; display: flex; align-items: center; justify-content: space-between; color: var(--text-main);">
           <span><i class="fa-solid fa-clock-rotate-left" style="color: #4f46e5;"></i> Nhật ký hoạt động gần đây</span>
-          <a href="/audit" style="font-size: 0.8rem; color: var(--text-accent); font-weight: 600; text-decoration: none;">Xem tất cả <i class="fa-solid fa-arrow-right"></i></a>
+          <a href="/audit" style="font-size: 0.8rem; color: var(--text-accent); font-weight: 700; text-decoration: none;">Xem tất cả <i class="fa-solid fa-arrow-right"></i></a>
         </h2>
 
-        <div class="glass-card" style="padding: 1.5rem; overflow-x: auto; border-radius: 16px;">
+        <div class="glass-card" style="padding: 1.5rem; border-radius: 12px; max-height: 480px; overflow-y: auto;">
           <% if (recentLogs.length === 0) { %>
             <div style="text-align: center; color: var(--text-muted); padding: 2rem;">Chưa có lịch sử hoạt động ghi nhận.</div>
           <% } else { %>
-            <table class="custom-table" style="margin-top: 0; font-size: 0.85rem; width: 100%;">
-              <thead>
-                <tr>
-                  <th style="width: 110px;">Thời gian</th>
-                  <th style="width: 120px;">Nhân sự</th>
-                  <th style="width: 180px;">Hành động</th>
-                  <th>Chi tiết</th>
-                </tr>
-              </thead>
-              <tbody>
-                <% recentLogs.forEach(log => { %>
-                  <tr>
-                    <td style="color: var(--text-muted); white-space: nowrap;"><%= new Date(log.created_at).toLocaleTimeString('vi-VN') %></td>
-                    <td><strong><%= log.username || 'Hệ thống' %></strong></td>
-                    <td>
-                      <% 
-                        let badgeStyle = "background: rgba(79, 70, 229, 0.08); color: var(--text-accent); border: 1px solid rgba(79, 70, 229, 0.16);";
-                        if (log.action.includes('SUCCESS') || log.action === 'USER_LOGIN' || log.action.includes('APPROVED')) {
-                          badgeStyle = "background: rgba(16, 185, 129, 0.08); color: #059669; border: 1px solid rgba(16, 185, 129, 0.18);";
-                        } else if (log.action.includes('REQUESTED') || log.action.includes('FAIL') || log.action.includes('REJECTED')) {
-                          badgeStyle = "background: rgba(239, 68, 68, 0.08); color: #dc2626; border: 1px solid rgba(239, 68, 68, 0.18);";
-                        } else if (log.action === 'USER_LOGOUT') {
-                          badgeStyle = "background: rgba(100, 116, 139, 0.08); color: #64748b; border: 1px solid rgba(100, 116, 139, 0.18);";
-                        }
-                      %>
-                      <span style="<%= badgeStyle %> padding: 0.25rem 0.55rem; border-radius: 6px; font-size: 0.74rem; font-weight: 600; display: inline-block;">
+            <div class="timeline-list">
+              <% recentLogs.forEach(log => { %>
+                <%
+                  let iconClass = 'fa-solid fa-circle-info';
+                  let iconColor = '#475569';
+                  let badgeType = 'gray';
+
+                  if (log.action.includes('USER_LOGIN')) {
+                    iconClass = 'fa-solid fa-right-to-bracket';
+                    iconColor = '#10b981';
+                    badgeType = 'green';
+                  } else if (log.action.includes('USER_LOGOUT')) {
+                    iconClass = 'fa-solid fa-right-from-bracket';
+                    iconColor = '#64748b';
+                    badgeType = 'gray';
+                  } else if (log.action.includes('CREATE') || log.action.includes('ADD')) {
+                    iconClass = 'fa-solid fa-circle-plus';
+                    iconColor = '#3b82f6';
+                    badgeType = 'blue';
+                  } else if (log.action.includes('DELETE') || log.action.includes('REJECTED')) {
+                    iconClass = 'fa-solid fa-circle-xmark';
+                    iconColor = '#ef4444';
+                    badgeType = 'red';
+                  } else if (log.action.includes('APPROVED') || log.action.includes('SUCCESS')) {
+                    iconClass = 'fa-solid fa-circle-check';
+                    iconColor = '#10b981';
+                    badgeType = 'green';
+                  } else if (log.action.includes('GRADE') || log.action.includes('SUBMIT')) {
+                    iconClass = 'fa-solid fa-square-poll-vertical';
+                    iconColor = '#8b5cf6';
+                    badgeType = 'purple';
+                  } else if (log.action.includes('ASSIGN')) {
+                    iconClass = 'fa-solid fa-route';
+                    iconColor = '#f59e0b';
+                    badgeType = 'amber';
+                  }
+                %>
+                <div class="timeline-item">
+                  <div class="timeline-time">
+                    <%= new Date(log.created_at).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) %>
+                  </div>
+                  <div class="timeline-icon-box" style="background: rgba(71, 85, 105, 0.05); color: <%= iconColor %>;">
+                    <i class="<%= iconClass %>"></i>
+                  </div>
+                  <div class="timeline-body">
+                    <div class="timeline-title">
+                      <span class="timeline-user"><%= log.username || 'Hệ thống' %></span>
+                      <span class="chip-badge <%= badgeType %>" style="margin-left:0.35rem; font-size:0.68rem; padding: 0.1rem 0.35rem;">
                         <%= dashboardActionLabels[log.action] || log.action %>
                       </span>
-                    </td>
-                    <td>
-                      <div style="max-width: 420px; line-height: 1.4; word-break: break-word;">
-                        <%- formatDashboardAuditDetails(log.details) %>
-                      </div>
-                    </td>
-                  </tr>
-                <% }) %>
-              </tbody>
-            </table>
+                    </div>
+                    <div class="timeline-details" style="margin-top: 0.25rem;">
+                      <%- formatDashboardAuditDetails(log.details) %>
+                    </div>
+                  </div>
+                </div>
+              <% }) %>
+            </div>
           <% } %>
         </div>
       </div>
@@ -910,13 +984,13 @@
       const progressValues = barChartData.map(e => e.progress);
       
       const backgroundColors = barChartData.map(e => {
-        if (e.progress === 100) return 'rgba(16, 185, 129, 0.75)';
-        if (e.progress > 0) return 'rgba(79, 70, 229, 0.75)';
-        return 'rgba(148, 163, 184, 0.6)';
+        if (e.progress === 100) return '#10b981'; // Solid Green
+        if (e.progress > 0) return '#4f46e5';      // Solid Blue/Indigo
+        return '#cbd5e1';                         // Solid Slate/Gray
       });
       const borderColors = barChartData.map(e => {
-        if (e.progress === 100) return '#10b981';
-        if (e.progress > 0) return '#4f46e5';
+        if (e.progress === 100) return '#059669';
+        if (e.progress > 0) return '#3730a3';
         return '#94a3b8';
       });
 
@@ -985,8 +1059,8 @@
             data: progressValues,
             backgroundColor: backgroundColors,
             borderColor: borderColors,
-            borderWidth: 1.5,
-            borderRadius: 8,
+            borderWidth: 1,
+            borderRadius: 6,
             borderSkipped: false,
             barPercentage: 0.55,
             maxBarThickness: 45 // Cân đối độ rộng cột khi có ít khóa học
@@ -1006,10 +1080,19 @@
               display: false
             },
             tooltip: {
+              backgroundColor: '#0f172a',
+              titleFont: { family: 'Inter', size: 12, weight: 'bold' },
+              bodyFont: { family: 'Inter', size: 11 },
+              padding: 10,
+              cornerRadius: 8,
+              displayColors: false,
               callbacks: {
+                title: function(context) {
+                  const idx = context[0].dataIndex;
+                  return barChartData[idx].title;
+                },
                 label: function(context) {
-                  const idx = context.dataIndex;
-                  return `Khóa học: ${barChartData[idx].title}\nTiến độ: ${context.raw}%`;
+                  return `Tiến độ: ${context.raw}%`;
                 }
               }
             }
@@ -1063,14 +1146,14 @@
           datasets: [{
             data: [completedCount, inProgressCount, notStartedCount],
             backgroundColor: [
-              'rgba(16, 185, 129, 0.8)',
-              'rgba(79, 70, 229, 0.8)',
-              'rgba(245, 158, 11, 0.8)'
-            ],
-            borderColor: [
               '#10b981',
               '#4f46e5',
               '#f59e0b'
+            ],
+            borderColor: [
+              '#059669',
+              '#3730a3',
+              '#d97706'
             ],
             borderWidth: 1.5,
             hoverOffset: 4
@@ -1084,16 +1167,31 @@
             legend: {
               position: 'bottom',
               labels: {
-                boxWidth: 12,
+                boxWidth: 10,
                 font: {
                   family: 'Inter',
-                  size: 11
+                  size: 11,
+                  weight: '500'
                 },
-                padding: 15
+                padding: 15,
+                color: '#475569'
+              }
+            },
+            tooltip: {
+              backgroundColor: '#0f172a',
+              titleFont: { family: 'Inter', size: 12, weight: 'bold' },
+              bodyFont: { family: 'Inter', size: 11 },
+              padding: 10,
+              cornerRadius: 8,
+              displayColors: true,
+              callbacks: {
+                label: function(context) {
+                  return ` ${context.label}: ${context.raw} khóa học`;
+                }
               }
             }
           },
-          cutout: '65%'
+          cutout: '70%'
         }
       });
     }
@@ -1163,20 +1261,20 @@
               {
                 label: 'Tổng lượt đăng ký',
                 data: enrollCountData,
-                backgroundColor: 'rgba(99, 102, 241, 0.75)', // Indigo
-                borderColor: '#6366f1',
-                borderWidth: 1.5,
-                borderRadius: 6,
+                backgroundColor: '#6366f1', // Indigo Solid
+                borderColor: '#4f46e5',
+                borderWidth: 1,
+                borderRadius: 4,
                 barPercentage: 0.8,
                 categoryPercentage: 0.6
               },
               {
                 label: 'Đã hoàn thành',
                 data: completedCountData,
-                backgroundColor: 'rgba(16, 185, 129, 0.75)', // Emerald
-                borderColor: '#10b981',
-                borderWidth: 1.5,
-                borderRadius: 6,
+                backgroundColor: '#10b981', // Emerald Solid
+                borderColor: '#059669',
+                borderWidth: 1,
+                borderRadius: 4,
                 barPercentage: 0.8,
                 categoryPercentage: 0.6
               }
@@ -1191,9 +1289,19 @@
                 display: false
               },
               tooltip: {
+                backgroundColor: '#0f172a',
+                titleFont: { family: 'Inter', size: 12, weight: 'bold' },
+                bodyFont: { family: 'Inter', size: 11 },
+                padding: 10,
+                cornerRadius: 8,
+                displayColors: true,
                 callbacks: {
+                  title: function(context) {
+                    const idx = context[0].dataIndex;
+                    return completionStats[idx].course_title;
+                  },
                   label: function(context) {
-                    return `${context.dataset.label}: ${context.raw}`;
+                    return ` ${context.dataset.label}: ${context.raw} nhân sự`;
                   }
                 }
               }
@@ -1237,22 +1345,15 @@
             datasets: [{
               data: deptUserCounts,
               backgroundColor: [
-                'rgba(99, 102, 241, 0.8)',  // Indigo
-                'rgba(16, 185, 129, 0.8)', // Emerald
-                'rgba(245, 158, 11, 0.8)', // Amber
-                'rgba(6, 182, 212, 0.8)',  // Cyan
-                'rgba(236, 72, 153, 0.8)', // Pink
-                'rgba(139, 92, 246, 0.8)'  // Purple
+                '#6366f1',  // Indigo
+                '#10b981',  // Emerald
+                '#f59e0b',  // Amber
+                '#06b6d4',  // Cyan
+                '#ec4899',  // Pink
+                '#8b5cf6'   // Purple
               ],
-              borderColor: [
-                '#6366f1',
-                '#10b981',
-                '#f59e0b',
-                '#06b6d4',
-                '#ec4899',
-                '#8b5cf6'
-              ],
-              borderWidth: 1.5,
+              borderColor: '#ffffff',
+              borderWidth: 2,
               hoverOffset: 4
             }]
           },
@@ -1264,13 +1365,27 @@
               legend: {
                 position: 'bottom',
                 labels: {
-                  boxWidth: 12,
-                  font: { family: 'Inter', size: 11 },
-                  padding: 15
+                  boxWidth: 10,
+                  font: { family: 'Inter', size: 11, weight: '500' },
+                  padding: 12,
+                  color: '#475569'
+                }
+              },
+              tooltip: {
+                backgroundColor: '#0f172a',
+                titleFont: { family: 'Inter', size: 12, weight: 'bold' },
+                bodyFont: { family: 'Inter', size: 11 },
+                padding: 10,
+                cornerRadius: 8,
+                displayColors: true,
+                callbacks: {
+                  label: function(context) {
+                    return ` Nhân sự: ${context.raw} người`;
+                  }
                 }
               }
             },
-            cutout: '65%'
+            cutout: '70%'
           }
         });
       }

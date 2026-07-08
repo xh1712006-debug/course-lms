@@ -27,7 +27,7 @@ async function testLearnerSuite() {
     console.log(`[OK] Đã tạo tài khoản test thành công với ID: ${testUserId}`);
 
     // 2. Kiểm thử getMyPaths
-    console.log('\n[1/5] Kiểm tra trang Lộ trình của tôi (/my-paths)...');
+    console.log('\n[1/4] Kiểm tra trang Lộ trình của tôi (/my-paths)...');
     const reqPaths = {
       session: {
         userId: testUserId,
@@ -51,32 +51,8 @@ async function testLearnerSuite() {
     assert.ok(renderedData.paths);
     assert.ok(Array.isArray(renderedData.paths));
     console.log('      [OK] Render thành công trang courses/my-paths.');
-
-    // 3. Kiểm thử getMyHistory
-    console.log('\n[2/5] Kiểm tra trang Lịch sử & Thành tựu (/my-history)...');
-    const reqHistory = {
-      session: {
-        userId: testUserId,
-        permissions: ['HISTORY_VIEW'],
-        isImpersonating: false
-      }
-    };
-    
-    const resHistory = {
-      render: (view, data) => {
-        renderedView = view;
-        renderedData = data;
-      }
-    };
-
-    await courseController.getMyHistory(reqHistory, resHistory);
-    assert.strictEqual(renderedView, 'courses/my-history');
-    assert.ok(renderedData.submissions);
-    assert.ok(renderedData.completedCourses);
-    console.log('      [OK] Render thành công trang courses/my-history.');
-
-    // 4. Kiểm thử getMyDeadlines
-    console.log('\n[3/5] Kiểm tra trang Lịch học & Deadline (/my-deadlines)...');
+    // 3. Kiểm thử getMyDeadlines
+    console.log('\n[2/4] Kiểm tra trang Lịch học & Deadline (/my-deadlines)...');
     const reqDeadlines = {
       session: {
         userId: testUserId,
@@ -97,8 +73,8 @@ async function testLearnerSuite() {
     assert.ok(renderedData.deadlines);
     console.log('      [OK] Render thành công trang courses/my-deadlines.');
 
-    // 5. Kiểm thử getSettings
-    console.log('\n[4/5] Kiểm tra trang Cài đặt tài khoản (/settings)...');
+    // 4. Kiểm thử getSettings
+    console.log('\n[3/4] Kiểm tra trang Cài đặt tài khoản (/settings)...');
     const reqSettings = {
       session: {
         userId: testUserId,
@@ -125,8 +101,8 @@ async function testLearnerSuite() {
     assert.strictEqual(renderedData.success, 'Thành công!');
     console.log('      [OK] Render thành công trang courses/settings.');
 
-    // 6. Kiểm thử postChangePassword (Đổi mật khẩu)
-    console.log('\n[5/5] Kiểm tra thay đổi mật khẩu an toàn...');
+    // 5. Kiểm thử postChangePassword (Đổi mật khẩu)
+    console.log('\n[4/4] Kiểm tra thay đổi mật khẩu an toàn...');
     
     // Trường hợp 1: Sai mật khẩu cũ
     const reqChangePwWrong = {

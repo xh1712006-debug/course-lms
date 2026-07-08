@@ -1,5 +1,4 @@
 const { Assessment, AssessmentQuestion, AssessmentAssignment, AssessmentSubmission, Course, Lesson, User, Department, AuditLog } = require('../models/schema');
-const geminiService = require('../services/geminiService');
 
 module.exports = {
   // ============================================================
@@ -29,10 +28,10 @@ module.exports = {
   },
 
   // ============================================================
-  // ADMIN: Tạo bài kiểm tra mới (AI sinh câu hỏi) — API
+  // ADMIN: Tạo bài kiểm tra mới (Chỉ tạo thủ công) — API
   // ============================================================
   postCreate: async (req, res) => {
-    const { type, title, description, courseIds, questionCount, durationMinutes, passingScore } = req.body;
+    const { type, title, description, durationMinutes, passingScore } = req.body;
     const userId = req.session.userId;
 
     try {
@@ -40,69 +39,24 @@ module.exports = {
         return res.status(400).json({ error: 'Vui lòng nhập tiêu đề bài kiểm tra.' });
       }
 
+      if (type !== 'manual') {
+        return res.status(400).json({ error: 'Hình thức tạo tự động bằng AI đã bị gỡ bỏ.' });
+      }
+
       const duration = parseInt(durationMinutes) || 60;
       const passing = parseInt(passingScore) || 70;
 
-      if (type === 'manual') {
-        // Tạo bài kiểm tra thủ công trống (chưa có câu hỏi)
-        const assessment = await Assessment.create(title, description, [], 0, duration, passing, userId);
-        
-        await AuditLog.create(userId, 'ASSESSMENT_CREATE_MANUAL', {
-          assessment_id: assessment.id,
-          title
-        }, req.ip);
-
-        return res.json({
-          success: true,
-          message: `Đã tạo bài kiểm tra thủ công "${title}" thành công!`,
-          assessmentId: assessment.id
-        });
-      }
-
-      // Giữ nguyên luồng AI nếu type !== 'manual'
-      if (!courseIds || courseIds.length === 0) {
-        return res.status(400).json({ error: 'Vui lòng chọn ít nhất 1 khóa học nguồn.' });
-      }
-
-      const ids = Array.isArray(courseIds) ? courseIds.map(Number) : [Number(courseIds)];
-      const count = parseInt(questionCount) || 50;
-      const assessment = await Assessment.create(title, description, ids, count, duration, passing, userId);
-
-      // Thu thập nội dung các bài học từ các khóa học được chọn
-      const coursesData = [];
-      for (const courseId of ids) {
-        const course = await Course.findById(courseId);
-        const lessons = await Lesson.findByCourseId(courseId);
-        if (course && lessons.length > 0) {
-          coursesData.push({
-            courseTitle: course.title,
-            lessons: lessons.map(l => ({ title: l.title, content: l.content || '' }))
-          });
-        }
-      }
-
-      if (coursesData.length === 0) {
-        return res.status(400).json({ error: 'Các khóa học được chọn chưa có bài học. Vui lòng thêm bài học trước.' });
-      }
-
-      // Gọi AI sinh câu hỏi
-      console.log(`[Assessment] Đang gọi AI sinh ${count} câu hỏi cho "${title}"...`);
-      const questions = await geminiService.generateAssessment(title, coursesData, count);
-
-      // Lưu câu hỏi vào DB
-      await AssessmentQuestion.createBulk(assessment.id, questions);
-
-      // Ghi audit log
-      await AuditLog.create(userId, 'ASSESSMENT_CREATE_AI', {
+      // Tạo bài kiểm tra thủ công trống (chưa có câu hỏi)
+      const assessment = await Assessment.create(title, description, [], 0, duration, passing, userId);
+      
+      await AuditLog.create(userId, 'ASSESSMENT_CREATE_MANUAL', {
         assessment_id: assessment.id,
-        title,
-        course_ids: ids,
-        question_count: questions.length
+        title
       }, req.ip);
 
-      res.json({
+      return res.json({
         success: true,
-        message: `Đã tạo bài kiểm tra "${title}" với ${questions.length} câu hỏi AI sinh ra thành công!`,
+        message: `Đã tạo bài kiểm tra thủ công "${title}" thành công!`,
         assessmentId: assessment.id
       });
     } catch (err) {
@@ -116,7 +70,7 @@ module.exports = {
   // ============================================================
   postAddQuestion: async (req, res) => {
     const { id } = req.params;
-    const { question_text, options, correct_answer } = req.body;
+    const { question_text, options, correct_answer, questionsList } = req.body;
     const userId = req.session.userId;
 
     try {
@@ -127,6 +81,36 @@ module.exports = {
       if (assessment.status !== 'draft') {
         return res.status(400).json({ error: 'Chỉ có thể thêm câu hỏi vào bài kiểm tra đang ở dạng bản nháp.' });
       }
+
+      // Hỗ trợ thêm nhiều câu hỏi cùng lúc
+      if (questionsList && Array.isArray(questionsList) && questionsList.length > 0) {
+        const existingQuestions = await AssessmentQuestion.findByAssessmentId(parseInt(id));
+        let orderIndex = existingQuestions.length;
+
+        for (const q of questionsList) {
+          if (!q.question_text || !q.options || q.options.length < 2 || !q.correct_answer) {
+            continue;
+          }
+          orderIndex++;
+          await AssessmentQuestion.createOne(
+            parseInt(id),
+            q.question_text.trim(),
+            q.options.map(o => o.trim()),
+            q.correct_answer.trim(),
+            orderIndex
+          );
+        }
+
+        await Assessment.updateQuestionCount(parseInt(id), orderIndex);
+        
+        await AuditLog.create(userId, 'ASSESSMENT_QUESTIONS_BULK_ADD', {
+          assessment_id: parseInt(id),
+          count: questionsList.length
+        }, req.ip);
+
+        return res.json({ success: true, message: `Đã thêm ${questionsList.length} câu hỏi thành công!` });
+      }
+
       if (!question_text || !options || options.length < 2 || !correct_answer) {
         return res.status(400).json({ error: 'Vui lòng điền đầy đủ câu hỏi, các phương án lựa chọn và đáp án đúng.' });
       }

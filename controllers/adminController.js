@@ -2,7 +2,8 @@ const redis = require('../config/redis');
 const { emitToUser } = require('../config/socket');
 const { 
   Course, Lesson, Quiz, Question, QuizSubmission, 
-  LearningPath, Enrollment, User, Department, Role, AuditLog, Report 
+  LearningPath, Enrollment, User, Department, Role, AuditLog, Report,
+  Assessment, AssessmentSubmission
 } = require('../models/schema');
 const multer = require('multer');
 const path = require('path');
@@ -318,25 +319,25 @@ module.exports = {
       
       const search = req.query.search || '';
       const status = req.query.status || ''; // 'passed', 'failed', or '' (all)
-      const courseId = req.query.courseId || ''; // specific course or '' (all)
+      const assessmentId = req.query.assessmentId || ''; // specific assessment or '' (all)
       
-      // Lấy danh sách bài làm phân trang và tối ưu bằng index
-      const { total, submissions } = await QuizSubmission.findPagedSubmissions({
+      // Lấy danh sách kết quả bài kiểm tra doanh nghiệp phân trang
+      const { total, submissions } = await AssessmentSubmission.findPagedSubmissions({
         search,
         status,
-        courseId,
+        assessmentId,
         limit,
         offset
       });
       
-      // Lấy toàn bộ khóa học để hiển thị trong bộ lọc Dropdown
-      const courses = await Course.findAll();
+      // Lấy toàn bộ đề kiểm tra doanh nghiệp để hiển thị trong bộ lọc Dropdown
+      const assessments = await Assessment.findAll();
       
       const totalPages = Math.ceil(total / limit) || 1;
       
       res.render('admin/grade', {
         submissions,
-        courses,
+        assessments,
         totalCount: total,
         currentPage: page,
         totalPages,
@@ -344,7 +345,7 @@ module.exports = {
         filters: {
           search,
           status,
-          courseId
+          assessmentId
         }
       });
     } catch (err) {

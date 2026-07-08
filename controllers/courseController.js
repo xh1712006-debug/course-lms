@@ -325,20 +325,10 @@ module.exports = {
       const currentIdx = lessons.findIndex(l => l.id === lessonId);
       const totalLessons = lessons.length;
 
-      // 4. Kiểm tra xem bài học hiện tại có bị khóa không dựa trên tiến độ trước đó
-      const requiredProgressForThisLesson = Math.round((currentIdx / totalLessons) * 100);
-      if (currentIdx > 0 && enrollment.progress < requiredProgressForThisLesson) {
-        // Tìm bài học hợp lệ gần nhất chưa bị khóa để chuyển hướng học viên về đó
-        const lastUnlockedIdx = Math.max(0, Math.min(
-          totalLessons - 1,
-          Math.floor((enrollment.progress / 100) * totalLessons)
-        ));
-        const redirectLessonId = lessons[lastUnlockedIdx].id;
-        return res.redirect(`/courses/${courseId}/lessons/${redirectLessonId}`);
-      }
-
       // Xử lý tiến độ và bài kiểm tra tự sinh
-      let calculatedProgress = enrollment.progress;
+      const { LessonCompletion } = require('../models/schema');
+      const completedLessonIds = await LessonCompletion.findByUserAndCourse(userId, courseId);
+
       let lessonQuiz = null;
       let lessonQuestions = [];
       let isQuizPassed = false;
@@ -353,52 +343,22 @@ module.exports = {
         // 2. Lấy danh sách câu hỏi
         lessonQuestions = await Question.findByQuizId(lessonQuiz.id);
 
-        // 3. Nếu chưa có câu hỏi nào, tự động gọi AI sinh ra 10 câu hỏi
-        if (lessonQuestions.length === 0) {
-          // Lấy nội dung các bài học trước đó (ngược từ currentIdx - 1 đến khi gặp bài kiểm tra khác hoặc đầu khóa)
-          let combinedContent = '';
-          for (let i = currentIdx - 1; i >= 0; i--) {
-            if (lessons[i].is_quiz) break;
-            combinedContent += `Tiêu đề: ${lessons[i].title}\nNội dung: ${lessons[i].content || ''}\n\n`;
-          }
-
-          if (combinedContent.trim() === '') {
-            combinedContent = `Nội dung tổng quát của khóa học: ${lesson.title}`;
-          }
-
-          const geminiService = require('../services/geminiService');
-          const generated = await geminiService.generateLessonQuiz(lesson.title, combinedContent, 10);
-          
-          // Lưu câu hỏi vào CSDL
-          for (const q of generated) {
-            await Question.create(lessonQuiz.id, q.question_text, 'multiple_choice', q.options, q.correct_answer);
-          }
-
-          // Lấy lại danh sách câu hỏi đã lưu
-          lessonQuestions = await Question.findByQuizId(lessonQuiz.id);
-        }
-
         // 4. Kiểm tra xem học viên đã vượt qua bài kiểm tra này chưa (đạt 100%)
         const passedSubmission = await QuizSubmission.findUserPassedSubmission(userId, lessonQuiz.id);
         if (passedSubmission) {
           isQuizPassed = true;
-          // Nếu đã qua bài kiểm tra, đảm bảo tiến độ tối thiểu đã cập nhật cho bài này
-          calculatedProgress = Math.max(
-            enrollment.progress,
-            Math.round(((currentIdx + 1) / totalLessons) * 100)
-          );
-          if (enrollment.id !== null) {
-            await Enrollment.updateProgress(userId, courseId, calculatedProgress);
+          // Nếu đã qua bài kiểm tra, đảm bảo lưu vào bảng lesson_completions
+          if (!completedLessonIds.includes(lessonId)) {
+            await LessonCompletion.create(userId, lessonId, courseId);
+            completedLessonIds.push(lessonId);
+            
+            // Tính toán lại tiến trình mới
+            const newProgress = Math.min(100, Math.round((completedLessonIds.length / totalLessons) * 100));
+            if (enrollment.id !== null) {
+              await Enrollment.updateProgress(userId, courseId, newProgress);
+              enrollment.progress = newProgress;
+            }
           }
-        }
-      } else {
-        // Bài lý thuyết/Video: tự động cập nhật tiến độ khi xem
-        calculatedProgress = Math.max(
-          enrollment.progress, 
-          Math.round(((currentIdx + 1) / totalLessons) * 100)
-        );
-        if (enrollment.id !== null) {
-          await Enrollment.updateProgress(userId, courseId, calculatedProgress);
         }
       }
 
@@ -413,16 +373,50 @@ module.exports = {
         lesson,
         lessons,
         currentIdx,
-        enrollment: { ...enrollment, progress: calculatedProgress },
+        enrollment,
         comments,
         quiz,
         lessonQuiz,
         lessonQuestions,
-        isQuizPassed
+        isQuizPassed,
+        completedLessonIds
       });
     } catch (err) {
       console.error('[Course Controller] Lỗi xem bài giảng:', err);
       res.render('error', { message: 'Không thể tải nội dung bài giảng.' });
+    }
+  },
+
+  // API lưu hoàn thành bài học khi xem video / tài liệu đạt 90%
+  completeLesson: async (req, res) => {
+    const courseId = parseInt(req.params.courseId);
+    const lessonId = parseInt(req.params.lessonId);
+    const userId = req.session.userId;
+
+    try {
+      const { LessonCompletion, Lesson, Enrollment } = require('../models/schema');
+
+      // 1. Kiểm tra enrollment hợp lệ
+      const enrollment = await Enrollment.findByUserAndCourse(userId, courseId);
+      if (!enrollment || enrollment.status !== 'approved') {
+        return res.status(403).json({ error: 'Bạn chưa đăng ký hoặc chưa được phê duyệt khóa học này.' });
+      }
+
+      // 2. Ghi nhận hoàn thành bài học
+      await LessonCompletion.create(userId, lessonId, courseId);
+
+      // 3. Tính toán lại tiến độ
+      const lessons = await Lesson.findByCourseId(courseId);
+      const completedLessonIds = await LessonCompletion.findByUserAndCourse(userId, courseId);
+      const progress = Math.min(100, Math.round((completedLessonIds.length / lessons.length) * 100));
+
+      // 4. Cập nhật tiến độ vào CSDL
+      await Enrollment.updateProgress(userId, courseId, progress);
+
+      res.json({ success: true, progress });
+    } catch (err) {
+      console.error('[Course Controller] Lỗi khi hoàn thành bài học:', err);
+      res.status(500).json({ error: 'Lỗi hệ thống khi cập nhật hoàn thành bài học.' });
     }
   },
 
@@ -490,23 +484,7 @@ module.exports = {
     }
   },
 
-  // Lịch sử & Thành tựu
-  getMyHistory: async (req, res) => {
-    const userId = req.session.userId;
-    try {
-      const submissions = await QuizSubmission.findByUser(userId);
-      const enrollments = await Enrollment.findUserEnrollments(userId);
-      const completedCourses = enrollments.filter(e => e.progress === 100);
-      
-      res.render('courses/my-history', {
-        submissions,
-        completedCourses
-      });
-    } catch (err) {
-      console.error('[Course Controller] Lỗi lấy lịch sử học tập:', err);
-      res.render('error', { message: 'Không thể tải lịch sử học tập.' });
-    }
-  },
+
 
   // Lịch học & Deadline
   getMyDeadlines: async (req, res) => {

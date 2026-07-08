@@ -11,114 +11,267 @@
   <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"></script>
 
   <style>
+    .markdown-body {
+      color: #334155;
+      font-size: 1.02rem;
+      line-height: 1.75;
+      font-family: var(--font-body), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+
     .markdown-body h1,
     .markdown-body h2,
     .markdown-body h3,
-    .markdown-body h4 {
-      color: var(--text-normal, #f8fafc);
-      margin-top: 1.5rem;
-      margin-bottom: 0.75rem;
+    .markdown-body h4,
+    .markdown-body h5 {
+      color: #0f172a;
       font-weight: 700;
+      margin-top: 1.8rem;
+      margin-bottom: 0.8rem;
+      line-height: 1.35;
     }
 
     .markdown-body h1 {
-      font-size: 1.6rem;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-      padding-bottom: 0.5rem;
+      font-size: 1.65rem;
+      border-bottom: 2px solid #e2e8f0;
+      padding-bottom: 0.4rem;
     }
 
     .markdown-body h2 {
       font-size: 1.35rem;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-      padding-bottom: 0.25rem;
+      border-bottom: 1px solid #f1f5f9;
+      padding-bottom: 0.35rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .markdown-body h2::before {
+      content: '';
+      display: inline-block;
+      width: 4px;
+      height: 1.1rem;
+      background: #4f46e5;
+      border-radius: 2px;
+      flex-shrink: 0;
     }
 
     .markdown-body h3 {
-      font-size: 1.15rem;
+      font-size: 1.18rem;
+    }
+
+    .markdown-body h4 {
+      font-size: 1.05rem;
     }
 
     .markdown-body p {
-      margin-bottom: 1rem;
-      line-height: 1.7;
-      color: #cbd5e1;
+      margin-bottom: 1.1rem;
+      line-height: 1.75;
+      color: #334155;
+    }
+
+    .markdown-body strong {
+      color: #0f172a;
+      font-weight: 700;
     }
 
     .markdown-body ul,
     .markdown-body ol {
-      margin-bottom: 1rem;
+      margin-top: 0.5rem;
+      margin-bottom: 1.1rem;
       padding-left: 1.5rem;
     }
 
     .markdown-body li {
-      margin-bottom: 0.35rem;
-      line-height: 1.6;
+      margin-bottom: 0.4rem;
+      line-height: 1.65;
+      color: #334155;
     }
 
     .markdown-body code {
-      background: rgba(244, 63, 94, 0.15);
-      color: #fb7185;
-      padding: 0.2rem 0.4rem;
-      border-radius: 4px;
-      font-family: 'Fira Code', 'Courier New', Courier, monospace;
-      font-size: 0.85rem;
+      background: #f1f5f9;
+      color: #eb5757; /* Notion-like red code color */
+      padding: 0.18rem 0.35rem;
+      border-radius: 5px;
+      font-family: Consolas, Monaco, monospace;
+      font-size: 0.88em;
+      border: 1px solid #e2e8f0;
+      word-break: break-word;
     }
 
     .markdown-body pre {
       background: #0f172a !important;
-      border: 1px solid rgba(255, 255, 255, 0.05);
-      border-radius: 8px;
-      padding: 1rem;
-      margin: 1.25rem 0;
+      border: 1px solid #1e293b;
+      border-radius: 10px;
+      padding: 1.2rem;
+      margin: 1.5rem 0;
       overflow-x: auto;
       position: relative;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.05);
     }
 
     .markdown-body pre code {
       background: transparent !important;
-      color: #e2e8f0 !important;
+      color: #f8fafc !important;
       padding: 0 !important;
-      font-size: 0.9rem;
-      line-height: 1.5;
+      font-size: 0.88rem;
+      line-height: 1.55;
       display: block;
+      font-family: Consolas, Monaco, monospace;
+    }
+
+    .markdown-body blockquote {
+      border-left: 4px solid #4f46e5;
+      background: #f8fafc;
+      padding: 0.85rem 1.15rem;
+      margin: 1.25rem 0;
+      border-radius: 0 8px 8px 0;
+      border-top: 1px solid #f1f5f9;
+      border-right: 1px solid #f1f5f9;
+      border-bottom: 1px solid #f1f5f9;
+    }
+
+    .markdown-body blockquote p {
+      margin-bottom: 0;
+      color: #475569;
+      font-style: italic;
+    }
+
+    .markdown-body table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1.5rem 0;
+      font-size: 0.92rem;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
+    }
+
+    .markdown-body th,
+    .markdown-body td {
+      border: 1px solid #e2e8f0;
+      padding: 0.65rem 0.85rem;
+      text-align: left;
+    }
+
+    .markdown-body th {
+      background-color: #f8fafc;
+      font-weight: 600;
+      color: #0f172a;
+    }
+
+    .markdown-body tr:nth-child(even) {
+      background-color: #f8fafc;
+    }
+
+    .markdown-body hr {
+      border: 0;
+      height: 1px;
+      background: #e2e8f0;
+      margin: 1.8rem 0;
+    }
+
+    .markdown-body img {
+      max-width: 100%;
+      height: auto;
+      border-radius: 8px;
+      margin: 1rem 0;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
     }
 
     .code-copy-btn {
       position: absolute;
-      top: 0.5rem;
-      right: 0.5rem;
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid rgba(255, 255, 255, 0.1);
+      top: 0.75rem;
+      right: 0.75rem;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.15);
       color: #94a3b8;
-      border-radius: 4px;
-      padding: 0.25rem 0.5rem;
+      border-radius: 6px;
+      padding: 0.3rem 0.6rem;
       font-size: 0.75rem;
       cursor: pointer;
-      transition: all 0.2s;
-      display: flex;
+      transition: all 0.2s ease;
+      display: inline-flex;
       align-items: center;
-      gap: 0.25rem;
+      gap: 0.35rem;
     }
 
     .code-copy-btn:hover {
-      background: rgba(255, 255, 255, 0.15);
-      color: #fff;
+      background: rgba(255, 255, 255, 0.18);
+      color: #ffffff;
+      border-color: rgba(255, 255, 255, 0.3);
+    }
+
+    /* Giao diện Markdown trong khung Chat AI */
+    .ai-msg.markdown-body {
+      font-size: 0.9rem;
+      line-height: 1.6;
+      background: transparent;
+      padding: 0;
+      color: inherit;
+    }
+    .ai-msg.markdown-body p {
+      font-size: 0.9rem;
+      line-height: 1.6;
+      margin-bottom: 0.5rem;
+      color: inherit;
+    }
+    .ai-msg.markdown-body p:last-child {
+      margin-bottom: 0;
+    }
+    .ai-msg.markdown-body pre {
+      margin: 0.5rem 0;
+      padding: 0.75rem;
+      border-radius: 8px;
+    }
+    .ai-msg.markdown-body pre code {
+      font-size: 0.82rem;
+      line-height: 1.5;
+    }
+    .ai-msg.markdown-body ul, .ai-msg.markdown-body ol {
+      margin-bottom: 0.5rem;
+      padding-left: 1.25rem;
+    }
+    .ai-msg.markdown-body li {
+      font-size: 0.9rem;
+      line-height: 1.5;
+      margin-bottom: 0.25rem;
+      color: inherit;
+    }
+
+    .quiz-option-label:hover {
+      background: rgba(99, 102, 241, 0.05) !important;
+      border-color: rgba(99, 102, 241, 0.3) !important;
+    }
+
+    @keyframes quizFadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .quiz-question-step {
+      animation: quizFadeIn 0.35s ease-out forwards;
     }
   </style>
 
-  <div style="margin-bottom: 1rem;">
-    <a href="/courses/<%= courseId %>" style="font-size: 0.9rem; font-weight: 500; color: var(--text-muted);">
-      <i class="fa-solid fa-chevron-left" style="font-size: 0.8rem; margin-right: 0.25rem;"></i> Quay lại danh mục khóa
-      học
-    </a>
-    <h1 style="font-size: 1.8rem; font-weight: 800; margin-top: 0.5rem;">
-      <%= lesson.title %>
-    </h1>
+  <div style="margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; flex-wrap: wrap;">
+    <div style="flex: 1; min-width: 250px;">
+      <a href="/courses/<%= courseId %>" style="font-size: 0.9rem; font-weight: 500; color: var(--text-muted); text-decoration: none;" onmouseover="this.style.color='var(--text-accent)'" onmouseout="this.style.color='inherit'">
+        <i class="fa-solid fa-chevron-left" style="font-size: 0.8rem; margin-right: 0.25rem;"></i> Quay lại danh mục khóa học
+      </a>
+      <h1 style="font-size: 1.8rem; font-weight: 800; margin-top: 0.5rem; color: var(--text-main); margin-bottom: 0; line-height: 1.25;">
+        <%= lesson.title && lesson.title.trim() !== '' ? lesson.title : 'Bài học ' + (currentIdx + 1) %>
+      </h1>
+    </div>
+    
+    <button type="button" class="btn-theater-toggle" id="toggle-sidebar-btn" onclick="toggleSidebar()" title="Thu gọn/Mở rộng danh sách bài học">
+      <i class="fa-solid fa-expand"></i> <span>Chế độ tập trung</span>
+    </button>
   </div>
 
-  <div class="learning-layout">
+  <div class="learning-layout" id="learning-layout-container">
 
     <!-- Cột bên trái: Bài giảng & Thảo luận -->
-    <div>
+    <div class="learning-main">
       <!-- MOCK VIDEO PLAYER (Chỉ hiển thị nếu bài học có Video) -->
       <% if (lesson.video_url && lesson.video_url.trim() !=='' ) {
         // Hàm helper kiểm tra và trích xuất URL embed YouTube
@@ -126,11 +279,11 @@
         const ytRegExp=/^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=|shorts\/)([^#\&\?]*).*/;
         const ytMatch=lesson.video_url.match(ytRegExp);
         if (ytMatch && ytMatch[2].length===11) {
-          ytEmbedUrl=`https://www.youtube.com/embed/${ytMatch[2]}?autoplay=0&rel=0`;
+          ytEmbedUrl=`https://www.youtube.com/embed/${ytMatch[2]}?autoplay=0&rel=0&enablejsapi=1`;
         } %>
         <div class="video-container" style="margin-bottom: 1.5rem;">
           <% if (ytEmbedUrl) { %>
-            <iframe src="<%= ytEmbedUrl %>" title="YouTube video player"
+            <iframe id="youtube-player" src="<%= ytEmbedUrl %>" title="YouTube video player"
               style="width: 100%; height: 100%; border: none;"
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
               allowfullscreen></iframe>
@@ -147,29 +300,110 @@
           <div class="lesson-details">
             <% const hasContent=(lesson.content && lesson.content.trim() !=='' ) || (lesson.attachment_url &&
               lesson.attachment_url.trim() !=='' ); %>
+            <% const hasQuiz = lesson.is_quiz && lessonQuiz && lessonQuestions && lessonQuestions.length > 0; %>
               <div class="lesson-tab-nav">
-                <% if (hasContent) { %>
+                <% if (hasQuiz) { %>
+                  <button class="tab-btn active" onclick="switchTab(event, 'tab-quiz')">
+                    <i class="fa-solid fa-clipboard-question"></i> Bài kiểm tra trắc nghiệm
+                  </button>
+                  <button class="tab-btn" onclick="switchTab(event, 'tab-discussion')">
+                    <i class="fa-solid fa-comments"></i> Thảo luận trực tuyến
+                  </button>
+                <% } else if (hasContent) { %>
                   <button class="tab-btn active" onclick="switchTab(event, 'tab-content')">
                     <i class="fa-solid fa-file-invoice"></i> Tài liệu bài học
                   </button>
                   <button class="tab-btn" onclick="switchTab(event, 'tab-discussion')">
                     <i class="fa-solid fa-comments"></i> Thảo luận trực tuyến
                   </button>
-                  <% } else { %>
-                    <button class="tab-btn active" onclick="switchTab(event, 'tab-discussion')"
-                      style="width: 100%; border-radius: 8px;">
-                      <i class="fa-solid fa-comments"></i> Thảo luận trực tuyến
-                    </button>
-                    <% } %>
+                <% } else { %>
+                  <button class="tab-btn active" onclick="switchTab(event, 'tab-discussion')"
+                    style="width: 100%; border-radius: 8px;">
+                    <i class="fa-solid fa-comments"></i> Thảo luận trực tuyến
+                  </button>
+                <% } %>
               </div>
+
+              <!-- Tab Bài kiểm tra trắc nghiệm -->
+              <% if (hasQuiz) { %>
+                <div id="tab-quiz" class="tab-pane active glass-card" style="padding: 2rem;">
+                  <% if (isQuizPassed) { %>
+                    <div style="text-align: center; padding: 2.5rem 1.5rem; background: rgba(16, 185, 129, 0.04); border-radius: 12px; border: 1px solid rgba(16, 185, 129, 0.15); margin-bottom: 1.5rem;">
+                      <i class="fa-solid fa-circle-check" style="color: #10b981; font-size: 3rem; margin-bottom: 1rem; display: block;"></i>
+                      <h4 style="color: #064e3b; font-weight: 700; margin-bottom: 0.5rem; font-size: 1.15rem;">Bạn đã hoàn thành bài kiểm tra này!</h4>
+                      <p style="color: #047857; font-size: 0.9rem; margin-bottom: 0;">Chúc mừng bạn đã trả lời đúng 100% câu hỏi và vượt qua bài học thành công.</p>
+                    </div>
+                  <% } else { %>
+                    <div id="quiz-result-alert" class="alert" style="display: none; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; font-size: 0.9rem; font-weight: 600;"></div>
+                    
+                    <form id="lesson-quiz-form" onsubmit="submitLessonQuiz(event)">
+                      <input type="hidden" id="lesson-quiz-id" value="<%= lessonQuiz.id %>">
+                      
+                      <!-- Thanh tiến trình & Bộ điều hướng ở trên -->
+                      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 2rem; background: rgba(99, 102, 241, 0.03); padding: 1rem 1.25rem; border-radius: 12px; border: 1px solid rgba(99, 102, 241, 0.08); gap: 1rem; flex-wrap: wrap;">
+                        <div style="font-size: 0.85rem; font-weight: 700; color: #4f46e5; min-width: 80px;">
+                          Tiến trình: <span id="quiz-progress-text">1 / <%= lessonQuestions.length %></span>
+                        </div>
+                        <div style="flex: 1; background: #e2e8f0; height: 8px; border-radius: 4px; overflow: hidden; min-width: 150px;">
+                          <div id="quiz-progress-bar" style="width: <%= (1 / lessonQuestions.length) * 100 %>%; height: 100%; background: var(--primary-gradient); border-radius: 4px; transition: width 0.3s ease;"></div>
+                        </div>
+                        <!-- Bộ lưới câu hỏi mini để jump nhanh -->
+                        <div style="display: flex; gap: 0.35rem; flex-wrap: wrap;" id="quiz-nav-dots">
+                          <% lessonQuestions.forEach((q, qIdx) => { %>
+                            <span class="quiz-nav-dot" onclick="goToQuestion(<%= qIdx %>)" id="nav-dot-<%= qIdx %>" style="width: 1.8rem; height: 1.8rem; display: inline-flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: 700; border-radius: 50%; border: 1.5px solid #cbd5e1; cursor: pointer; transition: all 0.25s; color: #64748b; background: transparent; user-select: none;" title="Đến câu <%= qIdx + 1 %>">
+                              <%= qIdx + 1 %>
+                            </span>
+                          <% }) %>
+                        </div>
+                      </div>
+
+                      <!-- Danh sách câu hỏi (Hiển thị từng câu) -->
+                      <div class="quiz-questions-container">
+                        <% lessonQuestions.forEach((q, qIdx) => { %>
+                          <div class="quiz-question-step" id="quiz-step-<%= qIdx %>" style="display: <%= qIdx === 0 ? 'block' : 'none' %>;">
+                            <div style="font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); font-weight: 700; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.35rem;">
+                              <i class="fa-solid fa-graduation-cap" style="color: #6366f1;"></i> Câu hỏi <%= qIdx + 1 %> trên <%= lessonQuestions.length %>
+                            </div>
+                            <p style="font-weight: 700; font-size: 1.15rem; color: var(--text-main); margin-bottom: 1.5rem; line-height: 1.5;">
+                              <%= q.question_text %>
+                            </p>
+                            
+                            <div style="display: flex; flex-direction: column; gap: 0.75rem; margin-bottom: 1.5rem;">
+                              <% q.options.forEach((opt, oIdx) => { %>
+                                <label class="quiz-option-label" onclick="highlightSelectedOption(this); markDotAnswered(<%= qIdx %>)" style="display: flex; align-items: center; gap: 0.75rem; background: #ffffff; padding: 0.85rem 1.25rem; border-radius: 12px; border: 1px solid #e2e8f0; cursor: pointer; transition: all 0.25s; box-shadow: 0 1px 3px rgba(0,0,0,0.02);">
+                                  <input type="radio" name="q-<%= q.id %>" value="<%= opt %>" required style="cursor: pointer; width: 1.05rem; height: 1.05rem;">
+                                  <span style="font-size: 0.95rem; color: var(--text-main); font-weight: 500;"><%= opt %></span>
+                                </label>
+                              <% }) %>
+                            </div>
+                          </div>
+                        <% }) %>
+                      </div>
+                      
+                      <!-- Thanh điều hành Prev/Next/Submit ở dưới -->
+                      <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1.5rem; border-top: 1px solid var(--border-light); padding-top: 1.25rem;">
+                        <button type="button" id="btn-prev-quiz" class="btn btn-secondary" onclick="prevQuestion()" style="padding: 0.65rem 1.5rem; font-size: 0.85rem; display: none;">
+                          <i class="fa-solid fa-chevron-left"></i> Câu trước
+                        </button>
+                        
+                        <button type="button" id="btn-next-quiz" class="btn btn-secondary" onclick="nextQuestion()" style="padding: 0.65rem 1.5rem; font-size: 0.85rem; margin-left: auto;">
+                          Câu sau <i class="fa-solid fa-chevron-right"></i>
+                        </button>
+                        
+                        <button type="submit" id="btn-submit-lesson-quiz" class="btn btn-primary" style="padding: 0.65rem 2.25rem; font-size: 0.9rem; font-weight: 600; display: none; margin-left: auto; background: var(--secondary-gradient); border: none; box-shadow: 0 4px 12px rgba(20, 184, 166, 0.2);">
+                          <i class="fa-solid fa-paper-plane"></i> Nộp bài kiểm tra
+                        </button>
+                      </div>
+                    </form>
+                  <% } %>
+                </div>
+              <% } %>
 
               <!-- Tab Nội dung chi tiết bài học -->
               <% if (hasContent) { %>
                 <div id="tab-content" class="tab-pane active glass-card" style="padding: 1.5rem;">
                   <% if (lesson.content && lesson.content.trim() !=='' ) { %>
-                    <div id="raw-markdown-content" style="display: none;">
-                      <%= lesson.content %>
-                    </div>
+                    <textarea id="raw-markdown-content" style="display: none;"><%= lesson.content %></textarea>
                     <div id="rendered-markdown-content" class="markdown-body"></div>
                     <% } %>
 
@@ -177,9 +411,28 @@
                         <div class="attachment-viewer"
                           style="<%= (lesson.content && lesson.content.trim() !== '') ? 'margin-top: 1.5rem;' : '' %>">
                           <% if (lesson.attachment_url.toLowerCase().endsWith('.pdf')) { %>
-                            <iframe src="<%= lesson.attachment_url %>#toolbar=0&navpanes=0&view=FitH"
-                              style="width: 100%; height: 750px; border: none; border-radius: 8px; background: #fff;"
-                              title="Tài liệu bài học"></iframe>
+                            <div class="pdf-document-card" style="margin-bottom: 1.5rem; padding: 1.25rem 1.5rem; border-radius: 12px; background: rgba(79, 70, 229, 0.03); border: 1px solid rgba(79, 70, 229, 0.15); display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap;">
+                              <div style="display: flex; align-items: center; gap: 1rem;">
+                                <div style="width: 48px; height: 48px; border-radius: 10px; background: rgba(239, 68, 68, 0.1); color: #ef4444; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; flex-shrink: 0;">
+                                  <i class="fa-solid fa-file-pdf"></i>
+                                </div>
+                                <div style="min-width: 0; flex: 1;">
+                                  <h4 style="margin: 0; font-size: 0.95rem; font-weight: 700; color: var(--text-main); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"><%= lesson.title || 'Tài liệu bài học' %></h4>
+                                  <p style="margin: 0.15rem 0 0 0; font-size: 0.78rem; color: var(--text-muted);">Tài liệu học tập đính kèm (PDF)</p>
+                                </div>
+                              </div>
+                              <div style="display: flex; gap: 0.5rem; flex-shrink: 0;">
+                                <a href="<%= lesson.attachment_url %>" class="btn btn-primary" target="_blank" style="padding: 0.55rem 1.25rem; font-size: 0.8rem; border-radius: 6px; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 0.35rem; color: #fff;">
+                                  <i class="fa-solid fa-square-arrow-up-right"></i> Xem toàn màn hình
+                                </a>
+                              </div>
+                            </div>
+
+                            <div id="pdf-preview-container" style="transition: all 0.3s ease; margin-bottom: 1rem;">
+                              <iframe src="<%= lesson.attachment_url %>#toolbar=0&navpanes=0&view=FitH"
+                                style="width: 100%; height: 750px; border: 1px solid var(--border-light); border-radius: 8px; background: #fff;"
+                                title="Tài liệu bài học"></iframe>
+                            </div>
                             <% } else if (['.png', '.jpg' , '.jpeg' , '.gif' , '.svg' , '.webp' ].some(ext=>
                               lesson.attachment_url.toLowerCase().endsWith(ext))) { %>
                               <div
@@ -211,26 +464,48 @@
 
                   <!-- Tab Thảo luận trực tuyến (WebSocket Chat) -->
                   <div id="tab-discussion" class="tab-pane <%= !hasContent ? 'active' : '' %>">
-                    <div class="chat-container">
-                      <div class="chat-messages" id="chat-messages-container">
-                        <% comments.forEach(c=> { %>
-                          <div class="chat-msg">
-                            <div class="chat-msg-sender">
-                              <%= c.username %>
-                            </div>
-                            <div class="chat-msg-text" style="font-size: 0.9rem;">
+                    <%
+                    function formatTime(dateVal) {
+                      if (!dateVal) return '';
+                      const date = new Date(dateVal);
+                      const now = new Date();
+                      const timeStr = date.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+                      const isToday = date.toDateString() === now.toDateString();
+                      if (isToday) {
+                        return timeStr;
+                      } else {
+                        const dateStr = date.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' });
+                        return timeStr + ' ' + dateStr;
+                      }
+                    }
+                    %>
+                    <div class="chat-container" style="background: #ffffff; border-radius: 16px; border: 1px solid var(--border-light); padding: 1rem; box-shadow: 0 4px 20px -2px rgba(0,0,0,0.02); display: flex; flex-direction: column; gap: 1rem;">
+                      <div class="chat-messages" id="chat-messages-container" style="display: flex; flex-direction: column; gap: 0.75rem; padding: 1rem; overflow-y: auto; height: 380px; background: #f8fafc; border-radius: 12px; border: 1px solid #f1f5f9;">
+                        <% comments.forEach(c=> { 
+                          const isSelf = user && (c.username === user.username);
+                        %>
+                          <div class="chat-msg <%= isSelf ? 'self' : 'other' %>" style="display: flex; flex-direction: column; max-width: 75%; padding: 0.75rem 1rem; border-radius: 14px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); <%= isSelf ? 'align-self: flex-end; background: var(--primary-gradient); color: #ffffff; border-bottom-right-radius: 4px;' : 'align-self: flex-start; background: #ffffff; color: var(--text-main); border-bottom-left-radius: 4px; border: 1px solid #e2e8f0;' %>">
+                            <% if (!isSelf) { %>
+                              <div class="chat-msg-sender" style="font-weight: 800; font-size: 0.78rem; color: #4f46e5; margin-bottom: 0.25rem;">
+                                <%= c.username %>
+                              </div>
+                            <% } %>
+                            <div class="chat-msg-text" style="font-size: 0.92rem; line-height: 1.45; word-break: break-word;">
                               <%= c.content %>
                             </div>
+                            <div class="chat-msg-time" style="font-size: 0.68rem; text-align: right; margin-top: 0.35rem; opacity: 0.75; <%= isSelf ? 'color: rgba(255,255,255,0.85);' : 'color: var(--text-muted);' %>">
+                              <%= formatTime(c.created_at) %>
+                            </div>
                           </div>
-                          <% }) %>
+                        <% }) %>
                       </div>
 
-                      <form id="comment-form" class="chat-input-area" onsubmit="handleSendComment(event)">
+                      <form id="comment-form" class="chat-input-area" onsubmit="handleSendComment(event)" style="display: flex; gap: 0.5rem; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 0.4rem 0.5rem 0.4rem 1rem; align-items: center;">
                         <input type="hidden" id="lesson-id-field" value="<%= lesson.id %>">
                         <input type="text" id="comment-input-field" class="chat-input"
-                          placeholder="Viết câu hỏi hoặc chia sẻ thảo luận tại đây..." required>
-                        <button type="submit" class="btn btn-primary" style="padding: 0.5rem 1.25rem;">
-                          Gửi <i class="fa-solid fa-paper-plane" style="font-size: 0.8rem;"></i>
+                          placeholder="Viết câu hỏi hoặc chia sẻ thảo luận tại đây..." required style="flex: 1; border: none; background: transparent; color: var(--text-main); font-size: 0.9rem; outline: none; padding: 0.5rem 0;">
+                        <button type="submit" class="btn btn-primary" style="padding: 0.55rem 1.5rem; border-radius: 8px; font-weight: 600; font-size: 0.85rem; display: inline-flex; align-items: center; gap: 0.4rem; background: var(--primary-gradient); border: none; box-shadow: 0 4px 10px rgba(79, 70, 229, 0.15);">
+                          Gửi <i class="fa-solid fa-paper-plane" style="font-size: 0.75rem;"></i>
                         </button>
                       </form>
                     </div>
@@ -239,49 +514,41 @@
     </div>
 
     <!-- Cột bên phải: Danh mục bài & Trợ lý học tập AI -->
-    <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+    <div class="learning-sidebar">
 
       <!-- Danh sách các bài giảng khác -->
       <div class="glass-card" style="padding: 1.25rem;">
         <h3 style="font-size: 1.1rem; margin-bottom: 1rem;"><i class="fa-solid fa-list-check"
             style="color: #6366f1;"></i> Danh sách bài học</h3>
+            
+        <!-- Hộp tìm kiếm bài học nhanh -->
+        <div class="sidebar-search-wrapper" style="margin-bottom: 1rem; position: relative;">
+          <i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 0.85rem; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 0.85rem;"></i>
+          <input type="text" id="sidebar-search-input" placeholder="Tìm tên bài học..." onkeyup="filterSidebarLessons()"
+            style="width: 100%; padding: 0.55rem 1rem 0.55rem 2.2rem; background: rgba(15,23,42,0.02); border: 1px solid var(--border-light); border-radius: 8px; color: var(--text-main); font-size: 0.82rem; outline: none; box-sizing: border-box; transition: all 0.2s;">
+        </div>
+
         <div class="lesson-list-sidebar">
           <% lessons.forEach((l, idx)=> {
-            const isLocked = idx > 0 && enrollment.progress < Math.round((idx / lessons.length) * 100); %>
-              <% if (isLocked) { %>
-                <div class="lesson-list-item locked"
-                  style="opacity: 0.5; cursor: not-allowed; display: flex; justify-content: space-between; align-items: center;"
-                  title="Bài học này đang bị khóa. Vui lòng hoàn thành các bài học trước.">
-                  <div style="display: flex; align-items: center; gap: 0.5rem;">
-                    <span style="font-weight: 700; font-size: 0.85rem; color: var(--text-muted);">#<%= idx + 1 %></span>
-                    <span
-                      style="font-size: 0.85rem; font-weight: 500; color: var(--text-muted); display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden;">
-                      <%= l.title %>
-                    </span>
-                  </div>
-                  <i class="fa-solid fa-lock" style="color: var(--text-muted); font-size: 0.85rem;"></i>
-                </div>
-                <% } else { %>
-                  <a href="/courses/<%= courseId %>/lessons/<%= l.id %>"
-                    class="lesson-list-item <%= l.id === lesson.id ? 'active' : '' %>">
-                    <div style="display: flex; align-items: center; gap: 0.5rem;">
-                      <span style="font-weight: 700; font-size: 0.85rem; color: var(--text-accent);">#<%= idx + 1 %>
-                      </span>
-                      <span
-                        style="font-size: 0.85rem; font-weight: 500; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden;">
-                        <%= l.title %>
-                      </span>
-                    </div>
-                    <% if (idx < currentIdx) { %>
-                      <i class="fa-solid fa-circle-check" style="color: #10b981; font-size: 0.85rem;"></i>
-                      <% } else if (l.id===lesson.id) { %>
-                        <i class="fa-solid fa-circle-play" style="color: #6366f1; font-size: 0.85rem;"></i>
-                        <% } else { %>
-                          <i class="fa-solid fa-circle" style="color: var(--text-muted); font-size: 0.75rem;"></i>
-                          <% } %>
-                  </a>
-                  <% } %>
-                    <% }) %>
+            const isCompleted = completedLessonIds.includes(l.id); %>
+            <a href="/courses/<%= courseId %>/lessons/<%= l.id %>"
+              class="lesson-list-item <%= l.id === lesson.id ? 'active' : '' %>">
+              <div style="display: flex; align-items: center; gap: 0.5rem;">
+                <span style="font-weight: 700; font-size: 0.85rem; color: var(--text-accent);">#<%= idx + 1 %></span>
+                <span
+                  style="font-size: 0.85rem; font-weight: 500; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden;">
+                  <%= l.title && l.title.trim() !== '' ? l.title : 'Bài học ' + (idx + 1) %>
+                </span>
+              </div>
+              <% if (isCompleted) { %>
+                <i class="fa-solid fa-circle-check" style="color: #10b981; font-size: 0.85rem;"></i>
+              <% } else if (l.id === lesson.id) { %>
+                <i class="fa-solid fa-circle-play" style="color: #6366f1; font-size: 0.85rem;"></i>
+              <% } else { %>
+                <i class="fa-solid fa-circle" style="color: var(--text-muted); font-size: 0.75rem;"></i>
+              <% } %>
+            </a>
+          <% }) %>
         </div>
 
         <!-- Cấp đề thi cuối khóa -->
@@ -306,57 +573,7 @@
           <% } %>
       </div>
 
-      <!-- TRỢ LÝ AI HỌC TẬP THÔNG MINH (GEMINI INTEGRATION) -->
-      <div class="glass-card ai-panel" style="padding: 1.5rem;">
-        <div class="ai-header">
-          <div class="ai-title">
-            <i class="fa-solid fa-wand-magic-sparkles" style="color: #8b5cf6;"></i>
-            <span>Trợ lý Học tập AI</span>
-          </div>
-          <button class="btn btn-secondary" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;"
-            onclick="handleAiSummarize()">
-            Tóm tắt bài học
-          </button>
-        </div>
 
-        <div class="ai-body">
-          <!-- AI chat box hiển thị phản hồi -->
-          <div class="ai-chat-box" id="ai-chat-box">
-            <div class="ai-msg assistant">
-              Chào bạn! Tôi là Trợ lý AI. Bạn cần tôi giải thích thêm gì về bài học này hay làm bài trắc nghiệm nhanh
-              không?
-            </div>
-          </div>
-
-          <div style="display: flex; gap: 0.5rem; align-items: center;">
-            <input type="text" id="ai-chat-input" placeholder="Hỏi AI..."
-              style="padding: 0.4rem 0.75rem; font-size: 0.85rem;">
-            <button class="btn btn-primary" onclick="handleAiSendChat()"
-              style="padding: 0.4rem 0.75rem; font-size: 0.85rem;">
-              Hỏi <i class="fa-solid fa-magnifying-glass-chart" style="font-size: 0.75rem;"></i>
-            </button>
-          </div>
-
-          <div style="display: flex; gap: 0.5rem; margin-top: 0.5rem;">
-            <button class="btn btn-secondary" style="flex: 1; font-size: 0.75rem; padding: 0.4rem;"
-              onclick="handleAiGenerateQuiz()">
-              <i class="fa-solid fa-circle-question" style="color: #06b6d4;"></i> Sinh trắc nghiệm nhanh
-            </button>
-
-            <% if (user.permissions.includes('QUIZ_BANK_MANAGE') && quiz) { %>
-              <!-- Phím tắt sinh câu hỏi trực tiếp đưa vào ngân hàng đề thi -->
-              <button class="btn btn-secondary"
-                style="flex: 1; font-size: 0.75rem; padding: 0.4rem; border-color: rgba(139, 92, 246, 0.4);"
-                onclick="handleAiGenerateToDb('<%= quiz.id %>')">
-                <i class="fa-solid fa-database" style="color: #8b5cf6;"></i> Thêm trắc nghiệm vào DB
-              </button>
-              <% } %>
-          </div>
-        </div>
-      </div>
-
-      <!-- KHU VỰC HIỂN THỊ CÂU HỎI TRẮC NGHIỆM AI TẠO NHANH -->
-      <div id="ai-quick-quiz-area" style="display: none;"></div>
 
     </div>
   </div>
@@ -384,8 +601,59 @@
     style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); z-index: 999;"
     onclick="closeFinalQuizModal()"></div>
 
+  <script src="https://www.youtube.com/iframe_api"></script>
   <% let nextLessonId=null; if (currentIdx + 1 < lessons.length) { nextLessonId=lessons[currentIdx + 1].id; } %>
     <script>
+      // Đóng/mở Sidebar và lưu trạng thái vào LocalStorage
+      function toggleSidebar() {
+        const container = document.getElementById('learning-layout-container');
+        const btn = document.getElementById('toggle-sidebar-btn');
+        if (!container) return;
+        
+        const willCollapse = !container.classList.contains('sidebar-collapsed');
+        if (willCollapse) {
+          container.classList.add('sidebar-collapsed');
+          localStorage.setItem('lesson-sidebar-collapsed', 'true');
+          if (btn) {
+            btn.classList.add('active');
+            btn.querySelector('span').textContent = 'Mở rộng màn hình';
+            btn.querySelector('i').className = 'fa-solid fa-compress';
+          }
+        } else {
+          container.classList.remove('sidebar-collapsed');
+          localStorage.setItem('lesson-sidebar-collapsed', 'false');
+          if (btn) {
+            btn.classList.remove('active');
+            btn.querySelector('span').textContent = 'Chế độ tập trung';
+            btn.querySelector('i').className = 'fa-solid fa-expand';
+          }
+        }
+      }
+
+      // Lọc danh sách bài học ở sidebar theo thời gian thực
+      function filterSidebarLessons() {
+        const query = document.getElementById('sidebar-search-input').value.toLowerCase().trim();
+        const items = document.querySelectorAll('.lesson-list-sidebar .lesson-list-item');
+        
+        items.forEach(item => {
+          const spanText = item.querySelector('span:nth-child(2)').textContent.toLowerCase();
+          if (spanText.includes(query)) {
+            item.style.display = 'flex';
+          } else {
+            item.style.display = 'none';
+          }
+        });
+      }
+
+      // Mở/đóng khung xem trước PDF tại chỗ
+      function togglePdfPreview() {
+        const container = document.getElementById('pdf-preview-container');
+        if (!container) return;
+        
+        const isHidden = container.style.display === 'none';
+        container.style.display = isHidden ? 'block' : 'none';
+      }
+
       // Hàm bổ trợ kết xuất công thức toán học
       function renderMath(element) {
         if (typeof renderMathInElement !== 'undefined' && element) {
@@ -415,20 +683,42 @@
 
       // Tự động mở khóa và chuyển bài khi video kết thúc
       document.addEventListener('DOMContentLoaded', () => {
+        // Khôi phục trạng thái Sidebar từ LocalStorage
+        const isCollapsed = localStorage.getItem('lesson-sidebar-collapsed') === 'true';
+        const container = document.getElementById('learning-layout-container');
+        const btn = document.getElementById('toggle-sidebar-btn');
+        if (isCollapsed && container) {
+          container.classList.add('sidebar-collapsed');
+          if (btn) {
+            btn.classList.add('active');
+            btn.querySelector('span').textContent = 'Mở rộng màn hình';
+            btn.querySelector('i').className = 'fa-solid fa-compress';
+          }
+        }
+
         // Render Markdown bài học
         const rawMarkdownEl = document.getElementById('raw-markdown-content');
         const renderedMarkdownEl = document.getElementById('rendered-markdown-content');
         if (rawMarkdownEl && renderedMarkdownEl) {
-          const rawText = rawMarkdownEl.textContent || rawMarkdownEl.innerText;
+          const rawText = rawMarkdownEl.value;
           if (typeof marked !== 'undefined') {
             marked.use({
               renderer: {
-                code(code, infostring) {
-                  const lang = (infostring || '').match(/\S*/)[0];
+                code(codeOrToken, infostring) {
+                  let text = '';
+                  let lang = '';
+                  if (typeof codeOrToken === 'object' && codeOrToken !== null) {
+                    text = codeOrToken.text || '';
+                    lang = codeOrToken.lang || '';
+                  } else {
+                    text = codeOrToken || '';
+                    lang = infostring || '';
+                  }
+                  lang = (lang || '').match(/\S*/)[0];
                   const validLang = typeof hljs !== 'undefined' && hljs.getLanguage(lang) ? lang : 'plaintext';
                   const highlighted = typeof hljs !== 'undefined'
-                    ? hljs.highlight(code, { language: validLang }).value
-                    : code;
+                    ? hljs.highlight(text, { language: validLang }).value
+                    : text;
                   return `<pre><code class="hljs language-${validLang}">${highlighted}</code></pre>`;
                 }
               }
@@ -459,6 +749,15 @@
           } else {
             renderedMarkdownEl.innerText = rawText;
           }
+        }
+
+        // Render Math in Quiz if present
+        const quizFormEl = document.getElementById('lesson-quiz-form');
+        if (quizFormEl && typeof renderMath === 'function') {
+          renderMath(quizFormEl);
+        }
+        if (quizFormEl && typeof showStep === 'function') {
+          showStep(0);
         }
 
         const video = document.getElementById('lesson-video');
@@ -500,8 +799,381 @@
           };
         }
       });
-    </script>
-    <!-- Nạp JS Xử lý trợ lý AI -->
-    <script src="/js/ai-assistant.js"></script>
 
+      let currentQuizStep = 0;
+      const totalQuizSteps = <%= hasQuiz ? lessonQuestions.length : 0 %>;
+
+      function showStep(stepIdx) {
+        if (totalQuizSteps === 0) return;
+        
+        document.querySelectorAll('.quiz-question-step').forEach((el, idx) => {
+          el.style.display = idx === stepIdx ? 'block' : 'none';
+        });
+        
+        currentQuizStep = stepIdx;
+        
+        const progressText = document.getElementById('quiz-progress-text');
+        if (progressText) {
+          progressText.textContent = `${currentQuizStep + 1} / ${totalQuizSteps}`;
+        }
+        
+        const progressBar = document.getElementById('quiz-progress-bar');
+        if (progressBar) {
+          progressBar.style.width = `${((currentQuizStep + 1) / totalQuizSteps) * 100}%`;
+        }
+        
+        document.querySelectorAll('.quiz-nav-dot').forEach((dot, idx) => {
+          if (idx === currentQuizStep) {
+            dot.style.borderColor = '#4f46e5';
+            dot.style.color = '#4f46e5';
+            dot.style.backgroundColor = 'rgba(79, 70, 229, 0.08)';
+            dot.style.transform = 'scale(1.15)';
+          } else if (dot.classList.contains('answered')) {
+            dot.style.borderColor = '#10b981';
+            dot.style.color = '#10b981';
+            dot.style.backgroundColor = 'rgba(16, 185, 129, 0.06)';
+            dot.style.transform = 'scale(1)';
+          } else {
+            dot.style.borderColor = '#cbd5e1';
+            dot.style.color = '#64748b';
+            dot.style.backgroundColor = 'transparent';
+            dot.style.transform = 'scale(1)';
+          }
+        });
+
+        const prevBtn = document.getElementById('btn-prev-quiz');
+        const nextBtn = document.getElementById('btn-next-quiz');
+        const submitBtn = document.getElementById('btn-submit-lesson-quiz');
+        
+        if (prevBtn) {
+          prevBtn.style.display = currentQuizStep === 0 ? 'none' : 'block';
+        }
+        
+        if (nextBtn) {
+          nextBtn.style.display = currentQuizStep === totalQuizSteps - 1 ? 'none' : 'block';
+        }
+        
+        if (submitBtn) {
+          submitBtn.style.display = currentQuizStep === totalQuizSteps - 1 ? 'block' : 'none';
+        }
+      }
+
+      function nextQuestion() {
+        if (currentQuizStep < totalQuizSteps - 1) {
+          showStep(currentQuizStep + 1);
+        }
+      }
+
+      function prevQuestion() {
+        if (currentQuizStep > 0) {
+          showStep(currentQuizStep - 1);
+        }
+      }
+
+      function goToQuestion(stepIdx) {
+        showStep(stepIdx);
+      }
+
+      function markDotAnswered(stepIdx) {
+        const dot = document.getElementById(`nav-dot-${stepIdx}`);
+        if (dot) {
+          dot.classList.add('answered');
+          if (stepIdx !== currentQuizStep) {
+            dot.style.borderColor = '#10b981';
+            dot.style.color = '#10b981';
+            dot.style.backgroundColor = 'rgba(16, 185, 129, 0.06)';
+          }
+        }
+      }
+
+      // --- LOGIC HOÀN THÀNH BÀI HỌC VÀ LÀM BÀI TRẮC NGHIỆM ---
+      let progressChecked = false;
+
+      function markLessonAsCompleted() {
+        if (progressChecked) return;
+        progressChecked = true;
+        
+        fetch('/courses/<%= courseId %>/lessons/<%= lesson.id %>/complete', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        })
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+            console.log('[LMS] Bài học đã hoàn thành! Tiến trình mới:', data.progress);
+            
+            // 1. Cập nhật tích xanh trên sidebar cho bài hiện tại
+            const activeSidebarItem = document.querySelector('.lesson-list-sidebar .lesson-list-item.active');
+            if (activeSidebarItem) {
+              const icon = activeSidebarItem.querySelector('i:last-child');
+              if (icon) {
+                icon.className = 'fa-solid fa-circle-check';
+                icon.style.color = '#10b981';
+                icon.style.fontSize = '0.85rem';
+              }
+            }
+            
+            // 2. Cập nhật thanh tiến độ nếu có
+            const progressBar = document.querySelector('.progress-bar');
+            const progressText = document.querySelector('.progress-container')?.parentElement?.querySelector('strong');
+            if (progressBar && data.progress !== undefined) {
+              progressBar.style.width = data.progress + '%';
+            }
+            if (progressText && data.progress !== undefined) {
+              progressText.textContent = data.progress + '%';
+            }
+          }
+        })
+        .catch(err => {
+          console.error('[LMS] Lỗi khi gửi yêu cầu hoàn thành bài học:', err);
+          progressChecked = false;
+        });
+      }
+
+      // YouTube Player API
+      var ytPlayer;
+      function onYouTubeIframeAPIReady() {
+        const ytIframe = document.getElementById('youtube-player');
+        if (ytIframe) {
+          ytPlayer = new YT.Player('youtube-player', {
+            events: {
+              'onStateChange': onPlayerStateChange
+            }
+          });
+        }
+      }
+      window.onYouTubeIframeAPIReady = onYouTubeIframeAPIReady;
+
+      let checkInterval = null;
+      function onPlayerStateChange(event) {
+        if (event.data === YT.PlayerState.PLAYING) {
+          if (!checkInterval) {
+            checkInterval = setInterval(checkYoutubeProgress, 1000);
+          }
+        } else {
+          if (checkInterval) {
+            clearInterval(checkInterval);
+            checkInterval = null;
+          }
+        }
+      }
+
+      function checkYoutubeProgress() {
+        if (progressChecked) {
+          if (checkInterval) clearInterval(checkInterval);
+          return;
+        }
+        if (ytPlayer && typeof ytPlayer.getDuration === 'function' && typeof ytPlayer.getCurrentTime === 'function') {
+          const duration = ytPlayer.getDuration();
+          const currentTime = ytPlayer.getCurrentTime();
+          if (duration > 0 && (currentTime / duration) >= 0.9) {
+            progressChecked = true;
+            if (checkInterval) clearInterval(checkInterval);
+            markLessonAsCompleted();
+          }
+        }
+      }
+
+      // HTML5 Video
+      const videoEl = document.getElementById('lesson-video');
+      if (videoEl) {
+        videoEl.addEventListener('timeupdate', () => {
+          if (progressChecked) return;
+          const duration = videoEl.duration;
+          const currentTime = videoEl.currentTime;
+          if (duration > 0 && (currentTime / duration) >= 0.9) {
+            markLessonAsCompleted();
+          }
+        });
+      }
+
+      // Cuộn tài liệu (Document Scroll)
+      function checkDocumentProgress() {
+        if (progressChecked) return;
+        const contentEl = document.getElementById('rendered-markdown-content') || document.getElementById('pdf-preview-container');
+        if (contentEl && contentEl.offsetHeight > 0) {
+          const rect = contentEl.getBoundingClientRect();
+          const scrolledPast = window.innerHeight - rect.top;
+          const totalHeight = rect.height;
+          
+          if (totalHeight > 0) {
+            const scrollPct = (scrolledPast / totalHeight) * 100;
+            if (scrollPct >= 90) {
+              markLessonAsCompleted();
+            }
+          }
+        }
+      }
+
+      window.addEventListener('scroll', checkDocumentProgress);
+      
+      // Trắc nghiệm bài học (Lesson Quiz)
+      function submitLessonQuiz(event) {
+        event.preventDefault();
+        const quizId = document.getElementById('lesson-quiz-id').value;
+        const form = document.getElementById('lesson-quiz-form');
+        const answers = {};
+        
+        const inputs = form.querySelectorAll('input[type="radio"]:checked');
+        inputs.forEach(input => {
+          const qId = input.name.replace('q-', '');
+          answers[qId] = input.value;
+        });
+        
+        fetch('/courses/quiz/submit', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            quizId: quizId,
+            answers: answers
+          })
+        })
+        .then(res => res.json())
+        .then(data => {
+          const alertEl = document.getElementById('quiz-result-alert');
+          if (data.is_passed) {
+            if (alertEl) {
+              alertEl.className = 'alert alert-success';
+              alertEl.style.backgroundColor = 'rgba(16, 185, 129, 0.1)';
+              alertEl.style.color = '#047857';
+              alertEl.style.border = '1px solid rgba(16, 185, 129, 0.2)';
+              alertEl.style.display = 'block';
+              alertEl.innerHTML = `<i class="fa-solid fa-circle-check"></i> Chúc mừng! Bạn đã đạt ${data.score}/100 điểm và hoàn thành bài kiểm tra này.`;
+            }
+            
+            const currentSidebarItem = document.querySelector('.lesson-list-sidebar .lesson-list-item.active');
+            if (currentSidebarItem) {
+              const icon = currentSidebarItem.querySelector('i:last-child');
+              if (icon) {
+                icon.className = 'fa-solid fa-circle-check';
+                icon.style.color = '#10b981';
+              }
+            }
+            
+            setTimeout(() => {
+              window.location.reload();
+            }, 2000);
+          } else {
+            if (alertEl) {
+              alertEl.className = 'alert alert-danger';
+              alertEl.style.backgroundColor = 'rgba(239, 68, 68, 0.1)';
+              alertEl.style.color = '#b91c1c';
+              alertEl.style.border = '1px solid rgba(239, 68, 68, 0.2)';
+              alertEl.style.display = 'block';
+              alertEl.innerHTML = `<i class="fa-solid fa-circle-xmark"></i> Rất tiếc! Bạn chỉ đạt ${data.score}/100 điểm. Cần đạt 100 điểm để hoàn thành. Vui lòng thử lại.`;
+            }
+          }
+        })
+        .catch(err => {
+          console.error('Lỗi khi nộp bài kiểm tra:', err);
+          alert('Có lỗi xảy ra khi nộp bài kiểm tra.');
+        });
+      }
+
+      // Bài thi cuối khóa (Final Quiz)
+      function openFinalQuizModal() {
+        const modal = document.getElementById('final-quiz-modal');
+        const overlay = document.getElementById('modal-overlay');
+        const container = document.getElementById('modal-quiz-questions');
+        if (!modal || !overlay) return;
+        
+        modal.style.display = 'block';
+        overlay.style.display = 'block';
+        
+        fetch('/courses/quiz/questions?lessonId=<%= lesson.id %>')
+        .then(res => res.json())
+        .then(data => {
+          window.finalQuizId = data.quiz.id;
+          let html = '';
+          data.questions.forEach((q, idx) => {
+            html += `
+              <div style="margin-bottom: 1.5rem; border-bottom: 1px solid var(--border-light); padding-bottom: 1rem;">
+                <p style="font-weight: 700; margin-bottom: 0.75rem;">Câu ${idx + 1}: ${q.question_text}</p>
+                <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+            `;
+            q.options.forEach(opt => {
+              html += `
+                <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                  <input type="radio" name="final-q-${q.id}" value="${opt}" required>
+                  <span>${opt}</span>
+                </label>
+              `;
+            });
+            html += `
+                </div>
+              </div>
+            `;
+          });
+          container.innerHTML = html;
+        })
+        .catch(err => {
+          container.innerHTML = '<p style="color: #ef4444;">Không thể tải câu hỏi thi cuối khóa.</p>';
+          console.error(err);
+        });
+      }
+
+      function closeFinalQuizModal() {
+        const modal = document.getElementById('final-quiz-modal');
+        const overlay = document.getElementById('modal-overlay');
+        if (modal) modal.style.display = 'none';
+        if (overlay) overlay.style.display = 'none';
+      }
+
+      function submitFinalQuiz() {
+        const container = document.getElementById('modal-quiz-questions');
+        const answers = {};
+        const inputs = container.querySelectorAll('input[type="radio"]:checked');
+        
+        inputs.forEach(input => {
+          const qId = input.name.replace('final-q-', '');
+          answers[qId] = input.value;
+        });
+        
+        if (!window.finalQuizId) return;
+        
+        fetch('/courses/quiz/submit', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            quizId: window.finalQuizId,
+            answers: answers
+          })
+        })
+        .then(res => res.json())
+        .then(data => {
+          if (data.is_passed) {
+            alert(`Chúc mừng! Bạn đã vượt qua bài thi cuối khóa với điểm số ${data.score}/100. Tiến trình khóa học đạt 100%!`);
+            closeFinalQuizModal();
+            window.location.reload();
+          } else {
+            alert(`Rất tiếc! Điểm của bạn là ${data.score}/100. Cần đạt điểm tối thiểu để đạt. Vui lòng thi lại.`);
+          }
+        })
+        .catch(err => {
+          console.error(err);
+          alert('Có lỗi xảy ra khi nộp bài thi cuối khóa.');
+        });
+      }
+
+      document.addEventListener('DOMContentLoaded', () => {
+        // Tự động kiểm tra hoàn thành cho các bài học không có nội dung lẫn video
+        const hasVideo = <%= lesson.video_url && lesson.video_url.trim() !== '' ? 'true' : 'false' %>;
+        const hasContent = <%= (lesson.content && lesson.content.trim() !== '') || (lesson.attachment_url && lesson.attachment_url.trim() !== '') ? 'true' : 'false' %>;
+        const isQuiz = <%= lesson.is_quiz ? 'true' : 'false' %>;
+
+        if (!hasVideo && !hasContent && !isQuiz) {
+          setTimeout(() => {
+            markLessonAsCompleted();
+          }, 1000);
+        } else if (hasContent) {
+          setTimeout(checkDocumentProgress, 1000);
+        }
+      });
+    </script>
     <%- include('../partials/footer') %>

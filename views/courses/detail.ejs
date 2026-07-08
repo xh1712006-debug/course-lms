@@ -1,4 +1,4 @@
-﻿<%- include('../partials/header') %>
+<%- include('../partials/header') %>
 
 <style>
   /* ========================================== */
@@ -271,9 +271,7 @@
             let isUnlocked = false;
             let lockTitle = 'Vui lòng đăng ký khóa học để mở khóa bài giảng';
             if (enrollment && enrollment.status === 'approved') {
-              const requiredProgress = Math.round((index / lessons.length) * 100);
-              isUnlocked = enrollment.progress >= requiredProgress;
-              lockTitle = 'Vui lòng hoàn thành các bài học trước để mở khóa bài này';
+              isUnlocked = true;
             }
           %>
           <div class="lesson-card-item" style="<%= !isUnlocked ? 'opacity: 0.65; background: #f8fafc;' : '' %>">

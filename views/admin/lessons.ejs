@@ -1,213 +1,457 @@
 <%- include('../partials/header') %>
 
-<div style="margin-bottom: 2rem;">
-  <a href="/course-management" style="font-size: 0.9rem; font-weight: 500; color: var(--text-muted);">
-    <i class="fa-solid fa-chevron-left" style="font-size: 0.8rem; margin-right: 0.25rem;"></i> Quay lại danh sách khóa học
-  </a>
-  <h1 style="font-size: 1.55rem; font-weight: 700; color: var(--text-main); margin-top: 0.5rem;">
-    Quản Lý Bài Học: <%= course.title %>
-  </h1>
-  <p style="color: var(--text-muted); margin-top: 0.25rem;">Thêm bài học lý thuyết, tải tài liệu đính kèm và cấu hình thứ tự học tập.</p>
-</div>
+  <div style="margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 1rem;">
+    <div style="flex: 1; min-width: 250px;">
+      <!-- Breadcrumb -->
+      <div style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.82rem; font-weight: 500; color: var(--text-muted); margin-bottom: 0.5rem;">
+        <a href="/course-management" style="color: inherit; text-decoration: none;" onmouseover="this.style.color='var(--text-accent)'" onmouseout="this.style.color='inherit'">
+          Quản lý khóa học
+        </a>
+        <i class="fa-solid fa-angle-right" style="font-size: 0.7rem;"></i>
+        <span style="color: var(--text-main); font-weight: 600;"><%= course.title %></span>
+        <i class="fa-solid fa-angle-right" style="font-size: 0.7rem;"></i>
+        <span>Bài học</span>
+      </div>
 
-<div style="display: grid; grid-template-columns: 1.2fr 2fr; gap: 2rem; align-items: start;">
-  
-  <!-- Cột trái: Thêm bài học mới -->
-  <% if (user.permissions.includes('LESSON_CREATE')) { %>
-    <div class="glass-card">
-      <h3 style="font-size: 1.2rem; margin-bottom: 1.5rem;"><i class="fa-solid fa-file-circle-plus" style="color: #6366f1;"></i> Thêm bài học</h3>
-      <form action="/course-management/<%= course.id %>/lessons" method="POST">
-        <div class="form-group">
-          <label class="form-label">Thứ tự bài học (Order Index)</label>
-          <input type="number" name="order_index" value="<%= lessons.length + 1 %>" required>
+      <!-- Course Header -->
+      <div style="display: flex; align-items: center; gap: 0.75rem; margin-top: 0.25rem; width: 100%;">
+        <div style="width: 42px; height: 42px; border-radius: 10px; background: rgba(99, 102, 241, 0.1); color: #4f46e5; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; flex-shrink: 0;">
+          <i class="fa-solid fa-book-open"></i>
         </div>
-
-        <div class="form-group">
-          <label class="form-label">Loại bài học</label>
-          <select name="is_quiz" style="width: 100%; padding: 0.65rem 1rem; background: rgba(15, 23, 42, 0.5); border: 1px solid var(--border-light); border-radius: 8px; color: var(--text-main); font-size: 0.9rem; outline: none;" onchange="toggleQuizFields(this.value, 'add')">
-            <option value="false">Bài học lý thuyết / Video</option>
-            <option value="true">Bài kiểm tra trắc nghiệm (AI tự sinh)</option>
-          </select>
+        <div style="flex: 1; min-width: 0;">
+          <h1 style="font-size: 1.5rem; font-weight: 800; color: var(--text-main); margin: 0; line-height: 1.2;">
+            <%= course.title %>
+          </h1>
+          <p style="color: var(--text-muted); font-size: 0.82rem; margin: 0.2rem 0 0 0; line-height: 1.4;">
+            Quản lý giáo trình, tải lên bài giảng video/tài liệu lý thuyết, và lập ngân hàng câu hỏi ôn tập.
+          </p>
         </div>
-
-        <div class="form-group">
-          <label class="form-label">Tiêu đề bài học</label>
-          <input type="text" name="title" placeholder="Bài 1: Giới thiệu..." required>
-        </div>
-
-        <div id="add-theory-fields">
-          <div class="form-group">
-            <label class="form-label">Nội dung bài học lý thuyết (Dùng làm học liệu cho AI)</label>
-            <textarea id="add-lesson-content" name="content" rows="6" placeholder="Nhập nội dung bài giảng chi tiết..."></textarea>
-          </div>
-
-          <div class="form-group">
-            <label class="form-label">Đường dẫn Video bài giảng (URL)</label>
-            <input type="text" name="video_url" value="https://www.w3schools.com/html/mov_bbb.mp4" placeholder="https://...">
-          </div>
-
-          <div class="form-group">
-            <label class="form-label">Tài liệu đính kèm (URL Slide/PDF)</label>
-            <input type="text" name="attachment_url" placeholder="Đường dẫn Slide hoặc file PDF đính kèm...">
-          </div>
-        </div>
-
-        <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">
-          <i class="fa-solid fa-save"></i> Lưu bài học
-        </button>
-      </form>
+      </div>
     </div>
-  <% } else { %>
-    <div class="glass-card" style="text-align: center; color: var(--text-muted);">
-      Bạn không có quyền thêm bài giảng mới.
-    </div>
-  <% } %>
-
-  <!-- Cột phải: Danh sách bài học đang có -->
-  <div class="glass-card" style="padding: 1.5rem; overflow-x: auto;">
-    <h3 style="font-size: 1.2rem; margin-bottom: 1.25rem;"><i class="fa-solid fa-layer-group" style="color: #06b6d4;"></i> Cấu trúc bài giảng hiện tại</h3>
     
-    <% if (lessons.length === 0) { %>
-      <p style="color: var(--text-muted); font-size: 0.9rem; text-align: center; padding: 2rem;">Khóa học chưa có bài giảng nào.</p>
-    <% } else { %>
-      <table class="custom-table" style="margin-top: 0; font-size: 0.85rem;">
-        <thead>
-          <tr>
-            <th>Thứ tự</th>
-            <th>Tiêu đề</th>
-            <th>Xem trước nội dung</th>
-            <th style="text-align: center;">Hành động</th>
-          </tr>
-        </thead>
-        <tbody>
-          <% lessons.forEach(lesson => { %>
-            <tr>
-              <td><strong>#<%= lesson.order_index %></strong></td>
-              <td><strong><a href="/courses/<%= course.id %>/lessons/<%= lesson.id %>" target="_blank" style="color: inherit; text-decoration: none;" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'" title="Xem trải nghiệm bài học"><%= lesson.title %></a></strong></td>
-              <td style="max-width: 200px;">
-                <% if (lesson.is_quiz) { %>
-                  <span style="color: #fbbf24; font-weight: 600;"><i class="fa-solid fa-circle-question"></i> Bài kiểm tra trắc nghiệm AI</span>
-                <% } else { %>
-                  <span style="color: var(--text-muted); font-size: 0.8rem; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden;"><%= lesson.content %></span>
-                <% } %>
-              </td>
-              <td>
-                <div style="display: flex; justify-content: center; gap: 0.25rem;">
-                  
-                  <% if (user.permissions.includes('LESSON_MANAGE')) { %>
-                    <!-- Nút xem trải nghiệm bài học -->
-                    <a href="/courses/<%= course.id %>/lessons/<%= lesson.id %>" target="_blank" class="btn btn-secondary" style="padding: 0.3rem 0.6rem; font-size: 0.75rem; background: rgba(99, 102, 241, 0.15); border: 1px solid rgba(99, 102, 241, 0.3); color: #818cf8; display: inline-flex; align-items: center;" title="Xem trải nghiệm bài học">
-                      <i class="fa-solid fa-eye"></i>
-                    </a>
-
-                    <!-- Nút mở modal chỉnh sửa bài học -->
-                    <button class="btn btn-secondary" onclick="openEditLessonModal('<%= lesson.id %>', '<%= lesson.title %>', `<%= lesson.content %>`, '<%= lesson.video_url %>', '<%= lesson.attachment_url %>', '<%= lesson.order_index %>', '<%= lesson.is_quiz %>')" style="padding: 0.3rem 0.6rem; font-size: 0.75rem;">
-                      <i class="fa-solid fa-pen"></i>
-                    </button>
-
-                    <!-- Form xóa bài học -->
-                    <form action="/course-management/<%= course.id %>/lessons/<%= lesson.id %>/delete" method="POST" style="display: inline;" onsubmit="return confirm('Xóa bài học này?')">
-                      <button type="submit" class="btn btn-danger" style="padding: 0.3rem 0.6rem; font-size: 0.75rem;">
-                        <i class="fa-solid fa-trash-can"></i>
-                      </button>
-                    </form>
-                  <% } %>
-
-                </div>
-              </td>
-            </tr>
-          <% }) %>
-        </tbody>
-      </table>
+    <% if (user.permissions.includes('LESSON_CREATE')) { %>
+      <button type="button" class="btn btn-primary" onclick="openAddLessonModal()" style="padding: 0.65rem 1.25rem; font-weight: 600; border-radius: 8px; flex-shrink: 0;">
+        <i class="fa-solid fa-plus" style="margin-right: 0.25rem;"></i> Thêm bài học mới
+      </button>
     <% } %>
   </div>
-</div>
 
-<!-- Modal Sửa Bài Học Mờ Kính -->
-<div id="edit-lesson-modal" class="glass-card" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 550px; max-width: 95%; max-height: 90vh; overflow-y: auto; z-index: 1000; box-shadow: 0 10px 50px rgba(0,0,0,0.8); border-color: var(--border-glow);">
-  <h3 style="font-size: 1.3rem; margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center;">
-    <span><i class="fa-solid fa-file-pen" style="color: #8b5cf6;"></i> Sửa Thông Tin Bài Học</span>
-    <button class="btn btn-secondary" onclick="closeEditLessonModal()" style="padding: 0.25rem 0.5rem; font-size: 0.85rem;"><i class="fa-solid fa-xmark"></i></button>
-  </h3>
-  <form id="edit-lesson-form" action="" method="POST">
-    <div class="form-group">
-      <label class="form-label">Thứ tự bài học (Order Index)</label>
-      <input type="number" id="edit-lesson-order" name="order_index" required>
-    </div>
+  <!-- Curriculum Outline List (Full-Width Card) -->
+  <div class="glass-card" style="padding: 2rem; margin-bottom: 2rem;">
+    <h3 style="font-size: 1.2rem; margin-bottom: 1.5rem; font-weight: 700; color: var(--text-main); display: flex; align-items: center; gap: 0.5rem;">
+      <i class="fa-solid fa-layer-group" style="color: #06b6d4;"></i> Cấu trúc bài giảng hiện tại
+    </h3>
 
-    <div class="form-group">
-      <label class="form-label">Tiêu đề bài học</label>
-      <input type="text" id="edit-lesson-title" name="title" required>
-    </div>
+    <% if (lessons.length === 0) { %>
+      <div class="empty-state-card">
+        <div class="empty-state-icon">
+          <i class="fa-solid fa-folder-open"></i>
+        </div>
+        <h4 class="empty-state-title">Bài giảng chưa được xây dựng</h4>
+        <p class="empty-state-desc">Khóa học này hiện chưa có bài học nào. Bạn hãy bấm nút "+ Thêm bài học mới" ở góc trên bên phải để bắt đầu thiết kế giáo trình.</p>
+      </div>
+    <% } else { %>
+      <div class="syllabus-list">
+        <% lessons.forEach(lesson => { %>
+          <div class="syllabus-item">
+            <div class="syllabus-item-main">
+              <div class="syllabus-item-index">
+                <%= lesson.order_index %>
+              </div>
+              
+              <!-- Icon đại diện loại bài học -->
+              <div style="width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; flex-shrink: 0;
+                <% if (lesson.is_quiz) { %>
+                  background: rgba(139, 92, 246, 0.08); color: #8b5cf6;
+                <% } else if (lesson.video_url) { %>
+                  background: rgba(6, 182, 212, 0.08); color: #06b6d4;
+                <% } else { %>
+                  background: rgba(59, 130, 246, 0.08); color: #3b82f6;
+                <% } %>
+              ">
+                <% if (lesson.is_quiz) { %>
+                  <i class="fa-solid fa-clipboard-question" title="Bài kiểm tra trắc nghiệm"></i>
+                <% } else if (lesson.video_url) { %>
+                  <i class="fa-solid fa-circle-play" title="Bài giảng Video"></i>
+                <% } else { %>
+                  <i class="fa-solid fa-file-invoice" title="Bài giảng Lý thuyết"></i>
+                <% } %>
+              </div>
 
-    <div class="form-group">
-      <label class="form-label">Loại bài học</label>
-      <select id="edit-lesson-is-quiz" name="is_quiz" style="width: 100%; padding: 0.65rem 1rem; background: rgba(15, 23, 42, 0.5); border: 1px solid var(--border-light); border-radius: 8px; color: var(--text-main); font-size: 0.9rem; outline: none;" onchange="toggleQuizFields(this.value, 'edit')">
-        <option value="false">Bài học lý thuyết / Video</option>
-        <option value="true">Bài kiểm tra trắc nghiệm (AI tự sinh)</option>
-      </select>
-    </div>
+              <div class="syllabus-item-content">
+                <div style="display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap;">
+                  <h4 class="syllabus-item-title">
+                    <a href="/courses/<%= course.id %>/lessons/<%= lesson.id %>" target="_blank"
+                       style="color: inherit; text-decoration: none;"
+                       onmouseover="this.style.color='var(--text-accent)'"
+                       onmouseout="this.style.color='inherit'" title="Xem bài học ở giao diện học viên">
+                      <%= lesson.title || 'Bài học chưa đặt tiêu đề' %>
+                    </a>
+                  </h4>
+                  
+                  <!-- Badges -->
+                  <% if (lesson.is_quiz) { %>
+                    <span class="chip-badge purple" style="font-size: 0.68rem; padding: 0.05rem 0.35rem; line-height: 1.2;">Trắc nghiệm</span>
+                  <% } else { %>
+                    <span class="chip-badge blue" style="font-size: 0.68rem; padding: 0.05rem 0.35rem; line-height: 1.2;">Lý thuyết</span>
+                    <% if (lesson.video_url) { %>
+                      <span class="chip-badge green" style="font-size: 0.68rem; padding: 0.05rem 0.35rem; line-height: 1.2;">Video</span>
+                    <% } %>
+                    <% if (lesson.attachment_url) { %>
+                      <span class="chip-badge amber" style="font-size: 0.68rem; padding: 0.05rem 0.35rem; line-height: 1.2;"><i class="fa-solid fa-paperclip"></i> Tài liệu</span>
+                    <% } %>
+                  <% } %>
+                </div>
 
-    <div id="edit-theory-fields">
+                <p class="syllabus-item-desc">
+                  <% if (lesson.is_quiz) { %>
+                    Bài kiểm tra trắc nghiệm đánh giá kiến thức học viên.
+                  <% } else { %>
+                    <% if (lesson.video_url) { %>
+                      <span style="margin-right: 1.25rem; display: inline-flex; align-items: center; gap: 0.35rem;"><i class="fa-solid fa-circle-play" style="color: var(--text-muted);"></i> <%= lesson.video_url.split('/').pop() %></span>
+                    <% } %>
+                    <% if (lesson.attachment_url) { %>
+                      <span style="display: inline-flex; align-items: center; gap: 0.35rem;"><i class="fa-solid fa-paperclip" style="color: var(--text-muted);"></i> <%= lesson.attachment_url.split('/').pop() %></span>
+                    <% } %>
+                    <% if (!lesson.video_url && !lesson.attachment_url) { %>
+                      <span style="color: var(--text-muted); font-style: italic;">Chưa tải lên bài học Video hoặc Tài liệu đính kèm.</span>
+                    <% } %>
+                  <% } %>
+                </p>
+              </div>
+            </div>
+
+            <div class="syllabus-item-actions">
+              <% if (user.permissions.includes('LESSON_MANAGE')) { %>
+                <a href="/courses/<%= course.id %>/lessons/<%= lesson.id %>" target="_blank"
+                   class="syllabus-action-btn view" title="Xem trải nghiệm bài học">
+                  <i class="fa-solid fa-eye"></i>
+                </a>
+
+                <button type="button" class="syllabus-action-btn edit"
+                        onclick="openEditLessonModal('<%= lesson.id %>', '<%= lesson.title %>', `<%= lesson.content %>`, '<%= lesson.video_url %>', '<%= lesson.attachment_url %>', '<%= lesson.order_index %>', '<%= lesson.is_quiz %>')"
+                        title="Chỉnh sửa">
+                  <i class="fa-solid fa-pen"></i>
+                </button>
+
+                <form action="/course-management/<%= course.id %>/lessons/<%= lesson.id %>/delete"
+                      method="POST" style="display: inline;" onsubmit="return confirm('Bạn có chắc chắn muốn xóa bài học này khỏi giáo trình?')">
+                  <button type="submit" class="syllabus-action-btn delete" title="Xóa bài học">
+                    <i class="fa-solid fa-trash-can"></i>
+                  </button>
+                </form>
+              <% } %>
+            </div>
+          </div>
+        <% }) %>
+      </div>
+    <% } %>
+  </div>
+
+  <!-- Modal Thêm Bài Học Mờ Kính -->
+  <div id="add-lesson-modal" class="glass-card"
+    style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 620px; max-width: 95%; max-height: 90vh; overflow-y: auto; z-index: 1000; box-shadow: 0 10px 50px rgba(0,0,0,0.8); border-color: var(--border-glow);">
+    <h3
+      style="font-size: 1.25rem; margin-bottom: 1.5rem; font-weight: 700; display: flex; justify-content: space-between; align-items: center; color: var(--text-main);">
+      <span><i class="fa-solid fa-file-circle-plus" style="color: #6366f1;"></i> Thêm bài học mới</span>
+      <button type="button" class="btn btn-secondary" onclick="closeAddLessonModal()"
+        style="padding: 0.25rem 0.5rem; font-size: 0.85rem;"><i class="fa-solid fa-xmark"></i></button>
+    </h3>
+    
+    <form action="/course-management/<%= course.id %>/lessons" method="POST">
       <div class="form-group">
-        <label class="form-label">Nội dung bài học lý thuyết</label>
-        <textarea id="edit-lesson-content" name="content" rows="8"></textarea>
+        <label class="form-label">Thứ tự bài học (Order Index)</label>
+        <input type="number" name="order_index" value="<%= lessons.length + 1 %>" required>
       </div>
 
       <div class="form-group">
-        <label class="form-label">Đường dẫn Video bài giảng (URL)</label>
-        <input type="text" id="edit-lesson-video" name="video_url">
+        <label class="form-label">Loại bài học</label>
+        <select name="is_quiz" onchange="toggleQuizFields(this.value, 'add')">
+          <option value="false">🎥 Bài học lý thuyết / Video bài giảng</option>
+          <option value="true">📝 Bài kiểm tra trắc nghiệm</option>
+        </select>
       </div>
 
       <div class="form-group">
-        <label class="form-label">Tài liệu đính kèm (URL Slide/PDF)</label>
-        <input type="text" id="edit-lesson-attachment" name="attachment_url">
+        <label class="form-label">Tiêu đề bài học</label>
+        <input type="text" name="title" placeholder="Bài 1: Giới thiệu chung..." required>
       </div>
-    </div>
 
-    <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
-      <button type="submit" class="btn btn-primary">Cập nhật bài học</button>
-      <button type="button" class="btn btn-secondary" onclick="closeEditLessonModal()">Hủy</button>
-    </div>
-  </form>
-</div>
-<!-- Lớp phủ modal -->
-<div id="modal-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); z-index: 999;" onclick="closeEditLessonModal()"></div>
+      <div id="add-theory-fields">
+        <input type="hidden" name="content" value="">
 
-<script>
-  function toggleQuizFields(isQuizValue, prefix) {
-    const displayStyle = (isQuizValue === 'true' || isQuizValue === true) ? 'none' : 'block';
-    const theoryWrapper = document.getElementById(prefix + '-theory-fields');
-    if (theoryWrapper) {
-      theoryWrapper.style.display = displayStyle;
+        <div class="form-group">
+          <label class="form-label">Tệp Video bài giảng (.mp4, .webm)</label>
+          <div class="compact-upload-zone" id="add-lesson-video-zone" onclick="triggerFileUpload('add-lesson-video', 'video')">
+            <div class="compact-upload-info">
+              <i class="fa-solid fa-film compact-upload-icon" style="color: #06b6d4;"></i>
+              <span class="compact-upload-text" id="add-lesson-video-text">Kéo thả tệp video (.mp4) hoặc click để chọn</span>
+            </div>
+            <button type="button" class="compact-upload-btn">Tải lên</button>
+            <input type="hidden" id="add-lesson-video" name="video_url">
+          </div>
+          <small id="add-lesson-video-status" style="font-size: 0.75rem; color: var(--text-muted); display: block; margin-top: 0.25rem;"></small>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Tài liệu học tập đính kèm (Slide, PDF...)</label>
+          <div class="compact-upload-zone" id="add-lesson-attachment-zone" onclick="triggerFileUpload('add-lesson-attachment', 'attachment')">
+            <div class="compact-upload-info">
+              <i class="fa-solid fa-file-pdf compact-upload-icon" style="color: #ef4444;"></i>
+              <span class="compact-upload-text" id="add-lesson-attachment-text">Kéo & thả tài liệu (.pdf, .zip...) hoặc click để chọn</span>
+            </div>
+            <button type="button" class="compact-upload-btn">Tải lên</button>
+            <input type="hidden" id="add-lesson-attachment" name="attachment_url">
+          </div>
+          <small id="add-lesson-attachment-status" style="font-size: 0.75rem; color: var(--text-muted); display: block; margin-top: 0.25rem;"></small>
+        </div>
+      </div>
+
+      <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+        <button type="submit" class="btn btn-primary" style="padding: 0.65rem 1.25rem; border-radius: 8px;">Lưu bài học</button>
+        <button type="button" class="btn btn-secondary" onclick="closeAddLessonModal()" style="padding: 0.65rem 1.25rem; border-radius: 8px;">Hủy</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Modal Sửa Bài Học Mờ Kính -->
+  <div id="edit-lesson-modal" class="glass-card"
+    style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 620px; max-width: 95%; max-height: 90vh; overflow-y: auto; z-index: 1000; box-shadow: 0 10px 50px rgba(0,0,0,0.8); border-color: var(--border-glow);">
+    <h3
+      style="font-size: 1.25rem; margin-bottom: 1.5rem; font-weight: 700; display: flex; justify-content: space-between; align-items: center; color: var(--text-main);">
+      <span><i class="fa-solid fa-file-pen" style="color: #8b5cf6;"></i> Chỉnh sửa thông tin bài học</span>
+      <button type="button" class="btn btn-secondary" onclick="closeEditLessonModal()"
+        style="padding: 0.25rem 0.5rem; font-size: 0.85rem;"><i class="fa-solid fa-xmark"></i></button>
+    </h3>
+    
+    <form id="edit-lesson-form" action="" method="POST">
+      <div class="form-group">
+        <label class="form-label">Thứ tự bài học (Order Index)</label>
+        <input type="number" id="edit-lesson-order" name="order_index" required>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Tiêu đề bài học</label>
+        <input type="text" id="edit-lesson-title" name="title" required>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Loại bài học</label>
+        <select id="edit-lesson-is-quiz" name="is_quiz" onchange="toggleQuizFields(this.value, 'edit')">
+          <option value="false">🎥 Bài học lý thuyết / Video bài giảng</option>
+          <option value="true">📝 Bài kiểm tra trắc nghiệm</option>
+        </select>
+      </div>
+
+      <div id="edit-theory-fields">
+        <input type="hidden" id="edit-lesson-content" name="content">
+
+        <div class="form-group">
+          <label class="form-label">Tệp Video bài giảng (.mp4, .webm)</label>
+          <div class="compact-upload-zone" id="edit-lesson-video-zone" onclick="triggerFileUpload('edit-lesson-video', 'video')">
+            <div class="compact-upload-info">
+              <i class="fa-solid fa-film compact-upload-icon" style="color: #06b6d4;"></i>
+              <span class="compact-upload-text" id="edit-lesson-video-text">Kéo thả tệp video (.mp4) hoặc click để thay đổi</span>
+            </div>
+            <button type="button" class="compact-upload-btn">Thay đổi</button>
+            <input type="hidden" id="edit-lesson-video" name="video_url">
+          </div>
+          <small id="edit-lesson-video-status" style="font-size: 0.75rem; color: var(--text-muted); display: block; margin-top: 0.25rem;"></small>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Tài liệu học tập đính kèm (Slide, PDF...)</label>
+          <div class="compact-upload-zone" id="edit-lesson-attachment-zone" onclick="triggerFileUpload('edit-lesson-attachment', 'attachment')">
+            <div class="compact-upload-info">
+              <i class="fa-solid fa-file-pdf compact-upload-icon" style="color: #ef4444;"></i>
+              <span class="compact-upload-text" id="edit-lesson-attachment-text">Kéo thả tài liệu (.pdf, .zip) hoặc click để thay đổi</span>
+            </div>
+            <button type="button" class="compact-upload-btn">Thay đổi</button>
+            <input type="hidden" id="edit-lesson-attachment" name="attachment_url">
+          </div>
+          <small id="edit-lesson-attachment-status" style="font-size: 0.75rem; color: var(--text-muted); display: block; margin-top: 0.25rem;"></small>
+        </div>
+      </div>
+
+      <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+        <button type="submit" class="btn btn-primary" style="padding: 0.65rem 1.25rem; border-radius: 8px;">Cập nhật bài học</button>
+        <button type="button" class="btn btn-secondary" onclick="closeEditLessonModal()" style="padding: 0.65rem 1.25rem; border-radius: 8px;">Hủy</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Lớp phủ modal -->
+  <div id="modal-overlay"
+    style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); z-index: 999;"
+    onclick="closeAllModals()"></div>
+
+  <script>
+    function toggleQuizFields(isQuizValue, prefix) {
+      const displayStyle = (isQuizValue === 'true' || isQuizValue === true) ? 'none' : 'block';
+      const theoryWrapper = document.getElementById(prefix + '-theory-fields');
+      if (theoryWrapper) {
+        theoryWrapper.style.display = displayStyle;
+      }
     }
-  }
 
-  // Khởi tạo trạng thái ban đầu của form thêm
-  document.addEventListener('DOMContentLoaded', () => {
-    toggleQuizFields('false', 'add');
-  });
+    // Modal Control Functions
+    function openAddLessonModal() {
+      document.getElementById('add-lesson-modal').style.display = 'block';
+      document.getElementById('modal-overlay').style.display = 'block';
+    }
 
-  function openEditLessonModal(id, title, content, video, attachment, order, isQuiz) {
-    document.getElementById('edit-lesson-form').action = `/course-management/<%= course.id %>/lessons/${id}/update`;
-    document.getElementById('edit-lesson-title').value = title;
-    document.getElementById('edit-lesson-content').value = content;
-    document.getElementById('edit-lesson-video').value = video;
-    document.getElementById('edit-lesson-attachment').value = attachment;
-    document.getElementById('edit-lesson-order').value = order;
-    
-    const isQuizVal = isQuiz === 'true' || isQuiz === true;
-    document.getElementById('edit-lesson-is-quiz').value = isQuizVal ? 'true' : 'false';
-    toggleQuizFields(isQuizVal, 'edit');
-    
-    document.getElementById('edit-lesson-modal').style.display = 'block';
-    document.getElementById('modal-overlay').style.display = 'block';
-  }
+    function closeAddLessonModal() {
+      document.getElementById('add-lesson-modal').style.display = 'none';
+      document.getElementById('modal-overlay').style.display = 'none';
+    }
 
-  function closeEditLessonModal() {
-    document.getElementById('edit-lesson-modal').style.display = 'none';
-    document.getElementById('modal-overlay').style.display = 'none';
-  }
-</script>
+    function openEditLessonModal(id, title, content, video, attachment, order, isQuiz) {
+      document.getElementById('edit-lesson-form').action = `/course-management/<%= course.id %>/lessons/${id}/update`;
+      document.getElementById('edit-lesson-title').value = title || '';
+      document.getElementById('edit-lesson-content').value = content || '';
+      
+      // Load values into hidden inputs
+      document.getElementById('edit-lesson-video').value = video || '';
+      document.getElementById('edit-lesson-attachment').value = attachment || '';
+      
+      // Update text indicators
+      document.getElementById('edit-lesson-video-text').innerHTML = video 
+        ? `Đã chọn: <strong style="color: #10b981;">${video.split('/').pop()}</strong>` 
+        : 'Kéo thả tệp video (.mp4) hoặc click để thay đổi';
+      document.getElementById('edit-lesson-attachment-text').innerHTML = attachment 
+        ? `Đã chọn: <strong style="color: #10b981;">${attachment.split('/').pop()}</strong>` 
+        : 'Kéo thả tài liệu (.pdf, .zip) hoặc click để thay đổi';
+        
+      document.getElementById('edit-lesson-order').value = order || '';
 
-<%- include('../partials/footer') %>
+      const isQuizVal = isQuiz === 'true' || isQuiz === true;
+      document.getElementById('edit-lesson-is-quiz').value = isQuizVal ? 'true' : 'false';
+      toggleQuizFields(isQuizVal, 'edit');
+
+      document.getElementById('edit-lesson-modal').style.display = 'block';
+      document.getElementById('modal-overlay').style.display = 'block';
+    }
+
+    function closeEditLessonModal() {
+      document.getElementById('edit-lesson-modal').style.display = 'none';
+      document.getElementById('modal-overlay').style.display = 'none';
+    }
+
+    function closeAllModals() {
+      closeAddLessonModal();
+      closeEditLessonModal();
+    }
+
+    // Khởi động sự kiện kéo thả tệp và giá trị ban đầu
+    document.addEventListener('DOMContentLoaded', () => {
+      toggleQuizFields('false', 'add');
+      setupDragAndDrop('add-lesson-video-zone', 'add-lesson-video', 'video');
+      setupDragAndDrop('add-lesson-attachment-zone', 'add-lesson-attachment', 'attachment');
+      setupDragAndDrop('edit-lesson-video-zone', 'edit-lesson-video', 'video');
+      setupDragAndDrop('edit-lesson-attachment-zone', 'edit-lesson-attachment', 'attachment');
+    });
+
+    async function uploadFile(file, inputId, fileType) {
+      if (fileType === 'video' && !file.type.startsWith('video/')) {
+        alert('Vui lòng chỉ kéo thả tệp tin Video vào ô này.');
+        return;
+      }
+      
+      const statusEl = document.getElementById(inputId + '-status');
+      const textEl = document.getElementById(inputId + '-text');
+      
+      if (statusEl) {
+        statusEl.style.color = '#4f46e5';
+        statusEl.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Đang tải tệp "${file.name}" lên máy chủ...`;
+      }
+      
+      const formData = new FormData();
+      formData.append('file', file);
+      
+      try {
+        const response = await fetch('/course-management/upload', {
+          method: 'POST',
+          body: formData
+        });
+        const data = await response.json();
+        
+        if (data.success && data.filePath) {
+          document.getElementById(inputId).value = data.filePath;
+          
+          if (textEl) {
+            textEl.innerHTML = `Đã chọn: <strong style="color: #10b981;">${data.fileName}</strong>`;
+          }
+          
+          if (statusEl) {
+            statusEl.style.color = '#10b981';
+            statusEl.innerHTML = `<i class="fa-solid fa-circle-check"></i> Tải lên thành công!`;
+          }
+        } else {
+          throw new Error(data.error || 'Có lỗi xảy ra khi tải lên.');
+        }
+      } catch (error) {
+        console.error('Lỗi tải tệp:', error);
+        if (statusEl) {
+          statusEl.style.color = '#ef4444';
+          statusEl.innerHTML = `❌ Lỗi: ${error.message}`;
+        }
+        alert('Tải tệp thất bại: ' + error.message);
+      }
+    }
+
+    function triggerFileUpload(inputId, fileType) {
+      const fileInput = document.createElement('input');
+      fileInput.type = 'file';
+      if (fileType === 'video') {
+        fileInput.accept = 'video/*';
+      } else {
+        fileInput.accept = '.pdf,.ppt,.pptx,.doc,.docx,.xls,.xlsx,.zip,.rar,image/*';
+      }
+
+      fileInput.onchange = () => {
+        if (fileInput.files.length === 0) return;
+        uploadFile(fileInput.files[0], inputId, fileType);
+      };
+
+      fileInput.click();
+    }
+
+    function setupDragAndDrop(zoneId, inputId, fileType) {
+      const zoneEl = document.getElementById(zoneId);
+      const inputEl = document.getElementById(inputId);
+      if (!zoneEl || !inputEl) return;
+
+      const originalBorder = zoneEl.style.borderColor || '';
+      const originalBg = zoneEl.style.backgroundColor || '';
+
+      ['dragenter', 'dragover'].forEach(eventName => {
+        zoneEl.addEventListener(eventName, (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          zoneEl.style.borderColor = '#4f46e5';
+          zoneEl.style.borderStyle = 'dashed';
+          zoneEl.style.backgroundColor = 'rgba(79, 70, 229, 0.04)';
+        }, false);
+      });
+
+      ['dragleave', 'drop'].forEach(eventName => {
+        zoneEl.addEventListener(eventName, (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          zoneEl.style.borderColor = originalBorder;
+          zoneEl.style.borderStyle = 'dashed';
+          zoneEl.style.backgroundColor = originalBg;
+        }, false);
+      });
+
+      zoneEl.addEventListener('drop', (e) => {
+        const dt = e.dataTransfer;
+        const files = dt.files;
+        if (files.length > 0) {
+          uploadFile(files[0], inputId, fileType);
+        }
+      }, false);
+    }
+  </script>
+
+  <%- include('../partials/footer') %>

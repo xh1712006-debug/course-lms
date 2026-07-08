@@ -334,7 +334,7 @@
 <!-- ── Page Header ──────────────────────────────── -->
 <div class="as-header">
   <h1 class="as-title">Bài Kiểm Tra Doanh Nghiệp</h1>
-  <p class="as-subtitle">Tạo bài kiểm tra bằng AI từ nội dung khóa học và phân phối đến từng cá nhân hoặc phòng ban.</p>
+  <p class="as-subtitle">Tạo bài kiểm tra và phân phối đến từng cá nhân hoặc phòng ban trong doanh nghiệp.</p>
 </div>
 
 <!-- ── Flash Notification ────────────────────────── -->
@@ -485,20 +485,10 @@
 <div id="modal-create" class="as-modal">
   <div class="as-modal-head">
     <h3 class="as-modal-title">
-      <i id="header-create-icon" class="fa-solid fa-wand-magic-sparkles" style="color: #8b5cf6;"></i>
+      <i id="header-create-icon" class="fa-solid fa-keyboard" style="color: #6366f1;"></i>
       <span id="header-create-text">Tạo Bài Kiểm Tra Mới</span>
     </h3>
     <button class="as-modal-close" onclick="closeCreateModal()"><i class="fa-solid fa-xmark"></i></button>
-  </div>
-
-  <!-- Create modes selector -->
-  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 1.25rem;">
-    <button type="button" onclick="switchCreateType('ai')" id="btn-create-type-ai" class="as-btn-action assign" style="padding: 0.65rem; justify-content: center; font-size: 0.84rem;">
-      <i class="fa-solid fa-wand-magic-sparkles"></i> Tạo tự động bằng AI
-    </button>
-    <button type="button" onclick="switchCreateType('manual')" id="btn-create-type-manual" class="as-btn-action" style="padding: 0.65rem; justify-content: center; font-size: 0.84rem;">
-      <i class="fa-solid fa-keyboard"></i> Soạn đề thủ công
-    </button>
   </div>
 
   <div class="form-group">
@@ -511,24 +501,7 @@
     <textarea id="create-desc" rows="2" placeholder="Nhập mục tiêu đánh giá..."></textarea>
   </div>
 
-  <div class="form-group" id="create-section-ai">
-    <label class="form-label">Chọn khóa học làm dữ liệu nguồn <span style="color:#ef4444">*</span></label>
-    <p style="font-size:0.76rem; color:var(--text-muted); margin-bottom:0.5rem; line-height: 1.4;">AI sẽ quét dữ liệu bài giảng của khóa học được chọn để sinh câu hỏi trắc nghiệm tự động.</p>
-    <div class="as-select-grid">
-      <% courses.forEach(c => { %>
-        <label class="as-select-label">
-          <input type="checkbox" name="courseIds" value="<%= c.id %>" id="course-<%= c.id %>">
-          <span><%= c.title %></span>
-        </label>
-      <% }) %>
-    </div>
-  </div>
-
-  <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.85rem; margin-bottom: 1.25rem;">
-    <div class="form-group" style="margin-bottom: 0;">
-      <label class="form-label">Số câu hỏi</label>
-      <input type="number" id="create-count" value="10" min="5" max="100">
-    </div>
+  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.85rem; margin-bottom: 1.25rem;">
     <div class="form-group" style="margin-bottom: 0;">
       <label class="form-label">Thời gian (phút)</label>
       <input type="number" id="create-duration" value="30" min="5" max="180">
@@ -539,25 +512,11 @@
     </div>
   </div>
 
-  <!-- Loading bar element -->
-  <div id="create-loading" style="display:none; padding: 1.1rem; background: rgba(139,92,246,0.06); border: 1px solid rgba(139,92,246,0.18); border-radius: 10px; margin-bottom: 1.25rem;">
-    <div style="display: flex; align-items: center; gap: 0.65rem;">
-      <i class="fa-solid fa-spinner fa-spin" style="font-size: 1.1rem; color: #8b5cf6;"></i>
-      <div style="font-size: 0.82rem;">
-        <div style="font-weight: 700; color: var(--text-main);">AI đang phân tích và biên soạn câu hỏi...</div>
-        <div style="color: var(--text-muted); margin-top: 0.1rem;">Lên tới 1 phút. Xin vui lòng đợi.</div>
-      </div>
-    </div>
-    <div style="margin-top: 0.75rem; height: 4px; background: #e2e8f0; border-radius: 4px; overflow: hidden;">
-      <div style="height: 100%; width: 0; background: linear-gradient(90deg, #8b5cf6, #6366f1); border-radius: 4px; animation: progress-anim 45s linear forwards;" id="progress-bar"></div>
-    </div>
-  </div>
-
   <div style="display: flex; gap: 0.5rem; justify-content: flex-end; border-top: 1px solid #f1f5f9; padding-top: 1.1rem; margin-top: 0.5rem;">
     <button onclick="closeCreateModal()" class="btn btn-secondary" style="border-radius: 8px;">Hủy</button>
     <button id="btn-create-submit" onclick="submitCreateAssessment()" class="btn btn-primary" style="border-radius: 8px; display: inline-flex; align-items: center; gap: 0.45rem;">
-      <i id="icon-create-submit" class="fa-solid fa-brain"></i>
-      <span id="text-create-submit">Tạo đề thi bằng AI</span>
+      <i id="icon-create-submit" class="fa-solid fa-circle-plus"></i>
+      <span id="text-create-submit">Tạo đề thi</span>
     </button>
   </div>
 </div>
@@ -657,7 +616,6 @@
 
 <script>
   let currentAssignType = 'user';
-  let currentCreateType = 'ai';
 
   function showModal(id) {
     document.getElementById(id).style.display = 'block';
@@ -676,55 +634,9 @@
 
   function openCreateModal() {
     showModal('modal-create');
-    switchCreateType('ai');
   }
   function closeCreateModal() {
     hideModal('modal-create');
-  }
-
-  function switchCreateType(type) {
-    currentCreateType = type;
-    const btnAi = document.getElementById('btn-create-type-ai');
-    const btnManual = document.getElementById('btn-create-type-manual');
-    const sectionAi = document.getElementById('create-section-ai');
-    const countInput = document.getElementById('create-count');
-    const countGroup = countInput ? countInput.closest('.form-group') : null;
-    const textSubmit = document.getElementById('text-create-submit');
-    const iconSubmit = document.getElementById('icon-create-submit');
-    const headerIcon = document.getElementById('header-create-icon');
-    const headerText = document.getElementById('header-create-text');
-    
-    if (type === 'ai') {
-      btnAi.className = "as-btn-action assign";
-      btnAi.style.borderWidth = "2px";
-      btnManual.className = "as-btn-action";
-      btnManual.style.borderWidth = "1px";
-      
-      if (sectionAi) sectionAi.style.display = '';
-      if (countGroup) countGroup.style.display = '';
-      if (textSubmit) textSubmit.textContent = 'Tạo đề thi bằng AI';
-      if (iconSubmit) iconSubmit.className = 'fa-solid fa-brain';
-      if (headerIcon) {
-        headerIcon.className = 'fa-solid fa-wand-magic-sparkles';
-        headerIcon.style.color = '#8b5cf6';
-      }
-      if (headerText) headerText.textContent = 'Tạo Bài Kiểm Tra Bằng AI';
-    } else {
-      btnManual.className = "as-btn-action assign";
-      btnManual.style.borderWidth = "2px";
-      btnAi.className = "as-btn-action";
-      btnAi.style.borderWidth = "1px";
-      
-      if (sectionAi) sectionAi.style.display = 'none';
-      if (countGroup) countGroup.style.display = 'none';
-      if (textSubmit) textSubmit.textContent = 'Tạo đề thi thủ công';
-      if (iconSubmit) iconSubmit.className = 'fa-solid fa-keyboard';
-      if (headerIcon) {
-        headerIcon.className = 'fa-solid fa-keyboard';
-        headerIcon.style.color = '#6366f1';
-      }
-      if (headerText) headerText.textContent = 'Tạo Bài Kiểm Tra Thủ Công';
-    }
   }
 
   function openAssignModal(id, title) {
@@ -842,24 +754,12 @@
   async function submitCreateAssessment() {
     const title = document.getElementById('create-title').value.trim();
     const description = document.getElementById('create-desc').value.trim();
-    const checkedCourses = [...document.querySelectorAll('input[name="courseIds"]:checked')].map(cb => cb.value);
-    const count = document.getElementById('create-count').value;
     const duration = document.getElementById('create-duration').value;
     const passing = document.getElementById('create-passing').value;
 
     if (!title) return alert('Vui lòng nhập tiêu đề bài kiểm tra.');
-    if (currentCreateType === 'ai' && checkedCourses.length === 0) {
-      return alert('Vui lòng chọn ít nhất 1 khóa học nguồn.');
-    }
 
     const textSubmit = document.getElementById('text-create-submit');
-    if (currentCreateType === 'ai') {
-      document.getElementById('create-loading').style.display = 'block';
-      const bar = document.getElementById('progress-bar');
-      bar.style.animation = 'none'; bar.offsetHeight;
-      bar.style.animation = 'progress-anim 60s linear forwards';
-    }
-    
     document.getElementById('btn-create-submit').disabled = true;
     if (textSubmit) textSubmit.textContent = 'Đang xử lý...';
 
@@ -868,11 +768,9 @@
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          type: currentCreateType,
+          type: 'manual',
           title,
           description,
-          courseIds: currentCreateType === 'ai' ? checkedCourses : [],
-          questionCount: count,
           durationMinutes: duration,
           passingScore: passing
         })
@@ -889,10 +787,9 @@
       closeCreateModal();
       showFlash('Lỗi kết nối máy chủ: ' + err.message, 'error');
     } finally {
-      document.getElementById('create-loading').style.display = 'none';
       document.getElementById('btn-create-submit').disabled = false;
       if (textSubmit) {
-        textSubmit.textContent = currentCreateType === 'ai' ? 'Tạo đề thi bằng AI' : 'Tạo đề thi thủ công';
+        textSubmit.textContent = 'Tạo đề thi';
       }
     }
   }

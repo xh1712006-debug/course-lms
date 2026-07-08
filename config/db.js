@@ -13,6 +13,22 @@ pool.on('connect', () => {
   console.log('[PostgreSQL] Đã kết nối cơ sở dữ liệu thành công.');
 });
 
+// Tự động tạo bảng lưu trữ hoàn thành bài học khi kết nối CSDL
+pool.query(`
+  CREATE TABLE IF NOT EXISTS lesson_completions (
+      id SERIAL PRIMARY KEY,
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      lesson_id INTEGER NOT NULL REFERENCES lessons(id) ON DELETE CASCADE,
+      course_id INTEGER NOT NULL REFERENCES courses(id) ON DELETE CASCADE,
+      completed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE(user_id, lesson_id)
+  );
+`).then(() => {
+  console.log('[PostgreSQL] Đảm bảo bảng lesson_completions đã được khởi tạo thành công.');
+}).catch(err => {
+  console.error('[PostgreSQL] Lỗi khi tạo bảng lesson_completions:', err);
+});
+
 // Lắng nghe sự kiện lỗi kết nối để xử lý tránh sập ứng dụng
 pool.on('error', (err) => {
   console.error('[PostgreSQL] Lỗi kết nối CSDL đột ngột:', err);

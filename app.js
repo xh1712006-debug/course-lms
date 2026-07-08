@@ -8,7 +8,6 @@ require('dotenv').config();
 
 const authRoutes = require('./routes/authRoutes');
 const courseRoutes = require('./routes/courseRoutes');
-const aiRoutes = require('./routes/aiRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const { initSocket } = require('./config/socket');
 const { loadDynamicPermissions } = require('./middleware/auth');
@@ -66,10 +65,8 @@ app.get('/', (req, res) => {
   res.redirect('/dashboard');
 });
 
-// Đăng ký các bộ định tuyến phân hệ
 app.use('/auth', authRoutes);
 app.use('/', courseRoutes);
-app.use('/', aiRoutes);
 app.use('/', adminRoutes);
 
 // Middleware xử lý lỗi 404 (Không tìm thấy trang)
