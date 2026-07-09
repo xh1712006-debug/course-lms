@@ -1,5 +1,5 @@
 const redis = require('../config/redis');
-const { Course, Lesson, Enrollment, Comment, Quiz, Question, QuizSubmission, LearningPath, User, AuditLog, Report } = require('../models/schema');
+const { Course, Lesson, Enrollment, Comment, Quiz, Question, QuizSubmission, LearningPath, User, AuditLog } = require('../models/schema');
 
 module.exports = {
   // Trang tổng quan tích hợp (Unified Dashboard)
@@ -89,16 +89,6 @@ module.exports = {
           recentLogs = logs.slice(0, 10);
         }
 
-        if (permissions.includes('REPORT_VIEW')) {
-          try {
-            stats.completionStats = await Report.getCompletionStats();
-            stats.departmentStats = await Report.getDepartmentStats();
-          } catch (reportErr) {
-            console.error('[Course Controller] Lỗi lấy báo cáo thống kê quản trị:', reportErr);
-            stats.completionStats = [];
-            stats.departmentStats = [];
-          }
-        }
 
         stats.onlineCount = await redis.scard('online_users');
       }
@@ -216,11 +206,28 @@ module.exports = {
         };
       }
 
+      // Lấy danh sách lộ trình học tập chứa khóa học này
+      const db = require('../config/db');
+      const pathsRes = await db.query(`
+        SELECT lp.id, lp.name, lpc.order_index,
+               (
+                 SELECT COUNT(*)::int 
+                 FROM learning_path_courses lpc2 
+                 WHERE lpc2.learning_path_id = lp.id
+               ) as total_courses
+        FROM learning_path_courses lpc
+        JOIN learning_paths lp ON lpc.learning_path_id = lp.id
+        WHERE lpc.course_id = $1
+        ORDER BY lp.name ASC
+      `, [courseId]);
+      const associatedPaths = pathsRes.rows;
+
       res.render('courses/detail', {
         course,
         lessons,
         enrollment,
-        quiz
+        quiz,
+        associatedPaths
       });
     } catch (err) {
       console.error('[Course Controller] Lỗi tải chi tiết khóa học:', err);

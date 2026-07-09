@@ -60,11 +60,7 @@ router.post('/departments/:id/update', requirePermission('DEPARTMENT_MANAGE'), a
 router.post('/departments/:id/delete', requirePermission('DEPARTMENT_MANAGE'), adminController.deleteDepartment);
 router.post('/departments/:id/assign-manager', requirePermission('DEPARTMENT_MANAGE'), adminController.assignDepartmentManager);
 
-// ==========================================
-// NHÓM 6: BÁO CÁO & THỐNG KÊ (ANALYTICS)
-// ==========================================
-router.get('/reports', requirePermission('REPORT_VIEW'), adminController.getReports);
-router.get('/reports/raw', requirePermission('REPORT_EXPORT'), adminController.getRawReportData);
+
 
 // ==========================================
 // NHÓM 7: BẢO MẬT & ĐẶC QUYỀN HỆ THỐNG (PRIVILEGES)

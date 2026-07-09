@@ -2,7 +2,7 @@ const redis = require('../config/redis');
 const { emitToUser } = require('../config/socket');
 const { 
   Course, Lesson, Quiz, Question, QuizSubmission, 
-  LearningPath, Enrollment, User, Department, Role, AuditLog, Report,
+  LearningPath, Enrollment, User, Department, Role, AuditLog,
   Assessment, AssessmentSubmission
 } = require('../models/schema');
 const multer = require('multer');
@@ -1001,100 +1001,7 @@ module.exports = {
     }
   },
 
-  // ==========================================
-  // NHÓM 6: BÁO CÁO & THỐNG KÊ (ANALYTICS)
-  // ==========================================
 
-  getReports: async (req, res) => {
-    if (!req.session.permissions.includes('REPORT_VIEW')) {
-      return res.status(403).render('error', { message: 'Không có quyền xem báo cáo thống kê.' });
-    }
-    try {
-      const stats = await Report.getCompletionStats();
-      const deptStats = await Report.getDepartmentStats();
-      const leaderboard = await Report.getLeaderboard();
-      
-      res.render('admin/reports', { 
-        stats, 
-        deptStats,
-        leaderboard
-      });
-    } catch (err) {
-      console.error('[Admin Controller] Lỗi tải báo cáo:', err);
-      res.render('error', { message: 'Lỗi tải trang báo cáo thống kê.' });
-    }
-  },
-
-  // Cung cấp giao diện báo cáo điểm chi tiết trực quan hoặc dữ liệu JSON thô cho Web Worker
-  getRawReportData: async (req, res) => {
-    if (!req.session.permissions.includes('REPORT_EXPORT')) {
-      if (req.query.format === 'json') {
-        return res.status(403).json({ error: 'Không có quyền xuất dữ liệu báo cáo.' });
-      }
-      return res.status(403).render('error', { message: 'Không có quyền xuất dữ liệu báo cáo.' });
-    }
-    try {
-      const data = await Report.getUserProgressDetails();
-
-      if (req.query.format === 'json') {
-        return res.json(data);
-      }
-
-      // Lọc dữ liệu phía server (Server-side filtering)
-      const search = (req.query.search || '').trim().toLowerCase();
-      const courseFilter = (req.query.course || '').trim();
-      const deptFilter = (req.query.department || '').trim();
-
-      let filteredData = data;
-
-      if (search) {
-        filteredData = filteredData.filter(row => 
-          (row.username && row.username.toLowerCase().includes(search)) ||
-          (row.email && row.email.toLowerCase().includes(search)) ||
-          (row.department_name && row.department_name.toLowerCase().includes(search)) ||
-          (row.course_title && row.course_title.toLowerCase().includes(search))
-        );
-      }
-
-      if (courseFilter && courseFilter !== 'all' && courseFilter !== '') {
-        filteredData = filteredData.filter(row => row.course_title === courseFilter);
-      }
-
-      if (deptFilter && deptFilter !== 'all' && deptFilter !== '') {
-        filteredData = filteredData.filter(row => row.department_name === deptFilter);
-      }
-
-      // Phân trang
-      const page = parseInt(req.query.page) || 1;
-      const limit = 20;
-      const totalRows = filteredData.length;
-      const totalPages = Math.ceil(totalRows / limit);
-      const offset = (page - 1) * limit;
-      const paginatedData = filteredData.slice(offset, offset + limit);
-
-      // Lấy danh sách duy nhất các khóa học và phòng ban để hiển thị bộ lọc dropdown
-      const uniqueCourses = [...new Set(data.map(row => row.course_title))].filter(Boolean);
-      const uniqueDepts = [...new Set(data.map(row => row.department_name))].filter(Boolean);
-
-      res.render('admin/raw-reports', {
-        reportData: paginatedData,
-        currentPage: page,
-        totalPages,
-        totalRows,
-        search,
-        selectedCourse: courseFilter,
-        selectedDept: deptFilter,
-        coursesList: uniqueCourses,
-        deptsList: uniqueDepts
-      });
-    } catch (err) {
-      console.error('[Admin Controller] Lỗi xuất dữ liệu báo cáo:', err);
-      if (req.query.format === 'json') {
-        return res.status(500).json({ error: 'Không thể xuất dữ liệu thô.' });
-      }
-      res.render('error', { message: 'Lỗi tải trang báo cáo điểm chi tiết.' });
-    }
-  },
 
   // ==========================================
   // NHÓM 7: BẢO MẬT & ĐẶC QUYỀN HỆ THỐNG (PRIVILEGES)

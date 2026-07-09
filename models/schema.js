@@ -858,71 +858,7 @@ module.exports = {
 
   },
 
-  // 11. Các truy vấn Thống kê Báo cáo (Analytics & Reports)
-  Report: {
-    getCompletionStats: async () => {
-      const sql = `
-        SELECT c.id as course_id, c.title as course_title,
-               COUNT(e.id) as total_enrollments,
-               SUM(CASE WHEN e.progress = 100 THEN 1 ELSE 0 END) as completed_count,
-               AVG(e.progress)::numeric(5,2) as average_progress
-        FROM courses c
-        LEFT JOIN enrollments e ON c.id = e.course_id AND e.status = 'approved'
-        GROUP BY c.id, c.title
-        ORDER BY total_enrollments DESC
-      `;
-      const res = await db.query(sql);
-      return res.rows;
-    },
 
-    getDepartmentStats: async () => {
-      const sql = `
-        SELECT d.id as department_id, d.name as department_name,
-               COUNT(DISTINCT u.id) as total_users,
-               COUNT(e.id) as total_enrollments,
-               COALESCE(AVG(e.progress)::numeric(5,2), 0) as average_progress
-        FROM departments d
-        LEFT JOIN users u ON d.id = u.department_id
-        LEFT JOIN enrollments e ON u.id = e.user_id AND e.status = 'approved'
-        GROUP BY d.id, d.name
-        ORDER BY average_progress DESC, total_enrollments DESC
-      `;
-      const res = await db.query(sql);
-      return res.rows;
-    },
-
-    getLeaderboard: async () => {
-      const sql = `
-        SELECT u.id as user_id, u.username, d.name as department_name,
-               COUNT(e.id) as enrolled_count,
-               SUM(CASE WHEN e.progress = 100 THEN 1 ELSE 0 END) as completed_count,
-               COALESCE(AVG(e.progress)::numeric(5,2), 0) as average_progress
-        FROM users u
-        LEFT JOIN enrollments e ON u.id = e.user_id AND e.status = 'approved'
-        LEFT JOIN departments d ON u.department_id = d.id
-        WHERE u.status = 'active'
-        GROUP BY u.id, u.username, d.name
-        ORDER BY completed_count DESC, average_progress DESC, enrolled_count DESC
-        LIMIT 5
-      `;
-      const res = await db.query(sql);
-      return res.rows;
-    },
-
-    getUserProgressDetails: async () => {
-        const sql = `
-        SELECT u.username, u.email, d.name as department_name,
-               c.title as course_title, e.progress, e.is_assigned, e.status, e.last_accessed
-        FROM enrollments e
-        JOIN users u ON e.user_id = u.id
-        JOIN courses c ON e.course_id = c.id
-        LEFT JOIN departments d ON u.department_id = d.id
-        ORDER BY u.username ASC, c.title ASC
-      `;
-        const res = await db.query(sql);
-        return res.rows;
-      }
-    },
   
     // 12. Quản lý Thực nghiệm Khoa học (Experiments)
     Experiment: {

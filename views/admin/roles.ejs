@@ -237,7 +237,7 @@
 
 <!-- ── Page Header ──────────────────────────────── -->
 <div class="rbac-header">
-  <h1 class="rbac-title">Ma Trận Vai Trò &amp; Quyền Hạn (RBAC Matrix)</h1>
+  <h1 class="rbac-title">Ma Trận Vai Trò &amp; Quyền Hạn</h1>
   <p class="rbac-subtitle">Quản lý đặc quyền tập trung. Bật/tắt các đặc quyền của từng vai trò tức thời và an toàn thông qua bảng ma trận.</p>
 </div>
 
@@ -307,7 +307,7 @@
 <% 
 const permissionGroups = [
   {
-    title: 'Quản lý Khóa học (Course Management)',
+    title: 'Quản lý Khóa học',
     icon: 'fa-folder-open',
     color: '#4f46e5',
     bg: 'rgba(79, 70, 229, 0.06)',
@@ -323,7 +323,7 @@ const permissionGroups = [
     ]
   },
   {
-    title: 'Bài giảng & Học liệu (Lesson & Content)',
+    title: 'Bài giảng & Học liệu',
     icon: 'fa-file-video',
     color: '#8b5cf6',
     bg: 'rgba(139, 92, 246, 0.06)',
@@ -337,7 +337,7 @@ const permissionGroups = [
     ]
   },
   {
-    title: 'Kiểm tra Doanh nghiệp (Company Assessments)',
+    title: 'Kiểm tra Doanh nghiệp',
     icon: 'fa-clipboard-check',
     color: '#0d9488',
     bg: 'rgba(13, 148, 136, 0.06)',
@@ -351,7 +351,7 @@ const permissionGroups = [
     ]
   },
   {
-    title: 'Lộ trình & Đăng ký (Learning Path & Enrollment)',
+    title: 'Lộ trình & Đăng ký',
     icon: 'fa-route',
     color: '#06b6d4',
     bg: 'rgba(6, 182, 212, 0.06)',
@@ -365,7 +365,7 @@ const permissionGroups = [
     ]
   },
   {
-    title: 'Quản lý Nhân sự (User Management)',
+    title: 'Quản lý Nhân sự',
     icon: 'fa-users-gear',
     color: '#ec4899',
     bg: 'rgba(236, 72, 153, 0.06)',
@@ -379,7 +379,7 @@ const permissionGroups = [
     ]
   },
   {
-    title: 'Phòng ban & Cơ cấu (Department Structure)',
+    title: 'Phòng ban & Cơ cấu',
     icon: 'fa-building',
     color: '#0284c7',
     bg: 'rgba(2, 132, 199, 0.06)',
@@ -391,20 +391,7 @@ const permissionGroups = [
     ]
   },
   {
-    title: 'Báo cáo & Thống kê (Analytics & Reports)',
-    icon: 'fa-chart-pie',
-    color: '#ea580c',
-    bg: 'rgba(234, 88, 12, 0.06)',
-    border: 'rgba(234, 88, 12, 0.15)',
-    sidebarNote: 'Báo cáo',
-    sidebarUrl: '/reports',
-    perms: [
-      { key: 'REPORT_VIEW',   desc: 'Xem biểu đồ thống kê tiến độ học (mở sidebar Báo cáo)' },
-      { key: 'REPORT_EXPORT', desc: 'Xuất báo cáo điểm dạng Excel/CSV' }
-    ]
-  },
-  {
-    title: 'Bảo mật & Đặc quyền Hệ thống (System Privileges)',
+    title: 'Bảo mật & Đặc quyền Hệ thống',
     icon: 'fa-shield-halved',
     color: '#e11d48',
     bg: 'rgba(225, 29, 72, 0.06)',
@@ -416,7 +403,7 @@ const permissionGroups = [
     ]
   },
   {
-    title: 'Học tập & Tiện ích (Learning & Utilities)',
+    title: 'Học tập & Tiện ích',
     icon: 'fa-graduation-cap',
     color: '#db2777',
     bg: 'rgba(219, 39, 119, 0.06)',
@@ -488,7 +475,6 @@ const permissionGroups = [
             <tr class="rbac-item-row">
               <td>
                 <div class="rbac-perm-desc"><%= perm.desc %></div>
-                <div class="rbac-perm-key"><%= perm.key %></div>
               </td>
               <% roles.forEach(role => { %>
                 <td class="rbac-cell-center">

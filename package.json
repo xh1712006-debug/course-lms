@@ -5,7 +5,7 @@
   "main": "app.js",
   "scripts": {
     "start": "node app.js",
-    "dev": "node --watch app.js",
+    "dev": "node --watch-path=app.js --watch-path=config --watch-path=controllers --watch-path=middleware --watch-path=models --watch-path=routes --watch-path=services app.js",
     "test-conn": "node config/test-conn.js",
     "test": "node research/testRoleMatrix.js && node research/testLearnerSuite.js && node research/testAssessmentSchedule.js"
   },
