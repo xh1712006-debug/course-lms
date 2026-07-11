@@ -1,1567 +1,1497 @@
 <%- include('../partials/header') %>
 
-<%
-// Helper function to dynamically generate a theme based on path name
-function getPathTheme(name) {
-  const lower = name.toLowerCase();
-  if (lower.includes('backend') || lower.includes('node') || lower.includes('java') || lower.includes('python')) {
-    return {
-      gradient: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)', // Blue to Dark Blue
-      color: '#2563eb',
-      bgGlow: 'rgba(59, 130, 246, 0.08)',
-      badgeBg: 'rgba(239, 246, 255, 0.9)',
-      badgeText: '#1d4ed8',
-      icon: 'fa-server',
-      label: 'Phát triển Backend'
-    };
-  }
-  if (lower.includes('frontend') || lower.includes('react') || lower.includes('vue') || lower.includes('ui') || lower.includes('ux') || lower.includes('javascript')) {
-    return {
-      gradient: 'linear-gradient(135deg, #0d9488 0%, #0f766e 100%)', // Teal
-      color: '#0d9488',
-      bgGlow: 'rgba(13, 148, 136, 0.08)',
-      badgeBg: 'rgba(240, 253, 250, 0.9)',
-      badgeText: '#0f766e',
-      icon: 'fa-code',
-      label: 'Phát triển Frontend'
-    };
-  }
-  if (lower.includes('devops') || lower.includes('docker') || lower.includes('aws') || lower.includes('cloud') || lower.includes('cicd') || lower.includes('hệ thống')) {
-    return {
-      gradient: 'linear-gradient(135deg, #f97316 0%, #c2410c 100%)', // Orange
-      color: '#ea580c',
-      bgGlow: 'rgba(249, 115, 22, 0.08)',
-      badgeBg: 'rgba(255, 247, 237, 0.9)',
-      badgeText: '#c2410c',
-      icon: 'fa-terminal',
-      label: 'DevOps & Cloud'
-    };
-  }
-  if (lower.includes('ai') || lower.includes('machine') || lower.includes('brain') || lower.includes('data') || lower.includes('trí tuệ')) {
-    return {
-      gradient: 'linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%)', // Violet
-      color: '#7c3aed',
-      bgGlow: 'rgba(139, 92, 246, 0.08)',
-      badgeBg: 'rgba(245, 243, 255, 0.9)',
-      badgeText: '#6d28d9',
-      icon: 'fa-brain',
-      label: 'Trí tuệ nhân tạo & Dữ liệu'
-    };
-  }
-  // Default
-  return {
-    gradient: 'linear-gradient(135deg, #6366f1 0%, #4338ca 100%)', // Indigo
-    color: '#4f46e5',
-    bgGlow: 'rgba(99, 102, 241, 0.08)',
-    badgeBg: 'rgba(238, 242, 255, 0.9)',
-    badgeText: '#4338ca',
-    icon: 'fa-route',
-    label: 'Chương trình đào tạo'
-  };
-}
-%>
+  <% // Helper function to dynamically generate a theme based on path name function getPathTheme(name) { const
+    lower=name.toLowerCase(); if (lower.includes('backend') || lower.includes('node') || lower.includes('java') ||
+    lower.includes('python')) { return { gradient: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)' , // Blue to Dark
+    Blue color: '#2563eb' , bgGlow: 'rgba(59, 130, 246, 0.08)' , badgeBg: 'rgba(239, 246, 255, 0.9)' ,
+    badgeText: '#1d4ed8' , icon: 'fa-server' , label: 'Phát triển Backend' }; } if (lower.includes('frontend') ||
+    lower.includes('react') || lower.includes('vue') || lower.includes('ui') || lower.includes('ux') ||
+    lower.includes('javascript')) { return { gradient: 'linear-gradient(135deg, #0d9488 0%, #0f766e 100%)' , // Teal
+    color: '#0d9488' , bgGlow: 'rgba(13, 148, 136, 0.08)' , badgeBg: 'rgba(240, 253, 250, 0.9)' , badgeText: '#0f766e' ,
+    icon: 'fa-code' , label: 'Phát triển Frontend' }; } if (lower.includes('devops') || lower.includes('docker') ||
+    lower.includes('aws') || lower.includes('cloud') || lower.includes('cicd') || lower.includes('hệ thống')) { return {
+    gradient: 'linear-gradient(135deg, #f97316 0%, #c2410c 100%)' , // Orange color: '#ea580c' ,
+    bgGlow: 'rgba(249, 115, 22, 0.08)' , badgeBg: 'rgba(255, 247, 237, 0.9)' , badgeText: '#c2410c' ,
+    icon: 'fa-terminal' , label: 'DevOps & Cloud' }; } if (lower.includes('ai') || lower.includes('machine') ||
+    lower.includes('brain') || lower.includes('data') || lower.includes('trí tuệ')) { return {
+    gradient: 'linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%)' , // Violet color: '#7c3aed' ,
+    bgGlow: 'rgba(139, 92, 246, 0.08)' , badgeBg: 'rgba(245, 243, 255, 0.9)' , badgeText: '#6d28d9' , icon: 'fa-brain' ,
+    label: 'Trí tuệ nhân tạo & Dữ liệu' }; } // Default return {
+    gradient: 'linear-gradient(135deg, #6366f1 0%, #4338ca 100%)' , // Indigo color: '#4f46e5' ,
+    bgGlow: 'rgba(99, 102, 241, 0.08)' , badgeBg: 'rgba(238, 242, 255, 0.9)' , badgeText: '#4338ca' , icon: 'fa-route' ,
+    label: 'Chương trình đào tạo' }; } %>
 
-<style>
-  /* ── Page Root Styles ── */
-  .mp-wrapper {
-    max-width: 1300px;
-    margin: 0 auto;
-    padding: 0.5rem 0 2rem;
-  }
+    <style>
+      /* ── Page Root Styles ── */
+      .mp-wrapper {
+        max-width: 1300px;
+        margin: 0 auto;
+        padding: 0.5rem 0 2rem;
+      }
 
-  /* ── Header ── */
-  .mp-page-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding-bottom: 1.5rem;
-    margin-bottom: 1.5rem;
-    border-bottom: 1px solid var(--border-light);
-  }
-  .mp-page-title {
-    font-size: 1.6rem;
-    font-weight: 800;
-    color: var(--text-main);
-    letter-spacing: -0.5px;
-    margin-bottom: 0.25rem;
-  }
-  .mp-page-subtitle {
-    font-size: 0.88rem;
-    color: var(--text-muted);
-    margin: 0;
-  }
+      /* ── Header ── */
+      .mp-page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding-bottom: 1.5rem;
+        margin-bottom: 1.5rem;
+        border-bottom: 1px solid var(--border-light);
+      }
 
-  /* ── Premium Tab Switcher ── */
-  .mp-nav-tabs {
-    display: inline-flex;
-    background: #f1f5f9;
-    padding: 0.35rem;
-    border-radius: 12px;
-    margin-bottom: 1.75rem;
-    border: 1px solid var(--border-light);
-  }
-  .mp-tab-trigger {
-    background: transparent;
-    border: none;
-    padding: 0.6rem 1.25rem;
-    border-radius: 9px;
-    font-size: 0.88rem;
-    font-weight: 700;
-    color: var(--text-muted);
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    transition: var(--transition-smooth);
-    user-select: none;
-  }
-  .mp-tab-trigger:hover {
-    color: var(--text-main);
-  }
-  .mp-tab-trigger.active {
-    background: #ffffff;
-    color: #4f46e5;
-    box-shadow: 0 4px 10px rgba(79, 70, 229, 0.08);
-  }
-  .mp-tab-count-badge {
-    font-size: 0.72rem;
-    font-weight: 800;
-    background: #e2e8f0;
-    color: #475569;
-    padding: 0.1rem 0.45rem;
-    border-radius: 20px;
-    transition: var(--transition-smooth);
-  }
-  .mp-tab-trigger.active .mp-tab-count-badge {
-    background: #e0e7ff;
-    color: #4f46e5;
-  }
+      .mp-page-title {
+        font-size: 1.6rem;
+        font-weight: 800;
+        color: var(--text-main);
+        letter-spacing: -0.5px;
+        margin-bottom: 0.25rem;
+      }
 
-  /* ── TAB 1: INDIVIDUAL COURSES GRID ── */
-  .mp-course-grid-container {
-    animation: fadeIn 0.3s ease;
-  }
-  .mp-stats-strip {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 1rem;
-    margin-bottom: 1.5rem;
-  }
-  .mp-mini-stat-card {
-    background: #ffffff;
-    border: 1px solid var(--border-light);
-    border-radius: 12px;
-    padding: 1rem 1.25rem;
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    box-shadow: var(--shadow-card);
-  }
-  .mp-stat-icon-box {
-    width: 42px;
-    height: 42px;
-    border-radius: 10px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1rem;
-    flex-shrink: 0;
-  }
-  .mp-stat-icon-box.blue { background: rgba(59, 130, 246, 0.08); color: #2563eb; }
-  .mp-stat-icon-box.orange { background: rgba(249, 115, 22, 0.08); color: #ea580c; }
-  .mp-stat-icon-box.green { background: rgba(34, 197, 94, 0.08); color: #16a34a; }
+      .mp-page-subtitle {
+        font-size: 0.88rem;
+        color: var(--text-muted);
+        margin: 0;
+      }
 
-  .mp-course-search-bar {
-    display: flex;
-    align-items: center;
-    background: #ffffff;
-    border: 1px solid var(--border-light);
-    border-radius: 10px;
-    padding: 0.5rem 1rem;
-    margin-bottom: 1.5rem;
-    gap: 0.5rem;
-    max-width: 400px;
-    box-shadow: var(--shadow-card);
-  }
-  .mp-course-search-bar input {
-    border: none;
-    outline: none;
-    font-size: 0.85rem;
-    width: 100%;
-    color: var(--text-main);
-  }
+      /* ── Premium Tab Switcher ── */
+      .mp-nav-tabs {
+        display: inline-flex;
+        background: #f1f5f9;
+        padding: 0.35rem;
+        border-radius: 12px;
+        margin-bottom: 1.75rem;
+        border: 1px solid var(--border-light);
+      }
 
-  .mp-grid-layout {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-    gap: 1.25rem;
-  }
-  .mp-premium-course-card {
-    background: #ffffff;
-    border: 1px solid var(--border-light);
-    border-radius: 16px;
-    padding: 1.25rem;
-    display: flex;
-    flex-direction: column;
-    position: relative;
-    overflow: hidden;
-    box-shadow: var(--shadow-card);
-    transition: var(--transition-smooth);
-  }
-  .mp-premium-course-card:hover {
-    border-color: rgba(79, 70, 229, 0.3);
-    box-shadow: var(--shadow-hover);
-    transform: translateY(-2px);
-  }
-  .mp-card-top-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    margin-bottom: 0.85rem;
-  }
-  .mp-card-topic-icon {
-    width: 38px;
-    height: 38px;
-    border-radius: 10px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 0.95rem;
-  }
-  .mp-priority-tag {
-    font-size: 0.68rem;
-    font-weight: 700;
-    padding: 0.2rem 0.55rem;
-    border-radius: 6px;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.25rem;
-  }
-  .mp-priority-tag.mandatory { background: #fff1f2; color: #dc2626; border: 1px solid #fee2e2; }
-  .mp-priority-tag.elective { background: #f0fdfa; color: #0d9488; border: 1px solid #ccfbf1; }
+      .mp-tab-trigger {
+        background: transparent;
+        border: none;
+        padding: 0.6rem 1.25rem;
+        border-radius: 9px;
+        font-size: 0.88rem;
+        font-weight: 700;
+        color: var(--text-muted);
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: var(--transition-smooth);
+        user-select: none;
+      }
 
-  .mp-course-card-title {
-    font-size: 0.95rem;
-    font-weight: 700;
-    color: var(--text-main);
-    line-height: 1.4;
-    margin: 0 0 0.4rem 0;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-    height: 2.65rem;
-  }
-  .mp-course-card-desc {
-    font-size: 0.8rem;
-    color: var(--text-muted);
-    line-height: 1.5;
-    margin: 0 0 1.25rem;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-    height: 2.4rem;
-  }
-  .mp-card-progress-section {
-    margin-top: auto;
-    border-top: 1px solid #f1f5f9;
-    padding-top: 0.85rem;
-  }
-  .mp-card-progress-label {
-    display: flex;
-    justify-content: space-between;
-    font-size: 0.75rem;
-    font-weight: 600;
-    color: var(--text-muted);
-    margin-bottom: 0.35rem;
-  }
-  .mp-card-progress-bar-bg {
-    height: 6px;
-    background: #e2e8f0;
-    border-radius: 99px;
-    overflow: hidden;
-    margin-bottom: 0.85rem;
-  }
-  .mp-card-progress-bar-fill {
-    height: 100%;
-    border-radius: 99px;
-    background: linear-gradient(90deg, #10b981, #34d399);
-    transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-  }
-  .mp-card-action-row {
-    display: flex;
-    justify-content: flex-end;
-  }
-  .mp-action-btn-primary {
-    background: var(--primary-gradient);
-    color: #ffffff;
-    border: none;
-    border-radius: 8px;
-    font-size: 0.78rem;
-    font-weight: 700;
-    padding: 0.45rem 1rem;
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.3rem;
-    box-shadow: 0 4px 10px rgba(99, 102, 241, 0.15);
-    transition: var(--transition-smooth);
-  }
-  .mp-action-btn-primary:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 6px 15px rgba(99, 102, 241, 0.25);
-    color: #ffffff;
-  }
+      .mp-tab-trigger:hover {
+        color: var(--text-main);
+      }
 
-  /* ── TAB 2: LEARNING PATHS WORKSPACE (MASTER-DETAIL) ── */
-  .mp-workspace-container {
-    display: grid;
-    grid-template-columns: 350px 1fr;
-    gap: 1.5rem;
-    min-height: 600px;
-    animation: fadeIn 0.3s ease;
-  }
+      .mp-tab-trigger.active {
+        background: #ffffff;
+        color: #4f46e5;
+        box-shadow: 0 4px 10px rgba(79, 70, 229, 0.08);
+      }
 
-  /* ── Left Sidebar Master Pane ── */
-  .mp-master-sidebar {
-    background: #ffffff;
-    border: 1px solid var(--border-light);
-    border-radius: 16px;
-    padding: 1.25rem;
-    box-shadow: var(--shadow-card);
-    display: flex;
-    flex-direction: column;
-    height: calc(100vh - 200px);
-    position: sticky;
-    top: 20px;
-  }
-  .mp-sidebar-header {
-    border-bottom: 1px solid #f1f5f9;
-    padding-bottom: 0.85rem;
-    margin-bottom: 0.85rem;
-  }
-  .mp-sidebar-search {
-    display: flex;
-    align-items: center;
-    background: #f8fafc;
-    border: 1px solid var(--border-light);
-    border-radius: 8px;
-    padding: 0.4rem 0.75rem;
-    gap: 0.4rem;
-    margin-bottom: 0.75rem;
-  }
-  .mp-sidebar-search input {
-    background: transparent;
-    border: none;
-    outline: none;
-    font-size: 0.82rem;
-    width: 100%;
-    color: var(--text-main);
-  }
-  .mp-sidebar-filters {
-    display: flex;
-    gap: 0.25rem;
-  }
-  .mp-pill-filter {
-    background: transparent;
-    border: 1px solid #cbd5e1;
-    color: var(--text-muted);
-    font-size: 0.72rem;
-    font-weight: 700;
-    padding: 0.25rem 0.6rem;
-    border-radius: 20px;
-    cursor: pointer;
-    transition: var(--transition-smooth);
-  }
-  .mp-pill-filter:hover {
-    border-color: #4f46e5;
-    color: #4f46e5;
-  }
-  .mp-pill-filter.active {
-    background: #4f46e5;
-    border-color: #4f46e5;
-    color: #ffffff;
-  }
+      .mp-tab-count-badge {
+        font-size: 0.72rem;
+        font-weight: 800;
+        background: #e2e8f0;
+        color: #475569;
+        padding: 0.1rem 0.45rem;
+        border-radius: 20px;
+        transition: var(--transition-smooth);
+      }
 
-  /* Path Selector List */
-  .mp-sidebar-list-scroll {
-    flex-grow: 1;
-    overflow-y: auto;
-    display: flex;
-    flex-direction: column;
-    gap: 0.65rem;
-    padding-right: 0.25rem;
-  }
-  .mp-sidebar-list-scroll::-webkit-scrollbar { width: 4px; }
-  .mp-sidebar-list-scroll::-webkit-scrollbar-thumb {
-    background: #e2e8f0;
-    border-radius: 4px;
-  }
+      .mp-tab-trigger.active .mp-tab-count-badge {
+        background: #e0e7ff;
+        color: #4f46e5;
+      }
 
-  /* Compact Path Card Selector */
-  .mp-path-selector-card {
-    background: #ffffff;
-    border: 1px solid var(--border-light);
-    border-radius: 12px;
-    padding: 0.85rem 1rem;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    position: relative;
-    transition: var(--transition-smooth);
-  }
-  .mp-path-selector-card:hover {
-    border-color: #cbd5e1;
-    background: #fafbfd;
-  }
-  .mp-path-selector-card.active {
-    background: var(--bg-glow, rgba(79, 70, 229, 0.05));
-    border-color: var(--theme-color, #4f46e5);
-    box-shadow: 0 4px 12px rgba(79, 70, 229, 0.04);
-  }
-  .mp-selector-icon-box {
-    width: 38px;
-    height: 38px;
-    border-radius: 8px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 0.9rem;
-    color: var(--theme-color, #4f46e5);
-    background: var(--bg-glow, rgba(79, 70, 229, 0.08));
-    flex-shrink: 0;
-  }
-  .mp-selector-meta {
-    flex-grow: 1;
-    min-width: 0;
-  }
-  .mp-selector-title {
-    font-size: 0.85rem;
-    font-weight: 700;
-    color: var(--text-main);
-    margin: 0 0 0.15rem 0;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-  .mp-selector-sub {
-    font-size: 0.72rem;
-    color: var(--text-muted);
-    display: flex;
-    align-items: center;
-    gap: 0.4rem;
-  }
-  .mp-selector-type-dot {
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    display: inline-block;
-  }
-  .mp-selector-type-dot.mandatory { background-color: #ef4444; }
-  .mp-selector-type-dot.elective { background-color: #0d9488; }
+      /* ── TAB 1: INDIVIDUAL COURSES GRID ── */
+      .mp-course-grid-container {
+        animation: fadeIn 0.3s ease;
+      }
 
-  /* Radial SVG Progress in Selector List */
-  .mp-radial-progress {
-    position: relative;
-    width: 34px;
-    height: 34px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-  }
-  .mp-radial-progress svg {
-    transform: rotate(-90deg);
-  }
-  .mp-radial-progress .pct {
-    position: absolute;
-    font-size: 0.65rem;
-    font-weight: 800;
-    color: var(--text-main);
-  }
+      .mp-stats-strip {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+      }
 
-  /* ── Right Detailed Workspace ── */
-  .mp-detail-view-pane {
-    display: flex;
-    flex-direction: column;
-    gap: 1.5rem;
-  }
-  .mp-path-detail-panel {
-    animation: slideUp 0.35s cubic-bezier(0.16, 1, 0.3, 1);
-  }
+      .mp-mini-stat-card {
+        background: #ffffff;
+        border: 1px solid var(--border-light);
+        border-radius: 12px;
+        padding: 1rem 1.25rem;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        box-shadow: var(--shadow-card);
+      }
 
-  /* Premium Gradient Hero Section */
-  .mp-hero-card {
-    background: var(--theme-gradient, linear-gradient(135deg, #6366f1 0%, #4338ca 100%));
-    color: #ffffff;
-    border-radius: 20px;
-    padding: 2.25rem;
-    position: relative;
-    overflow: hidden;
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
-  }
-  /* Elegant blurry background glow */
-  .mp-hero-card::after {
-    content: '';
-    position: absolute;
-    top: -50px;
-    right: -50px;
-    width: 200px;
-    height: 200px;
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 50%;
-    filter: blur(40px);
-    pointer-events: none;
-  }
-  .mp-hero-badge-row {
-    display: flex;
-    gap: 0.5rem;
-    margin-bottom: 0.85rem;
-    align-items: center;
-  }
-  .mp-hero-pill {
-    font-size: 0.68rem;
-    font-weight: 800;
-    padding: 0.25rem 0.65rem;
-    border-radius: 6px;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    background: rgba(255, 255, 255, 0.18);
-    color: #ffffff;
-    border: 1px solid rgba(255, 255, 255, 0.25);
-  }
-  .mp-hero-pill.mandatory {
-    background: rgba(239, 68, 68, 0.2);
-    border-color: rgba(239, 68, 68, 0.35);
-  }
-  .mp-hero-pill.topic-label {
-    background: var(--badge-bg, rgba(255, 255, 255, 0.9));
-    color: var(--badge-text, #4338ca);
-    border: none;
-  }
-  .mp-hero-title {
-    font-size: 1.45rem;
-    font-weight: 800;
-    margin: 0 0 0.5rem 0;
-    color: #ffffff;
-    letter-spacing: -0.3px;
-  }
-  .mp-hero-desc {
-    font-size: 0.85rem;
-    line-height: 1.6;
-    margin: 0 0 1.25rem 0;
-    color: rgba(255, 255, 255, 0.85);
-    max-width: 750px;
-  }
-  .mp-hero-action-row {
-    display: flex;
-    gap: 0.75rem;
-    align-items: center;
-  }
-  .mp-hero-btn {
-    border: none;
-    border-radius: 8px;
-    padding: 0.55rem 1.15rem;
-    font-size: 0.82rem;
-    font-weight: 700;
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.35rem;
-    transition: var(--transition-smooth);
-  }
-  .mp-hero-btn.primary {
-    background: #ffffff;
-    color: var(--theme-color, #4f46e5);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-  }
-  .mp-hero-btn.primary:hover {
-    background: #f8fafc;
-    transform: translateY(-1px);
-    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
-  }
-  .mp-hero-btn.secondary {
-    background: rgba(255, 255, 255, 0.15);
-    color: #ffffff;
-    border: 1px solid rgba(255, 255, 255, 0.25);
-  }
-  .mp-hero-btn.secondary:hover {
-    background: rgba(255, 255, 255, 0.25);
-    transform: translateY(-1px);
-  }
-  .mp-hero-btn.secondary.pinned {
-    background: #fffbeb;
-    color: #d97706;
-    border-color: #fcd34d;
-  }
+      .mp-stat-icon-box {
+        width: 42px;
+        height: 42px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1rem;
+        flex-shrink: 0;
+      }
 
-  /* Stats summary Row for path details */
-  .mp-path-stats-summary {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-    gap: 1rem;
-    margin-top: 1.25rem;
-  }
-  .mp-detail-stat-card {
-    background: #ffffff;
-    border: 1px solid var(--border-light);
-    border-radius: 12px;
-    padding: 0.85rem 1.15rem;
-    box-shadow: var(--shadow-card);
-  }
-  .mp-detail-stat-val {
-    font-size: 1.1rem;
-    font-weight: 800;
-    color: var(--text-main);
-    margin-bottom: 0.15rem;
-  }
-  .mp-detail-stat-lbl {
-    font-size: 0.72rem;
-    color: var(--text-muted);
-  }
+      .mp-stat-icon-box.blue {
+        background: rgba(59, 130, 246, 0.08);
+        color: #2563eb;
+      }
 
-  /* ── Interactive Roadmap Timeline ── */
-  .mp-roadmap-section-title {
-    font-size: 1.05rem;
-    font-weight: 700;
-    color: var(--text-main);
-    margin: 1.75rem 0 1rem;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-  }
-  .mp-roadmap-section-title i {
-    color: var(--theme-color, #4f46e5);
-  }
+      .mp-stat-icon-box.orange {
+        background: rgba(249, 115, 22, 0.08);
+        color: #ea580c;
+      }
 
-  .mp-roadmap-timeline-box {
-    position: relative;
-    padding-left: 0.5rem;
-  }
+      .mp-stat-icon-box.green {
+        background: rgba(34, 197, 94, 0.08);
+        color: #16a34a;
+      }
 
-  /* Visual Timeline Node Item */
-  .mp-roadmap-timeline-item {
-    position: relative;
-    padding-left: 50px;
-    padding-bottom: 1.75rem;
-  }
+      .mp-course-search-bar {
+        display: flex;
+        align-items: center;
+        background: #ffffff;
+        border: 1px solid var(--border-light);
+        border-radius: 10px;
+        padding: 0.5rem 1rem;
+        margin-bottom: 1.5rem;
+        gap: 0.5rem;
+        max-width: 400px;
+        box-shadow: var(--shadow-card);
+      }
 
-  /* Vertical railway line */
-  .mp-roadmap-timeline-item::before {
-    content: '';
-    position: absolute;
-    left: 20px;
-    top: 36px;
-    bottom: 0;
-    width: 2px;
-    background: #e2e8f0;
-    z-index: 1;
-    transition: background 0.3s ease;
-  }
-  /* Done rail style */
-  .mp-roadmap-timeline-item.done::before {
-    background: #10b981;
-  }
-  /* Active rail style */
-  .mp-roadmap-timeline-item.active-node::before {
-    background: repeating-linear-gradient(
-      to bottom,
-      #10b981,
-      #10b981 6px,
-      #e2e8f0 6px,
-      #e2e8f0 12px
-    );
-  }
-  /* Last item hides railroad */
-  .mp-roadmap-timeline-item:last-child::before {
-    display: none;
-  }
+      .mp-course-search-bar input {
+        border: none;
+        outline: none;
+        font-size: 0.85rem;
+        width: 100%;
+        color: var(--text-main);
+      }
 
-  /* Timeline indicator dot */
-  .mp-timeline-dot {
-    position: absolute;
-    left: 8px;
-    top: 4px;
-    width: 26px;
-    height: 26px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 0.68rem;
-    font-weight: 800;
-    z-index: 2;
-    background: #ffffff;
-    border: 2px solid #cbd5e1;
-    color: #64748b;
-    box-shadow: 0 0 0 4px #ffffff;
-    transition: var(--transition-smooth);
-  }
-  .mp-roadmap-timeline-item.done .mp-timeline-dot {
-    border-color: #10b981;
-    background: #10b981;
-    color: #ffffff;
-    box-shadow: 0 0 0 4px #ffffff, 0 3px 8px rgba(16, 185, 129, 0.2);
-  }
-  .mp-roadmap-timeline-item.active-node .mp-timeline-dot {
-    border-color: var(--theme-color, #4f46e5);
-    background: #ffffff;
-    color: var(--theme-color, #4f46e5);
-    box-shadow: 0 0 0 4px #ffffff, 0 0 0 6px var(--bg-glow, rgba(79, 70, 229, 0.15));
-    animation: dotPulse 2s infinite;
-  }
-  .mp-roadmap-timeline-item.locked-node .mp-timeline-dot {
-    border-color: #e2e8f0;
-    background: #f8fafc;
-    color: #94a3b8;
-  }
+      .mp-grid-layout {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+        gap: 1.25rem;
+      }
 
-  /* Timeline Card Design */
-  .mp-timeline-card {
-    background: #ffffff;
-    border: 1px solid var(--border-light);
-    border-radius: 14px;
-    padding: 1.1rem 1.25rem;
-    box-shadow: var(--shadow-card);
-    display: flex;
-    gap: 1.25rem;
-    align-items: center;
-    transition: var(--transition-smooth);
-    max-width: 850px;
-    width: 100%;
-  }
-  .mp-roadmap-timeline-item:hover .mp-timeline-card {
-    border-color: #cbd5e1;
-    box-shadow: var(--shadow-hover);
-  }
-  .mp-roadmap-timeline-item.active-node:hover .mp-timeline-card {
-    border-color: var(--theme-color, #cbd5e1);
-  }
-  .mp-roadmap-timeline-item.locked-node .mp-timeline-card {
-    background: #fafafa;
-    border-style: dashed;
-    opacity: 0.85;
-  }
+      .mp-premium-course-card {
+        background: #ffffff;
+        border: 1px solid var(--border-light);
+        border-radius: 16px;
+        padding: 1.25rem;
+        display: flex;
+        flex-direction: column;
+        position: relative;
+        overflow: hidden;
+        box-shadow: var(--shadow-card);
+        transition: var(--transition-smooth);
+      }
 
-  .mp-timeline-card-content {
-    flex-grow: 1;
-    min-width: 0;
-  }
-  .mp-timeline-card-title-row {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    margin-bottom: 0.3rem;
-    flex-wrap: wrap;
-  }
-  .mp-timeline-card-title {
-    font-size: 0.9rem;
-    font-weight: 700;
-    color: var(--text-main);
-    margin: 0;
-  }
-  .mp-difficulty-badge {
-    font-size: 0.6rem;
-    font-weight: 800;
-    padding: 0.1rem 0.4rem;
-    border-radius: 4px;
-  }
-  .mp-difficulty-badge.basic { background: #dcfce7; color: #15803d; }
-  .mp-difficulty-badge.mid { background: #e0e7ff; color: #4f46e5; }
-  .mp-difficulty-badge.advanced { background: #ffe4e6; color: #b91c1c; }
+      .mp-premium-course-card:hover {
+        border-color: rgba(79, 70, 229, 0.3);
+        box-shadow: var(--shadow-hover);
+        transform: translateY(-2px);
+      }
 
-  .mp-timeline-card-desc {
-    font-size: 0.78rem;
-    color: var(--text-muted);
-    line-height: 1.5;
-    margin: 0 0 0.65rem;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-  }
-  .mp-timeline-card-meta {
-    display: flex;
-    gap: 0.85rem;
-    font-size: 0.72rem;
-    color: var(--text-muted);
-  }
-  .mp-timeline-card-meta span {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.25rem;
-  }
+      .mp-card-top-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 0.85rem;
+      }
 
-  /* Node Progress Bar inside Timeline Card */
-  .mp-node-progress-wrapper {
-    margin-top: 0.5rem;
-    max-width: 250px;
-  }
-  .mp-node-progress-text {
-    font-size: 0.68rem;
-    font-weight: 700;
-    color: #10b981;
-    margin-bottom: 0.2rem;
-  }
-  .mp-node-progress-track {
-    height: 4px;
-    background: #e2e8f0;
-    border-radius: 99px;
-    overflow: hidden;
-  }
-  .mp-node-progress-fill {
-    height: 100%;
-    background: #10b981;
-    border-radius: 99px;
-  }
+      .mp-card-topic-icon {
+        width: 38px;
+        height: 38px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.95rem;
+      }
 
-  /* Node Actions */
-  .mp-timeline-card-actions {
-    flex-shrink: 0;
-  }
+      .mp-priority-tag {
+        font-size: 0.68rem;
+        font-weight: 700;
+        padding: 0.2rem 0.55rem;
+        border-radius: 6px;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+      }
 
-  /* Mobile back button inside detail pane */
-  .mp-mobile-back-header {
-    display: none;
-    align-items: center;
-    padding: 0.75rem 1rem;
-    background: #ffffff;
-    border-bottom: 1px solid var(--border-light);
-    position: sticky;
-    top: 0;
-    z-index: 100;
-    margin-bottom: 1rem;
-  }
-  .mp-mobile-back-btn {
-    background: none;
-    border: none;
-    font-size: 0.85rem;
-    font-weight: 700;
-    color: #4f46e5;
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.35rem;
-  }
+      .mp-priority-tag.mandatory {
+        background: #fff1f2;
+        color: #dc2626;
+        border: 1px solid #fee2e2;
+      }
 
-  /* Empty state details */
-  .mp-detail-empty-state {
-    background: #ffffff;
-    border: 1px dashed var(--border-light);
-    border-radius: 16px;
-    padding: 4rem 2rem;
-    text-align: center;
-    box-shadow: var(--shadow-card);
-  }
-  .mp-empty-state-icon {
-    font-size: 2.2rem;
-    color: var(--text-muted);
-    opacity: 0.4;
-    margin-bottom: 1rem;
-  }
-  .mp-detail-empty-state h3 {
-    font-size: 1rem;
-    font-weight: 700;
-    color: var(--text-main);
-    margin: 0 0 0.25rem 0;
-  }
-  .mp-detail-empty-state p {
-    font-size: 0.82rem;
-    color: var(--text-muted);
-    margin: 0;
-  }
+      .mp-priority-tag.elective {
+        background: #f0fdfa;
+        color: #0d9488;
+        border: 1px solid #ccfbf1;
+      }
 
-  /* ── Animations ── */
-  @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(4px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-  @keyframes slideUp {
-    from { opacity: 0; transform: translateY(12px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-  @keyframes dotPulse {
-    0% { box-shadow: 0 0 0 0 var(--bg-glow, rgba(79, 70, 229, 0.3)); }
-    70% { box-shadow: 0 0 0 6px rgba(79, 70, 229, 0); }
-    100% { box-shadow: 0 0 0 0 rgba(79, 70, 229, 0); }
-  }
+      .mp-course-card-title {
+        font-size: 0.95rem;
+        font-weight: 700;
+        color: var(--text-main);
+        line-height: 1.4;
+        margin: 0 0 0.4rem 0;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        height: 2.65rem;
+      }
 
-  /* ── Responsive Styling ── */
-  @media (max-width: 992px) {
-    .mp-workspace-container {
-      grid-template-columns: 1fr;
-      position: relative;
-    }
-    .mp-master-sidebar {
-      height: auto;
-      position: static;
-    }
-    .mp-detail-view-pane {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100vh;
-      background: #f8fafc;
-      z-index: 1000;
-      transform: translateX(100%);
-      transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-      overflow-y: auto;
-      display: none;
-      padding: 0;
-      gap: 0;
-    }
-    .mp-detail-view-pane.mobile-active {
-      transform: translateX(0);
-      display: block;
-    }
-    .mp-mobile-back-header {
-      display: flex;
-    }
-    .mp-path-detail-panel {
-      padding: 1rem 1.25rem 3rem;
-    }
-    .mp-hero-card {
-      border-radius: 12px;
-      padding: 1.5rem;
-    }
-    .mp-timeline-card {
-      flex-direction: column;
-      align-items: flex-start;
-      gap: 0.85rem;
-    }
-    .mp-timeline-card-actions {
-      width: 100%;
-      display: flex;
-      justify-content: flex-end;
-    }
-  }
+      .mp-course-card-desc {
+        font-size: 0.8rem;
+        color: var(--text-muted);
+        line-height: 1.5;
+        margin: 0 0 1.25rem;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        height: 2.4rem;
+      }
 
-  @media (max-width: 640px) {
-    .mp-page-header {
-      flex-direction: column;
-      align-items: flex-start;
-      gap: 0.75rem;
-    }
-    .mp-grid-layout {
-      grid-template-columns: 1fr;
-    }
-  }
-</style>
+      .mp-card-progress-section {
+        margin-top: auto;
+        border-top: 1px solid #f1f5f9;
+        padding-top: 0.85rem;
+      }
 
-<div class="mp-wrapper">
-  <!-- Page Header -->
-  <div class="mp-page-header">
-    <div>
-      <h1 class="mp-page-title">Lộ Trình Học Tập Của Tôi</h1>
-      <p class="mp-page-subtitle">Theo dõi các lộ trình đào tạo và các khóa học do tổ chức chỉ định cho bạn.</p>
-    </div>
-  </div>
+      .mp-card-progress-label {
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: var(--text-muted);
+        margin-bottom: 0.35rem;
+      }
 
-  <!-- Tab Switcher -->
-  <% const defaultTab = (paths.length > 0) ? 'paths' : 'individual'; %>
-  <div class="mp-nav-tabs">
-    <button class="mp-tab-trigger <%= defaultTab === 'paths' ? 'active' : '' %>" onclick="switchMainTab('paths')">
-      <i class="fa-solid fa-route"></i>
-      Lộ trình đào tạo
-      <span class="mp-tab-count-badge"><%= paths.length %></span>
-    </button>
-    <button class="mp-tab-trigger <%= defaultTab === 'individual' ? 'active' : '' %>" onclick="switchMainTab('individual')">
-      <i class="fa-solid fa-graduation-cap"></i>
-      Khóa học cá nhân
-      <span class="mp-tab-count-badge"><%= myCourses.length %></span>
-    </button>
-  </div>
+      .mp-card-progress-bar-bg {
+        height: 6px;
+        background: #e2e8f0;
+        border-radius: 99px;
+        overflow: hidden;
+        margin-bottom: 0.85rem;
+      }
 
-  <!-- ============================================== -->
-  <!-- TAB 1: INDIVIDUAL COURSES (KHÓA HỌC CÁ NHÂN) -->
-  <!-- ============================================== -->
-  <div id="main-tab-individual" class="mp-course-grid-container" style="display: <%= defaultTab === 'individual' ? 'block' : 'none' %>;">
-    <!-- Course Statistics -->
-    <div class="mp-stats-strip">
-      <div class="mp-mini-stat-card">
-        <div class="mp-stat-icon-box blue"><i class="fa-solid fa-book-bookmark"></i></div>
+      .mp-card-progress-bar-fill {
+        height: 100%;
+        border-radius: 99px;
+        background: linear-gradient(90deg, #10b981, #34d399);
+        transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+
+      .mp-card-action-row {
+        display: flex;
+        justify-content: flex-end;
+      }
+
+      .mp-action-btn-primary {
+        background: var(--primary-gradient);
+        color: #ffffff;
+        border: none;
+        border-radius: 8px;
+        font-size: 0.78rem;
+        font-weight: 700;
+        padding: 0.45rem 1rem;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+        box-shadow: 0 4px 10px rgba(99, 102, 241, 0.15);
+        transition: var(--transition-smooth);
+      }
+
+      .mp-action-btn-primary:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 6px 15px rgba(99, 102, 241, 0.25);
+        color: #ffffff;
+      }
+
+      /* ── TAB 2: LEARNING PATHS WORKSPACE (MASTER-DETAIL) ── */
+      .mp-workspace-container {
+        display: grid;
+        grid-template-columns: 350px 1fr;
+        gap: 1.5rem;
+        min-height: 600px;
+        animation: fadeIn 0.3s ease;
+      }
+
+      /* ── Left Sidebar Master Pane ── */
+      .mp-master-sidebar {
+        background: #ffffff;
+        border: 1px solid var(--border-light);
+        border-radius: 16px;
+        padding: 1.25rem;
+        box-shadow: var(--shadow-card);
+        display: flex;
+        flex-direction: column;
+        height: calc(100vh - 200px);
+        position: sticky;
+        top: 20px;
+      }
+
+      .mp-sidebar-header {
+        border-bottom: 1px solid #f1f5f9;
+        padding-bottom: 0.85rem;
+        margin-bottom: 0.85rem;
+      }
+
+      .mp-sidebar-search {
+        display: flex;
+        align-items: center;
+        background: #f8fafc;
+        border: 1px solid var(--border-light);
+        border-radius: 8px;
+        padding: 0.4rem 0.75rem;
+        gap: 0.4rem;
+        margin-bottom: 0.75rem;
+      }
+
+      .mp-sidebar-search input {
+        background: transparent;
+        border: none;
+        outline: none;
+        font-size: 0.82rem;
+        width: 100%;
+        color: var(--text-main);
+      }
+
+      .mp-sidebar-filters {
+        display: flex;
+        gap: 0.25rem;
+      }
+
+      .mp-pill-filter {
+        background: transparent;
+        border: 1px solid #cbd5e1;
+        color: var(--text-muted);
+        font-size: 0.72rem;
+        font-weight: 700;
+        padding: 0.25rem 0.6rem;
+        border-radius: 20px;
+        cursor: pointer;
+        transition: var(--transition-smooth);
+      }
+
+      .mp-pill-filter:hover {
+        border-color: #4f46e5;
+        color: #4f46e5;
+      }
+
+      .mp-pill-filter.active {
+        background: #4f46e5;
+        border-color: #4f46e5;
+        color: #ffffff;
+      }
+
+      /* Path Selector List */
+      .mp-sidebar-list-scroll {
+        flex-grow: 1;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 0.65rem;
+        padding-right: 0.25rem;
+      }
+
+      .mp-sidebar-list-scroll::-webkit-scrollbar {
+        width: 4px;
+      }
+
+      .mp-sidebar-list-scroll::-webkit-scrollbar-thumb {
+        background: #e2e8f0;
+        border-radius: 4px;
+      }
+
+      /* Compact Path Card Selector */
+      .mp-path-selector-card {
+        background: #ffffff;
+        border: 1px solid var(--border-light);
+        border-radius: 12px;
+        padding: 0.85rem 1rem;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        position: relative;
+        transition: var(--transition-smooth);
+      }
+
+      .mp-path-selector-card:hover {
+        border-color: #cbd5e1;
+        background: #fafbfd;
+      }
+
+      .mp-path-selector-card.active {
+        background: var(--bg-glow, rgba(79, 70, 229, 0.05));
+        border-color: var(--theme-color, #4f46e5);
+        box-shadow: 0 4px 12px rgba(79, 70, 229, 0.04);
+      }
+
+      .mp-selector-icon-box {
+        width: 38px;
+        height: 38px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.9rem;
+        color: var(--theme-color, #4f46e5);
+        background: var(--bg-glow, rgba(79, 70, 229, 0.08));
+        flex-shrink: 0;
+      }
+
+      .mp-selector-meta {
+        flex-grow: 1;
+        min-width: 0;
+      }
+
+      .mp-selector-title {
+        font-size: 0.85rem;
+        font-weight: 700;
+        color: var(--text-main);
+        margin: 0 0 0.15rem 0;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .mp-selector-sub {
+        font-size: 0.72rem;
+        color: var(--text-muted);
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+      }
+
+      .mp-selector-type-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        display: inline-block;
+      }
+
+      .mp-selector-type-dot.mandatory {
+        background-color: #ef4444;
+      }
+
+      .mp-selector-type-dot.elective {
+        background-color: #0d9488;
+      }
+
+      /* Radial SVG Progress in Selector List */
+      .mp-radial-progress {
+        position: relative;
+        width: 34px;
+        height: 34px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+      }
+
+      .mp-radial-progress svg {
+        transform: rotate(-90deg);
+      }
+
+      .mp-radial-progress .pct {
+        position: absolute;
+        font-size: 0.65rem;
+        font-weight: 800;
+        color: var(--text-main);
+      }
+
+      /* ── Right Detailed Workspace ── */
+      .mp-detail-view-pane {
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+      }
+
+      .mp-path-detail-panel {
+        animation: slideUp 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+      }
+
+      /* Premium Gradient Hero Section */
+      .mp-hero-card {
+        background: var(--theme-gradient, linear-gradient(135deg, #6366f1 0%, #4338ca 100%));
+        color: #ffffff;
+        border-radius: 20px;
+        padding: 2.25rem;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+      }
+
+      /* Elegant blurry background glow */
+      .mp-hero-card::after {
+        content: '';
+        position: absolute;
+        top: -50px;
+        right: -50px;
+        width: 200px;
+        height: 200px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 50%;
+        filter: blur(40px);
+        pointer-events: none;
+      }
+
+      .mp-hero-badge-row {
+        display: flex;
+        gap: 0.5rem;
+        margin-bottom: 0.85rem;
+        align-items: center;
+      }
+
+      .mp-hero-pill {
+        font-size: 0.68rem;
+        font-weight: 800;
+        padding: 0.25rem 0.65rem;
+        border-radius: 6px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        background: rgba(255, 255, 255, 0.18);
+        color: #ffffff;
+        border: 1px solid rgba(255, 255, 255, 0.25);
+      }
+
+      .mp-hero-pill.mandatory {
+        background: rgba(239, 68, 68, 0.2);
+        border-color: rgba(239, 68, 68, 0.35);
+      }
+
+      .mp-hero-pill.topic-label {
+        background: var(--badge-bg, rgba(255, 255, 255, 0.9));
+        color: var(--badge-text, #4338ca);
+        border: none;
+      }
+
+      .mp-hero-title {
+        font-size: 1.45rem;
+        font-weight: 800;
+        margin: 0 0 0.5rem 0;
+        color: #ffffff;
+        letter-spacing: -0.3px;
+      }
+
+      .mp-hero-desc {
+        font-size: 0.85rem;
+        line-height: 1.6;
+        margin: 0 0 1.25rem 0;
+        color: rgba(255, 255, 255, 0.85);
+        max-width: 750px;
+      }
+
+      .mp-hero-action-row {
+        display: flex;
+        gap: 0.75rem;
+        align-items: center;
+      }
+
+      .mp-hero-btn {
+        border: none;
+        border-radius: 8px;
+        padding: 0.55rem 1.15rem;
+        font-size: 0.82rem;
+        font-weight: 700;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        transition: var(--transition-smooth);
+      }
+
+      .mp-hero-btn.primary {
+        background: #ffffff;
+        color: var(--theme-color, #4f46e5);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+      }
+
+      .mp-hero-btn.primary:hover {
+        background: #f8fafc;
+        transform: translateY(-1px);
+        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+      }
+
+      .mp-hero-btn.secondary {
+        background: rgba(255, 255, 255, 0.15);
+        color: #ffffff;
+        border: 1px solid rgba(255, 255, 255, 0.25);
+      }
+
+      .mp-hero-btn.secondary:hover {
+        background: rgba(255, 255, 255, 0.25);
+        transform: translateY(-1px);
+      }
+
+      .mp-hero-btn.secondary.pinned {
+        background: #fffbeb;
+        color: #d97706;
+        border-color: #fcd34d;
+      }
+
+      /* Stats summary Row for path details */
+      .mp-path-stats-summary {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 1rem;
+        margin-top: 1.25rem;
+      }
+
+      .mp-detail-stat-card {
+        background: #ffffff;
+        border: 1px solid var(--border-light);
+        border-radius: 12px;
+        padding: 0.85rem 1.15rem;
+        box-shadow: var(--shadow-card);
+      }
+
+      .mp-detail-stat-val {
+        font-size: 1.1rem;
+        font-weight: 800;
+        color: var(--text-main);
+        margin-bottom: 0.15rem;
+      }
+
+      .mp-detail-stat-lbl {
+        font-size: 0.72rem;
+        color: var(--text-muted);
+      }
+
+      /* ── Interactive Roadmap Timeline ── */
+      .mp-roadmap-section-title {
+        font-size: 1.05rem;
+        font-weight: 700;
+        color: var(--text-main);
+        margin: 1.75rem 0 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+
+      .mp-roadmap-section-title i {
+        color: var(--theme-color, #4f46e5);
+      }
+
+      .mp-roadmap-timeline-box {
+        position: relative;
+        padding-left: 0.5rem;
+      }
+
+      /* Visual Timeline Node Item */
+      .mp-roadmap-timeline-item {
+        position: relative;
+        padding-left: 50px;
+        padding-bottom: 1.75rem;
+      }
+
+      /* Vertical railway line */
+      .mp-roadmap-timeline-item::before {
+        content: '';
+        position: absolute;
+        left: 20px;
+        top: 36px;
+        bottom: 0;
+        width: 2px;
+        background: #e2e8f0;
+        z-index: 1;
+        transition: background 0.3s ease;
+      }
+
+      /* Done rail style */
+      .mp-roadmap-timeline-item.done::before {
+        background: #10b981;
+      }
+
+      /* Active rail style */
+      .mp-roadmap-timeline-item.active-node::before {
+        background: repeating-linear-gradient(to bottom,
+            #10b981,
+            #10b981 6px,
+            #e2e8f0 6px,
+            #e2e8f0 12px);
+      }
+
+      /* Last item hides railroad */
+      .mp-roadmap-timeline-item:last-child::before {
+        display: none;
+      }
+
+      /* Timeline indicator dot */
+      .mp-timeline-dot {
+        position: absolute;
+        left: 8px;
+        top: 4px;
+        width: 26px;
+        height: 26px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.68rem;
+        font-weight: 800;
+        z-index: 2;
+        background: #ffffff;
+        border: 2px solid #cbd5e1;
+        color: #64748b;
+        box-shadow: 0 0 0 4px #ffffff;
+        transition: var(--transition-smooth);
+      }
+
+      .mp-roadmap-timeline-item.done .mp-timeline-dot {
+        border-color: #10b981;
+        background: #10b981;
+        color: #ffffff;
+        box-shadow: 0 0 0 4px #ffffff, 0 3px 8px rgba(16, 185, 129, 0.2);
+      }
+
+      .mp-roadmap-timeline-item.active-node .mp-timeline-dot {
+        border-color: var(--theme-color, #4f46e5);
+        background: #ffffff;
+        color: var(--theme-color, #4f46e5);
+        box-shadow: 0 0 0 4px #ffffff, 0 0 0 6px var(--bg-glow, rgba(79, 70, 229, 0.15));
+        animation: dotPulse 2s infinite;
+      }
+
+      .mp-roadmap-timeline-item.locked-node .mp-timeline-dot {
+        border-color: #e2e8f0;
+        background: #f8fafc;
+        color: #94a3b8;
+      }
+
+      /* Timeline Card Design */
+      .mp-timeline-card {
+        background: #ffffff;
+        border: 1px solid var(--border-light);
+        border-radius: 14px;
+        padding: 1.1rem 1.25rem;
+        box-shadow: var(--shadow-card);
+        display: flex;
+        gap: 1.25rem;
+        align-items: center;
+        transition: var(--transition-smooth);
+        max-width: 850px;
+        width: 100%;
+      }
+
+      .mp-roadmap-timeline-item:hover .mp-timeline-card {
+        border-color: #cbd5e1;
+        box-shadow: var(--shadow-hover);
+      }
+
+      .mp-roadmap-timeline-item.active-node:hover .mp-timeline-card {
+        border-color: var(--theme-color, #cbd5e1);
+      }
+
+      .mp-roadmap-timeline-item.locked-node .mp-timeline-card {
+        background: #fafafa;
+        border-style: dashed;
+        opacity: 0.85;
+      }
+
+      .mp-timeline-card-content {
+        flex-grow: 1;
+        min-width: 0;
+      }
+
+      .mp-timeline-card-title-row {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 0.3rem;
+        flex-wrap: wrap;
+      }
+
+      .mp-timeline-card-title {
+        font-size: 0.9rem;
+        font-weight: 700;
+        color: var(--text-main);
+        margin: 0;
+      }
+
+      .mp-difficulty-badge {
+        font-size: 0.6rem;
+        font-weight: 800;
+        padding: 0.1rem 0.4rem;
+        border-radius: 4px;
+      }
+
+      .mp-difficulty-badge.basic {
+        background: #dcfce7;
+        color: #15803d;
+      }
+
+      .mp-difficulty-badge.mid {
+        background: #e0e7ff;
+        color: #4f46e5;
+      }
+
+      .mp-difficulty-badge.advanced {
+        background: #ffe4e6;
+        color: #b91c1c;
+      }
+
+      .mp-timeline-card-desc {
+        font-size: 0.78rem;
+        color: var(--text-muted);
+        line-height: 1.5;
+        margin: 0 0 0.65rem;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+      }
+
+      .mp-timeline-card-meta {
+        display: flex;
+        gap: 0.85rem;
+        font-size: 0.72rem;
+        color: var(--text-muted);
+      }
+
+      .mp-timeline-card-meta span {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+      }
+
+      /* Node Progress Bar inside Timeline Card */
+      .mp-node-progress-wrapper {
+        margin-top: 0.5rem;
+        max-width: 250px;
+      }
+
+      .mp-node-progress-text {
+        font-size: 0.68rem;
+        font-weight: 700;
+        color: #10b981;
+        margin-bottom: 0.2rem;
+      }
+
+      .mp-node-progress-track {
+        height: 4px;
+        background: #e2e8f0;
+        border-radius: 99px;
+        overflow: hidden;
+      }
+
+      .mp-node-progress-fill {
+        height: 100%;
+        background: #10b981;
+        border-radius: 99px;
+      }
+
+      /* Node Actions */
+      .mp-timeline-card-actions {
+        flex-shrink: 0;
+      }
+
+      /* Mobile back button inside detail pane */
+      .mp-mobile-back-header {
+        display: none;
+        align-items: center;
+        padding: 0.75rem 1rem;
+        background: #ffffff;
+        border-bottom: 1px solid var(--border-light);
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        margin-bottom: 1rem;
+      }
+
+      .mp-mobile-back-btn {
+        background: none;
+        border: none;
+        font-size: 0.85rem;
+        font-weight: 700;
+        color: #4f46e5;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+      }
+
+      /* Empty state details */
+      .mp-detail-empty-state {
+        background: #ffffff;
+        border: 1px dashed var(--border-light);
+        border-radius: 16px;
+        padding: 4rem 2rem;
+        text-align: center;
+        box-shadow: var(--shadow-card);
+      }
+
+      .mp-empty-state-icon {
+        font-size: 2.2rem;
+        color: var(--text-muted);
+        opacity: 0.4;
+        margin-bottom: 1rem;
+      }
+
+      .mp-detail-empty-state h3 {
+        font-size: 1rem;
+        font-weight: 700;
+        color: var(--text-main);
+        margin: 0 0 0.25rem 0;
+      }
+
+      .mp-detail-empty-state p {
+        font-size: 0.82rem;
+        color: var(--text-muted);
+        margin: 0;
+      }
+
+      /* ── Animations ── */
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(4px);
+        }
+
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      @keyframes slideUp {
+        from {
+          opacity: 0;
+          transform: translateY(12px);
+        }
+
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      @keyframes dotPulse {
+        0% {
+          box-shadow: 0 0 0 0 var(--bg-glow, rgba(79, 70, 229, 0.3));
+        }
+
+        70% {
+          box-shadow: 0 0 0 6px rgba(79, 70, 229, 0);
+        }
+
+        100% {
+          box-shadow: 0 0 0 0 rgba(79, 70, 229, 0);
+        }
+      }
+
+      /* ── Responsive Styling ── */
+      @media (max-width: 992px) {
+        .mp-workspace-container {
+          grid-template-columns: 1fr;
+          position: relative;
+        }
+
+        .mp-master-sidebar {
+          height: auto;
+          position: static;
+        }
+
+        .mp-detail-view-pane {
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100vw;
+          height: 100vh;
+          background: #f8fafc;
+          z-index: 1000;
+          transform: translateX(100%);
+          transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+          overflow-y: auto;
+          display: none;
+          padding: 0;
+          gap: 0;
+        }
+
+        .mp-detail-view-pane.mobile-active {
+          transform: translateX(0);
+          display: block;
+        }
+
+        .mp-mobile-back-header {
+          display: flex;
+        }
+
+        .mp-path-detail-panel {
+          padding: 1rem 1.25rem 3rem;
+        }
+
+        .mp-hero-card {
+          border-radius: 12px;
+          padding: 1.5rem;
+        }
+
+        .mp-timeline-card {
+          flex-direction: column;
+          align-items: flex-start;
+          gap: 0.85rem;
+        }
+
+        .mp-timeline-card-actions {
+          width: 100%;
+          display: flex;
+          justify-content: flex-end;
+        }
+      }
+
+      @media (max-width: 640px) {
+        .mp-page-header {
+          flex-direction: column;
+          align-items: flex-start;
+          gap: 0.75rem;
+        }
+
+        .mp-grid-layout {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+
+    <div class="mp-wrapper">
+      <!-- Page Header -->
+      <div class="mp-page-header">
         <div>
-          <span class="mp-detail-stat-val" style="display:block;line-height:1.1;"><%= myCourses.length %></span>
-          <span class="mp-detail-stat-lbl">Khóa đăng ký</span>
+          <h1 class="mp-page-title">Lộ Trình Học Tập Của Tôi</h1>
+          <p class="mp-page-subtitle">Theo dõi các lộ trình đào tạo và các khóa học do tổ chức chỉ định cho bạn.</p>
         </div>
       </div>
-      <div class="mp-mini-stat-card">
-        <div class="mp-stat-icon-box orange"><i class="fa-solid fa-spinner"></i></div>
-        <div>
-          <span class="mp-detail-stat-val" style="display:block;line-height:1.1;">
-            <%= myCourses.filter(c => c.progress > 0 && c.progress < 100).length %>
-          </span>
-          <span class="mp-detail-stat-lbl">Đang tiến hành</span>
-        </div>
-      </div>
-      <div class="mp-mini-stat-card">
-        <div class="mp-stat-icon-box green"><i class="fa-solid fa-circle-check"></i></div>
-        <div>
-          <span class="mp-detail-stat-val" style="display:block;line-height:1.1;">
-            <%= myCourses.filter(c => c.progress === 100).length %>
-          </span>
-          <span class="mp-detail-stat-lbl">Đã hoàn thành</span>
-        </div>
-      </div>
-    </div>
 
-    <!-- Search Box for Courses -->
-    <div class="mp-course-search-bar">
-      <i class="fa-solid fa-magnifying-glass" style="color: var(--text-muted); font-size: 0.85rem;"></i>
-      <input type="text" id="individual-course-search" placeholder="Tìm kiếm khóa học cá nhân..." oninput="filterIndividualCourses()">
-    </div>
-
-    <!-- Grid View of Enrolled Courses -->
-    <% if (myCourses.length === 0) { %>
-      <div class="mp-detail-empty-state">
-        <div class="mp-empty-state-icon"><i class="fa-solid fa-book-open-reader"></i></div>
-        <h3>Bạn chưa đăng ký khóa học nào</h3>
-        <p>Truy cập Kho Khóa Học để tìm các chương trình đào tạo hữu ích cho bản thân.</p>
-        <div style="margin-top: 1.25rem;">
-          <a href="/courses" class="mp-action-btn-primary">
-            <i class="fa-solid fa-search"></i> Khám phá khóa học
-          </a>
+      <!-- Tab Switcher -->
+      <% const defaultTab=(paths.length> 0) ? 'paths' : 'individual'; %>
+        <div class="mp-nav-tabs">
+          <button class="mp-tab-trigger <%= defaultTab === 'paths' ? 'active' : '' %>" onclick="switchMainTab('paths')">
+            <i class="fa-solid fa-route"></i>
+            Lộ trình đào tạo
+            <span class="mp-tab-count-badge">
+              <%= paths.length %>
+            </span>
+          </button>
+          <button class="mp-tab-trigger <%= defaultTab === 'individual' ? 'active' : '' %>"
+            onclick="switchMainTab('individual')">
+            <i class="fa-solid fa-graduation-cap"></i>
+            Khóa học cá nhân
+            <span class="mp-tab-count-badge">
+              <%= myCourses.length %>
+            </span>
+          </button>
         </div>
-      </div>
-    <% } else { %>
-      <div class="mp-grid-layout" id="individual-courses-grid">
-        <% myCourses.forEach(c => { %>
-          <%
-            let cIcon = 'fa-book';
-            let cIconBg = 'rgba(99,102,241,0.08)';
-            let cIconColor = '#6366f1';
-            const tl = c.title.toLowerCase();
-            if      (tl.includes('aws') || tl.includes('cloud'))                            { cIcon='fa-cloud';          cIconBg='rgba(2,132,199,0.08)';   cIconColor='#0284c7'; }
-            else if (tl.includes('docker') || tl.includes('devops') || tl.includes('ci/cd')){ cIcon='fa-terminal';       cIconBg='rgba(234,88,12,0.08)';   cIconColor='#ea580c'; }
-            else if (tl.includes('react') || tl.includes('frontend') || tl.includes('vue')) { cIcon='fa-code';           cIconBg='rgba(6,182,212,0.08)';   cIconColor='#06b6d4'; }
-            else if (tl.includes('node') || tl.includes('backend'))                         { cIcon='fa-server';         cIconBg='rgba(99,102,241,0.08)';  cIconColor='#6366f1'; }
-            else if (tl.includes('git') || tl.includes('github'))                           { cIcon='fa-brands fa-github';cIconBg='rgba(15,23,42,0.08)';  cIconColor='#0f172a'; }
-            else if (tl.includes('scrum') || tl.includes('agile'))                          { cIcon='fa-people-group';   cIconBg='rgba(16,185,129,0.08)'; cIconColor='#10b981'; }
-            else if (tl.includes('machine') || tl.includes('ai') || tl.includes('trí tuệ')){ cIcon='fa-brain';           cIconBg='rgba(139,92,246,0.08)'; cIconColor='#8b5cf6'; }
-            else if (tl.includes('giao tiếp') || tl.includes('kỹ năng'))                   { cIcon='fa-comments';        cIconBg='rgba(236,72,153,0.08)'; cIconColor='#ec4899'; }
-          %>
-          <div class="mp-premium-course-card individual-course-item" data-title="<%= c.title %>">
-            <div class="mp-card-top-row">
-              <div class="mp-card-topic-icon" style="background: <%= cIconBg %>; color: <%= cIconColor %>;">
-                <i class="fa-solid <%= cIcon %>"></i>
+
+        <!-- ============================================== -->
+        <!-- TAB 1: INDIVIDUAL COURSES (KHÓA HỌC CÁ NHÂN) -->
+        <!-- ============================================== -->
+        <div id="main-tab-individual" class="mp-course-grid-container"
+          style="display: <%= defaultTab === 'individual' ? 'block' : 'none' %>;">
+          <!-- Course Statistics -->
+          <div class="mp-stats-strip">
+            <div class="mp-mini-stat-card">
+              <div class="mp-stat-icon-box blue"><i class="fa-solid fa-book-bookmark"></i></div>
+              <div>
+                <span class="mp-detail-stat-val" style="display:block;line-height:1.1;">
+                  <%= myCourses.length %>
+                </span>
+                <span class="mp-detail-stat-lbl">Khóa đăng ký</span>
               </div>
-              <span class="mp-priority-tag <%= c.is_assigned ? 'mandatory' : 'elective' %>">
-                <i class="fa-solid <%= c.is_assigned ? 'fa-thumbtack' : 'fa-compass' %>"></i>
-                <%= c.is_assigned ? 'Bắt buộc' : 'Tự chọn' %>
-              </span>
             </div>
-
-            <h3 class="mp-course-card-title"><%= c.title %></h3>
-            <p class="mp-course-card-desc"><%= c.description %></p>
-
-            <div class="mp-card-progress-section">
-              <div class="mp-card-progress-label">
-                <span>Tiến độ học tập</span>
-                <span style="color: #10b981;"><%= c.progress %>%</span>
+            <div class="mp-mini-stat-card">
+              <div class="mp-stat-icon-box orange"><i class="fa-solid fa-spinner"></i></div>
+              <div>
+                <span class="mp-detail-stat-val" style="display:block;line-height:1.1;">
+                  <%= myCourses.filter(c=> c.progress > 0 && c.progress < 100).length %>
+                </span>
+                <span class="mp-detail-stat-lbl">Đang tiến hành</span>
               </div>
-              <div class="mp-card-progress-bar-bg">
-                <div class="mp-card-progress-bar-fill" style="width: <%= c.progress %>%;"></div>
+            </div>
+            <div class="mp-mini-stat-card">
+              <div class="mp-stat-icon-box green"><i class="fa-solid fa-circle-check"></i></div>
+              <div>
+                <span class="mp-detail-stat-val" style="display:block;line-height:1.1;">
+                  <%= myCourses.filter(c=> c.progress === 100).length %>
+                </span>
+                <span class="mp-detail-stat-lbl">Đã hoàn thành</span>
               </div>
-              <div class="mp-card-action-row">
-                <a href="/courses/<%= c.course_id %>/lessons/1" class="mp-action-btn-primary">
-                  <i class="fa-solid <%= c.progress === 100 ? 'fa-rotate' : 'fa-circle-play' %>"></i>
-                  <%= c.progress === 100 ? 'Ôn tập' : 'Vào học' %>
+            </div>
+          </div>
+
+          <!-- Search Box for Courses -->
+          <div class="mp-course-search-bar">
+            <i class="fa-solid fa-magnifying-glass" style="color: var(--text-muted); font-size: 0.85rem;"></i>
+            <input type="text" id="individual-course-search" placeholder="Tìm kiếm khóa học cá nhân..."
+              oninput="filterIndividualCourses()">
+          </div>
+
+          <!-- Grid View of Enrolled Courses -->
+          <% if (myCourses.length===0) { %>
+            <div class="mp-detail-empty-state">
+              <div class="mp-empty-state-icon"><i class="fa-solid fa-book-open-reader"></i></div>
+              <h3>Bạn chưa đăng ký khóa học nào</h3>
+              <p>Truy cập Kho Khóa Học để tìm các chương trình đào tạo hữu ích cho bản thân.</p>
+              <div style="margin-top: 1.25rem;">
+                <a href="/courses" class="mp-action-btn-primary">
+                  <i class="fa-solid fa-search"></i> Khám phá khóa học
                 </a>
               </div>
             </div>
-          </div>
-        <% }) %>
-      </div>
-    <% } %>
-  </div>
+            <% } else { %>
+              <div class="mp-grid-layout" id="individual-courses-grid">
+                <% myCourses.forEach(c=> { %>
+                  <% let cIcon='fa-book' ; let cIconBg='rgba(99,102,241,0.08)' ; let cIconColor='#6366f1' ; const
+                    tl=c.title.toLowerCase(); if (tl.includes('aws') || tl.includes('cloud')) { cIcon='fa-cloud' ;
+                    cIconBg='rgba(2,132,199,0.08)' ; cIconColor='#0284c7' ; } else if (tl.includes('docker') ||
+                    tl.includes('devops') || tl.includes('ci/cd')){ cIcon='fa-terminal' ; cIconBg='rgba(234,88,12,0.08)'
+                    ; cIconColor='#ea580c' ; } else if (tl.includes('react') || tl.includes('frontend') ||
+                    tl.includes('vue')) { cIcon='fa-code' ; cIconBg='rgba(6,182,212,0.08)' ; cIconColor='#06b6d4' ; }
+                    else if (tl.includes('node') || tl.includes('backend')) { cIcon='fa-server' ;
+                    cIconBg='rgba(99,102,241,0.08)' ; cIconColor='#6366f1' ; } else if (tl.includes('git') ||
+                    tl.includes('github')) { cIcon='fa-brands fa-github' ;cIconBg='rgba(15,23,42,0.08)' ;
+                    cIconColor='#0f172a' ; } else if (tl.includes('scrum') || tl.includes('agile')) {
+                    cIcon='fa-people-group' ; cIconBg='rgba(16,185,129,0.08)' ; cIconColor='#10b981' ; } else if
+                    (tl.includes('machine') || tl.includes('ai') || tl.includes('trí tuệ')){ cIcon='fa-brain' ;
+                    cIconBg='rgba(139,92,246,0.08)' ; cIconColor='#8b5cf6' ; } else if (tl.includes('giao tiếp') ||
+                    tl.includes('kỹ năng')) { cIcon='fa-comments' ; cIconBg='rgba(236,72,153,0.08)' ;
+                    cIconColor='#ec4899' ; } %>
+                    <div class="mp-premium-course-card individual-course-item" data-title="<%= c.title %>">
+                      <div class="mp-card-top-row">
+                        <div class="mp-card-topic-icon" style="background: <%= cIconBg %>; color: <%= cIconColor %>;">
+                          <i class="fa-solid <%= cIcon %>"></i>
+                        </div>
+                        <span class="mp-priority-tag <%= c.is_assigned ? 'mandatory' : 'elective' %>">
+                          <i class="fa-solid <%= c.is_assigned ? 'fa-thumbtack' : 'fa-compass' %>"></i>
+                          <%= c.is_assigned ? 'Bắt buộc' : 'Tự chọn' %>
+                        </span>
+                      </div>
 
-  <!-- ============================================== -->
-  <!-- TAB 2: LEARNING PATHS (LỘ TRÌNH ĐÀO TẠO)      -->
-  <!-- ============================================== -->
-  <div id="main-tab-paths" class="mp-workspace-container" style="display: <%= defaultTab === 'paths' ? 'grid' : 'none' %>;">
-    
-    <!-- MASTER COLUMN: Path List & Search -->
-    <aside class="mp-master-sidebar">
-      <div class="mp-sidebar-header">
-        <!-- Search bar -->
-        <div class="mp-sidebar-search">
-          <i class="fa-solid fa-magnifying-glass" style="color: var(--text-muted); font-size: 0.8rem;"></i>
-          <input type="text" id="path-list-search" placeholder="Tìm kiếm lộ trình..." oninput="filterPathsInSidebar()">
-        </div>
-        <!-- Pills for filtering type -->
-        <div class="mp-sidebar-filters">
-          <button class="mp-pill-filter active" id="filter-path-all" onclick="filterPathsByType('all')">Tất cả</button>
-          <button class="mp-pill-filter" id="filter-path-mandatory" onclick="filterPathsByType('mandatory')">Bắt buộc</button>
-          <button class="mp-pill-filter" id="filter-path-elective" onclick="filterPathsByType('elective')">Tự chọn</button>
-        </div>
-      </div>
+                      <h3 class="mp-course-card-title">
+                        <%= c.title %>
+                      </h3>
+                      <p class="mp-course-card-desc">
+                        <%= c.description %>
+                      </p>
 
-      <!-- Scrolling List of Paths -->
-      <div class="mp-sidebar-list-scroll" id="sidebar-path-list">
-        <% if (paths.length === 0) { %>
-          <div style="text-align: center; padding: 2rem 0; color: var(--text-muted); font-size: 0.8rem;">
-            Không tìm thấy lộ trình.
-          </div>
-        <% } else { %>
-          <% paths.forEach((path, idx) => { %>
-            <% 
-              const theme = getPathTheme(path.name);
-            %>
-            <div class="mp-path-selector-card <%= idx === 0 ? 'active' : '' %> path-list-selector-item" 
-                 data-path-id="<%= path.id %>"
-                 data-type="<%= path.isMandatory ? 'mandatory' : 'elective' %>"
-                 data-name="<%= path.name %>"
-                 style="--theme-color: <%= theme.color %>; --bg-glow: <%= theme.bgGlow %>;"
-                 onclick="selectPath('<%= path.id %>')">
-              
-              <!-- Topic Icon -->
-              <div class="mp-selector-icon-box">
-                <i class="fa-solid <%= theme.icon %>"></i>
-              </div>
-
-              <!-- Metadata -->
-              <div class="mp-selector-meta">
-                <h4 class="mp-selector-title"><%= path.name %></h4>
-                <div class="mp-selector-sub">
-                  <span class="mp-selector-type-dot <%= path.isMandatory ? 'mandatory' : 'elective' %>"></span>
-                  <span><%= path.isMandatory ? 'Bắt buộc' : 'Tự chọn' %></span>
-                  <span>•</span>
-                  <span><%= path.totalCourses %> khóa</span>
-                </div>
-              </div>
-
-              <!-- SVG Progress Circle -->
-              <div class="mp-radial-progress" style="--percent: <%= path.progress %>;">
-                <svg width="34" height="34" viewBox="0 0 36 36">
-                  <circle cx="18" cy="18" r="15" fill="none" stroke="#f1f5f9" stroke-width="3"></circle>
-                  <circle cx="18" cy="18" r="15" fill="none" stroke="<%= theme.color %>" stroke-width="3" 
-                          stroke-dasharray="94.2" 
-                          stroke-dashoffset="calc(94.2 - (94.2 * <%= path.progress %>) / 100)" 
-                          stroke-linecap="round"
-                          style="transition: stroke-dashoffset 0.4s ease;"></circle>
-                </svg>
-                <span class="pct"><%= path.progress %>%</span>
-              </div>
-            </div>
-          <% }) %>
-        <% } %>
-      </div>
-    </aside>
-
-    <!-- DETAIL COLUMN: Path Details & Timelines -->
-    <main class="mp-detail-view-pane" id="detail-view-pane">
-      <!-- Mobile back panel header -->
-      <div class="mp-mobile-back-header">
-        <button class="mp-mobile-back-btn" onclick="closePathDetail()">
-          <i class="fa-solid fa-arrow-left"></i> Quay lại danh sách
-        </button>
-      </div>
-
-      <% if (paths.length === 0) { %>
-        <div class="mp-detail-empty-state">
-          <div class="mp-empty-state-icon"><i class="fa-solid fa-route"></i></div>
-          <h3>Không có lộ trình nào</h3>
-          <p>Hiện tại bạn không tham gia lộ trình học tập nào.</p>
-        </div>
-      <% } else { %>
-        <% paths.forEach((path, idx) => { %>
-          <% 
-            const theme = getPathTheme(path.name);
-          %>
-          <div class="mp-path-detail-panel" id="path-detail-<%= path.id %>" style="display: <%= idx === 0 ? 'block' : 'none' %>;">
-            
-            <!-- Header thông tin lộ trình tối giản -->
-            <% 
-              // Find first unfinished course index to redirect
-              let nextCourse = null;
-              for (let c of path.courses) {
-                if (!c.isEnrolled || c.progress < 100) {
-                  nextCourse = c;
-                  break;
-                }
-              }
-            %>
-            <div class="mp-path-header-clean" style="margin-bottom: 1.5rem; padding-bottom: 1.5rem; border-bottom: 1px solid var(--border-light);">
-              <div style="display: flex; justify-content: space-between; align-items: start; gap: 1.5rem; flex-wrap: wrap;">
-                <div style="flex: 1; min-width: 250px;">
-                  <div style="display: flex; align-items: center; gap: 0.50rem; margin-bottom: 0.5rem; flex-wrap: wrap;">
-                    <span style="font-size: 0.72rem; font-weight: 700; text-transform: uppercase; color: <%= theme.color %>; background: <%= theme.bgGlow %>; padding: 0.25rem 0.65rem; border-radius: 6px;">
-                      <i class="fa-solid <%= theme.icon %>"></i> <%= theme.label %>
-                    </span>
-                    <span style="font-size: 0.72rem; font-weight: 750; text-transform: uppercase; padding: 0.25rem 0.65rem; border-radius: 6px; <%= path.isMandatory ? 'background: #fff1f2; color: #dc2626; border: 1px solid #fee2e2;' : 'background: #f0fdfa; color: #0d9488; border: 1px solid #ccfbf1;' %>">
-                      <%= path.isMandatory ? 'Bắt buộc' : 'Tự chọn' %>
-                    </span>
-                  </div>
-                  <h2 style="font-size: 1.5rem; font-weight: 800; color: var(--text-main); margin: 0 0 0.5rem 0; letter-spacing: -0.02em;"><%= path.name %></h2>
-                  <p style="font-size: 0.88rem; color: var(--text-muted); line-height: 1.5; margin: 0;"><%= path.description %></p>
-                </div>
-                
-                <div style="display: flex; gap: 0.75rem; align-items: center; flex-shrink: 0; margin-top: 0.5rem;">
-                  <% if (nextCourse) { %>
-                    <button class="mp-hero-btn primary" onclick="scrollToNextCourse('<%= path.id %>', '<%= nextCourse.id %>')" style="background: <%= theme.color %>; color: #ffffff; border: none; border-radius: 8px; padding: 0.55rem 1.15rem; font-size: 0.82rem; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 0.35rem; transition: var(--transition-smooth); box-shadow: 0 4px 10px rgba(99, 102, 241, 0.15);">
-                      <i class="fa-solid fa-play"></i> Học tiếp chương trình
-                    </button>
-                  <% } %>
-
-                  <% if (!path.isMandatory) { %>
-                    <button class="mp-hero-btn secondary" id="pin-btn-<%= path.id %>" onclick="togglePathPin('<%= path.id %>')" style="background: #ffffff; color: var(--text-main); border: 1px solid var(--border-light); border-radius: 8px; padding: 0.55rem 1.15rem; font-size: 0.82rem; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 0.35rem; transition: var(--transition-smooth);">
-                      <i class="fa-regular fa-star"></i> Theo đuổi lộ trình
-                    </button>
-                  <% } %>
-                </div>
-              </div>
-            </div>
-
-            <!-- Path Stats Summary -->
-            <div class="mp-path-stats-summary">
-              <div class="mp-detail-stat-card">
-                <div class="mp-detail-stat-val"><%= path.enrolledCount %> / <%= path.totalCourses %></div>
-                <div class="mp-detail-stat-lbl">Khóa học đã hoàn thành</div>
-              </div>
-              <div class="mp-detail-stat-card">
-                <div class="mp-detail-stat-val">~<%= path.totalCourses * 12 %> giờ</div>
-                <div class="mp-detail-stat-lbl">Tổng thời lượng đào tạo</div>
-              </div>
-              <div class="mp-detail-stat-card">
-                <div class="mp-detail-stat-val" style="font-size: 0.8rem; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-top: 0.2rem;">
-                  <% 
-                    let skills = [];
-                    path.courses.slice(0, 3).forEach(c => {
-                      let tag = c.title.split(':')[0].replace('Lập trình','').replace('Kỹ năng','').trim();
-                      if(tag.length > 12) tag = tag.substring(0, 10) + '...';
-                      skills.push(tag);
-                    });
-                  %>
-                  <%= skills.join(', ') || 'N/A' %>
-                </div>
-                <div class="mp-detail-stat-lbl">Mục tiêu chuyên môn</div>
-              </div>
-            </div>
-
-            <!-- Roadmap Title -->
-            <h3 class="mp-roadmap-section-title" style="--theme-color: <%= theme.color %>;">
-              <i class="fa-solid fa-map-signs"></i> Bảng Chỉ Dẫn Bản Đồ Học Tập
-            </h3>
-
-            <!-- Timeline Nodes Container -->
-            <div class="mp-roadmap-timeline-box">
-              <% path.courses.forEach((c, cIdx) => { %>
-                <%
-                  // Determine visual states
-                  let nodeStatus = 'locked-node'; // default
-                  if (c.isEnrolled && c.progress === 100) {
-                    nodeStatus = 'done';
-                  } else if (c.isEnrolled) {
-                    nodeStatus = 'active-node';
-                  } else if (c.isPending) {
-                    nodeStatus = 'active-node'; // Show active decoration for pending approval
-                  } else if (cIdx === 0 || (cIdx > 0 && path.courses[cIdx - 1].isEnrolled && path.courses[cIdx - 1].progress === 100)) {
-                    // Unlocked but not enrolled
-                    nodeStatus = 'active-node';
-                  }
-
-                  let diffTag = 'mid', diffText = 'Trung cấp';
-                  const ctl = c.title.toLowerCase();
-                  if (ctl.includes('cơ bản') || ctl.includes('nhập môn') || ctl.includes('scrum') || ctl.includes('agile')) { diffTag='basic'; diffText='Cơ bản'; }
-                  else if (ctl.includes('chuyên sâu') || ctl.includes('devops') || ctl.includes('aws') || ctl.includes('ci/cd') || ctl.includes('nâng cao')) { diffTag='advanced'; diffText='Nâng cao'; }
-                  const hrs = 8 + cIdx * 6 + (c.title.length % 5);
-                %>
-                <div class="mp-roadmap-timeline-item <%= nodeStatus %>" id="course-node-<%= path.id %>-<%= c.id %>">
-                  <!-- Node Circle -->
-                  <div class="mp-timeline-dot">
-                    <% if (c.isEnrolled && c.progress === 100) { %>
-                      <i class="fa-solid fa-check"></i>
-                    <% } else if (c.isEnrolled) { %>
-                      <i class="fa-solid fa-play" style="margin-left: 2px; font-size: 0.55rem;"></i>
-                    <% } else if (c.isPending) { %>
-                      <i class="fa-solid fa-spinner fa-spin" style="font-size: 0.55rem;"></i>
-                    <% } else { %>
-                      <%= cIdx + 1 %>
-                    <% } %>
-                  </div>
-
-                  <!-- Timeline Card content -->
-                  <div class="mp-timeline-card">
-                    <!-- Icon của khóa học -->
-                    <%
-                      let tIcon = 'fa-book';
-                      let tIconBg = 'rgba(99,102,241,0.08)';
-                      let tIconColor = '#6366f1';
-                      const ctlLower = c.title.toLowerCase();
-                      if      (ctlLower.includes('aws') || ctlLower.includes('cloud'))                            { tIcon='fa-cloud';          tIconBg='rgba(2,132,199,0.08)';   tIconColor='#0284c7'; }
-                      else if (ctlLower.includes('docker') || ctlLower.includes('devops') || ctlLower.includes('ci/cd')){ tIcon='fa-terminal';       tIconBg='rgba(234,88,12,0.08)';   tIconColor='#ea580c'; }
-                      else if (ctlLower.includes('react') || ctlLower.includes('frontend') || ctlLower.includes('vue')) { tIcon='fa-code';           tIconBg='rgba(6,182,212,0.08)';   tIconColor='#06b6d4'; }
-                      else if (ctlLower.includes('node') || ctlLower.includes('backend'))                         { tIcon='fa-server';         tIconBg='rgba(99,102,241,0.08)';  tIconColor='#6366f1'; }
-                      else if (ctlLower.includes('git') || ctlLower.includes('github'))                           { tIcon='fa-brands fa-github';tIconBg='rgba(15,23,42,0.08)';  tIconColor='#0f172a'; }
-                      else if (ctlLower.includes('scrum') || ctlLower.includes('agile'))                          { tIcon='fa-people-group';   tIconBg='rgba(16,185,129,0.08)'; tIconColor='#10b981'; }
-                      else if (ctlLower.includes('machine') || ctlLower.includes('ai') || ctlLower.includes('trí tuệ')){ tIcon='fa-brain';           tIconBg='rgba(139,92,246,0.08)'; tIconColor='#8b5cf6'; }
-                      else if (ctlLower.includes('giao tiếp') || ctlLower.includes('kỹ năng') || ctlLower.includes('mới')) { tIcon='fa-comments';        tIconBg='rgba(236,72,153,0.08)'; tIconColor='#ec4899'; }
-                    %>
-                    <div class="mp-card-topic-icon" style="background: <%= tIconBg %>; color: <%= tIconColor %>; flex-shrink: 0; width: 44px; height: 44px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.1rem;">
-                      <i class="fa-solid <%= tIcon %>"></i>
+                      <div class="mp-card-progress-section">
+                        <div class="mp-card-progress-label">
+                          <span>Tiến độ học tập</span>
+                          <span style="color: #10b981;">
+                            <%= c.progress %>%
+                          </span>
+                        </div>
+                        <div class="mp-card-progress-bar-bg">
+                          <div class="mp-card-progress-bar-fill" style="width: <%= c.progress %>%;"></div>
+                        </div>
+                        <div class="mp-card-action-row">
+                          <a href="/courses/<%= c.course_id %>/lessons/1" class="mp-action-btn-primary">
+                            <i class="fa-solid <%= c.progress === 100 ? 'fa-rotate' : 'fa-circle-play' %>"></i>
+                            <%= c.progress===100 ? 'Ôn tập' : 'Vào học' %>
+                          </a>
+                        </div>
+                      </div>
                     </div>
+                    <% }) %>
+              </div>
+              <% } %>
+        </div>
 
-                    <div class="mp-timeline-card-content">
-                      <div class="mp-timeline-card-title-row">
-                        <h4 class="mp-timeline-card-title"><%= c.title %></h4>
-                        <span class="mp-difficulty-badge <%= diffTag %>"><%= diffText %></span>
+        <!-- ============================================== -->
+        <!-- TAB 2: LEARNING PATHS (LỘ TRÌNH ĐÀO TẠO)      -->
+        <!-- ============================================== -->
+        <div id="main-tab-paths" class="mp-workspace-container"
+          style="display: <%= defaultTab === 'paths' ? 'grid' : 'none' %>;">
 
-                        <% if (c.isEnrolled) { %>
-                          <% if (c.progress === 100) { %>
-                            <span class="mp-difficulty-badge basic" style="background:#e0f2fe; color:#0369a1;"><i class="fa-solid fa-check"></i> Hoàn thành</span>
-                          <% } else { %>
-                            <span class="mp-difficulty-badge mid" style="background:#fef3c7; color:#d97706;"><i class="fa-solid fa-clock"></i> Đang học</span>
-                          <% } %>
-                        <% } else if (c.isPending) { %>
-                          <span class="mp-difficulty-badge mid" style="background:#f1f5f9; color:#475569;"><i class="fa-solid fa-hourglass"></i> Chờ duyệt đăng ký</span>
-                        <% } else { %>
-                          <span class="mp-difficulty-badge basic" style="background:#f1f5f9; color:#94a3b8;"><i class="fa-solid fa-lock"></i> Chưa mở khóa</span>
-                        <% } %>
-                      </div>
+          <!-- MASTER COLUMN: Path List & Search -->
+          <aside class="mp-master-sidebar">
+            <div class="mp-sidebar-header">
+              <!-- Search bar -->
+              <div class="mp-sidebar-search">
+                <i class="fa-solid fa-magnifying-glass" style="color: var(--text-muted); font-size: 0.8rem;"></i>
+                <input type="text" id="path-list-search" placeholder="Tìm kiếm lộ trình..."
+                  oninput="filterPathsInSidebar()">
+              </div>
+              <!-- Pills for filtering type -->
+              <div class="mp-sidebar-filters">
+                <button class="mp-pill-filter active" id="filter-path-all" onclick="filterPathsByType('all')">Tất
+                  cả</button>
+                <button class="mp-pill-filter" id="filter-path-mandatory" onclick="filterPathsByType('mandatory')">Bắt
+                  buộc</button>
+                <button class="mp-pill-filter" id="filter-path-elective" onclick="filterPathsByType('elective')">Tự
+                  chọn</button>
+              </div>
+            </div>
 
-                      <p class="mp-timeline-card-desc"><%= c.description %></p>
+            <!-- Scrolling List of Paths -->
+            <div class="mp-sidebar-list-scroll" id="sidebar-path-list">
+              <% if (paths.length===0) { %>
+                <div style="text-align: center; padding: 2rem 0; color: var(--text-muted); font-size: 0.8rem;">
+                  Không tìm thấy lộ trình.
+                </div>
+                <% } else { %>
+                  <% paths.forEach((path, idx)=> { %>
+                    <% const theme=getPathTheme(path.name); %>
+                      <div class="mp-path-selector-card <%= idx === 0 ? 'active' : '' %> path-list-selector-item"
+                        data-path-id="<%= path.id %>" data-type="<%= path.isMandatory ? 'mandatory' : 'elective' %>"
+                        data-name="<%= path.name %>"
+                        style="--theme-color: <%= theme.color %>; --bg-glow: <%= theme.bgGlow %>;"
+                        onclick="selectPath('<%= path.id %>')">
 
-                      <div class="mp-timeline-card-meta">
-                        <span><i class="fa-regular fa-clock"></i> <%= hrs %> giờ học</span>
-                        <span><i class="fa-solid fa-book-open"></i> Bài học tích hợp</span>
-                      </div>
+                        <!-- Topic Icon -->
+                        <div class="mp-selector-icon-box">
+                          <i class="fa-solid <%= theme.icon %>"></i>
+                        </div>
 
-                      <% if (c.isEnrolled && c.progress < 100) { %>
-                        <div class="mp-node-progress-wrapper">
-                          <div class="mp-node-progress-text">Tiến độ bài học: <%= c.progress %>%</div>
-                          <div class="mp-node-progress-track">
-                            <div class="mp-node-progress-fill" style="width: <%= c.progress %>%;"></div>
+                        <!-- Metadata -->
+                        <div class="mp-selector-meta">
+                          <h4 class="mp-selector-title">
+                            <%= path.name %>
+                          </h4>
+                          <div class="mp-selector-sub">
+                            <span
+                              class="mp-selector-type-dot <%= path.isMandatory ? 'mandatory' : 'elective' %>"></span>
+                            <span>
+                              <%= path.isMandatory ? 'Bắt buộc' : 'Tự chọn' %>
+                            </span>
+                            <span>•</span>
+                            <span>
+                              <%= path.totalCourses %> khóa
+                            </span>
                           </div>
                         </div>
-                      <% } %>
-                    </div>
 
-                    <!-- Timeline Card Action Button -->
-                    <div class="mp-timeline-card-actions">
-                      <% if (c.isEnrolled) { %>
-                        <a href="/courses/<%= c.id %>/lessons/1" class="mp-action-btn-primary" style="--primary-gradient: <%= theme.gradient %>; min-width: 120px; justify-content: center;">
-                          <i class="fa-solid fa-circle-play"></i>
-                          <%= c.progress === 100 ? 'Ôn tập' : 'Vào học' %>
-                        </a>
-                      <% } else if (c.isPending) { %>
-                        <button class="mp-action-btn-primary" style="background: #e2e8f0; color: #94a3b8; box-shadow: none; cursor: default; pointer-events: none; min-width: 120px; justify-content: center;">
-                          <i class="fa-solid fa-clock"></i> Chờ duyệt
-                        </button>
-                      <% } else { %>
-                        <a href="/courses/<%= c.id %>" class="mp-action-btn-primary" style="background: #ffffff; color: var(--theme-color, #4f46e5); border: 1px solid var(--theme-color, #4f46e5); box-shadow: none; min-width: 120px; justify-content: center;">
-                          Đăng ký học
-                        </a>
-                      <% } %>
-                    </div>
-                  </div>
-                </div>
-              <% }) %>
+                        <!-- SVG Progress Circle -->
+                        <div class="mp-radial-progress" style="--percent: <%= path.progress %>;">
+                          <svg width="34" height="34" viewBox="0 0 36 36">
+                            <circle cx="18" cy="18" r="15" fill="none" stroke="#f1f5f9" stroke-width="3"></circle>
+                            <circle cx="18" cy="18" r="15" fill="none" stroke="<%= theme.color %>" stroke-width="3"
+                              stroke-dasharray="94.2"
+                              stroke-dashoffset="calc(94.2 - (94.2 * <%= path.progress %>) / 100)"
+                              stroke-linecap="round" style="transition: stroke-dashoffset 0.4s ease;"></circle>
+                          </svg>
+                          <span class="pct">
+                            <%= path.progress %>%
+                          </span>
+                        </div>
+                      </div>
+                      <% }) %>
+                        <% } %>
             </div>
+          </aside>
 
-          </div>
-        <% }) %>
-      <% } %>
-    </main>
+          <!-- DETAIL COLUMN: Path Details & Timelines -->
 
-  </div>
-</div>
 
-<script>
-  /* ── Tab Management ── */
-  function switchMainTab(tabId) {
-    // Hide both tabs
-    document.getElementById('main-tab-individual').style.display = 'none';
-    document.getElementById('main-tab-paths').style.display = 'none';
-    
-    // Deactivate all tab buttons
-    document.querySelectorAll('.mp-tab-trigger').forEach(btn => {
-      btn.classList.remove('active');
-    });
 
-    // Display active tab
-    if (tabId === 'individual') {
-      document.getElementById('main-tab-individual').style.display = 'block';
-      event.currentTarget.classList.add('active');
-    } else {
-      document.getElementById('main-tab-paths').style.display = 'grid';
-      event.currentTarget.classList.add('active');
-      
-      // Auto-focus first path selection if on desktop view
-      if (window.innerWidth > 992) {
-        const activeSelector = document.querySelector('.mp-path-selector-card.active');
-        if (activeSelector) {
-          const pathId = activeSelector.dataset.pathId;
-          showPathDetailDOM(pathId);
+        </div>
+    </div>
+
+    <script>
+      /* ── Tab Management ── */
+      function switchMainTab(tabId) {
+        // Hide both tabs
+        document.getElementById('main-tab-individual').style.display = 'none';
+        document.getElementById('main-tab-paths').style.display = 'none';
+
+        // Deactivate all tab buttons
+        document.querySelectorAll('.mp-tab-trigger').forEach(btn => {
+          btn.classList.remove('active');
+        });
+
+        // Display active tab
+        if (tabId === 'individual') {
+          document.getElementById('main-tab-individual').style.display = 'block';
+          event.currentTarget.classList.add('active');
+        } else {
+          document.getElementById('main-tab-paths').style.display = 'grid';
+          event.currentTarget.classList.add('active');
+
+          // Auto-focus first path selection if on desktop view
+          if (window.innerWidth > 992) {
+            const activeSelector = document.querySelector('.mp-path-selector-card.active');
+            if (activeSelector) {
+              const pathId = activeSelector.dataset.pathId;
+              showPathDetailDOM(pathId);
+            }
+          }
         }
       }
-    }
-  }
 
-  /* ── Search & Filter Individual Enrolled Courses ── */
-  function filterIndividualCourses() {
-    const query = document.getElementById('individual-course-search').value.toLowerCase().trim();
-    const items = document.querySelectorAll('.individual-course-item');
-    
-    items.forEach(item => {
-      const title = item.dataset.title.toLowerCase();
-      if (title.includes(query)) {
-        item.style.display = 'flex';
-      } else {
-        item.style.display = 'none';
+      /* ── Search & Filter Individual Enrolled Courses ── */
+      function filterIndividualCourses() {
+        const query = document.getElementById('individual-course-search').value.toLowerCase().trim();
+        const items = document.querySelectorAll('.individual-course-item');
+
+        items.forEach(item => {
+          const title = item.dataset.title.toLowerCase();
+          if (title.includes(query)) {
+            item.style.display = 'flex';
+          } else {
+            item.style.display = 'none';
+          }
+        });
       }
-    });
-  }
 
-  /* ── Search Paths in Sidebar List ── */
-  function filterPathsInSidebar() {
-    const query = document.getElementById('path-list-search').value.toLowerCase().trim();
-    const activeType = document.querySelector('.mp-pill-filter.active').id.replace('filter-path-', '');
-    applySidebarFiltering(query, activeType);
-  }
-
-  /* ── Filter Paths by Type Button ── */
-  function filterPathsByType(type) {
-    document.querySelectorAll('.mp-pill-filter').forEach(btn => {
-      btn.classList.remove('active');
-    });
-    document.getElementById('filter-path-' + type).classList.add('active');
-
-    const query = document.getElementById('path-list-search').value.toLowerCase().trim();
-    applySidebarFiltering(query, type);
-  }
-
-  /* Apply combined Search and Filter */
-  function applySidebarFiltering(searchQuery, type) {
-    const selectors = document.querySelectorAll('.path-list-selector-item');
-    let visibleCount = 0;
-    let firstVisibleId = null;
-
-    selectors.forEach(item => {
-      const name = item.dataset.name.toLowerCase();
-      const itemType = item.dataset.type; // mandatory or elective
-      
-      const matchSearch = name.includes(searchQuery);
-      const matchType = (type === 'all') || (type === itemType);
-
-      if (matchSearch && matchType) {
-        item.style.setProperty('display', 'flex', 'important');
-        visibleCount++;
-        if (!firstVisibleId) firstVisibleId = item.dataset.pathId;
-      } else {
-        item.style.setProperty('display', 'none', 'important');
+      /* ── Search Paths in Sidebar List ── */
+      function filterPathsInSidebar() {
+        const query = document.getElementById('path-list-search').value.toLowerCase().trim();
+        const activeType = document.querySelector('.mp-pill-filter.active').id.replace('filter-path-', '');
+        applySidebarFiltering(query, activeType);
       }
-    });
 
-    // If on desktop and the currently active path is hidden, switch detail view to the first visible path
-    if (window.innerWidth > 992 && visibleCount > 0) {
-      const currentActive = document.querySelector('.mp-path-selector-card.active');
-      if (currentActive && currentActive.style.display === 'none') {
-        selectPath(firstVisibleId);
+      /* ── Filter Paths by Type Button ── */
+      function filterPathsByType(type) {
+        document.querySelectorAll('.mp-pill-filter').forEach(btn => {
+          btn.classList.remove('active');
+        });
+        document.getElementById('filter-path-' + type).classList.add('active');
+
+        const query = document.getElementById('path-list-search').value.toLowerCase().trim();
+        applySidebarFiltering(query, type);
       }
-    }
-  }
 
-  /* ── Path Selection Management ── */
-  function selectPath(pathId) {
-    // 1. Update active states on sidebar selector list
-    document.querySelectorAll('.mp-path-selector-card').forEach(card => {
-      card.classList.remove('active');
-      if (card.dataset.pathId === pathId) {
-        card.classList.add('active');
+      /* Apply combined Search and Filter */
+      function applySidebarFiltering(searchQuery, type) {
+        const selectors = document.querySelectorAll('.path-list-selector-item');
+        let visibleCount = 0;
+        let firstVisibleId = null;
+
+        selectors.forEach(item => {
+          const name = item.dataset.name.toLowerCase();
+          const itemType = item.dataset.type; // mandatory or elective
+
+          const matchSearch = name.includes(searchQuery);
+          const matchType = (type === 'all') || (type === itemType);
+
+          if (matchSearch && matchType) {
+            item.style.setProperty('display', 'flex', 'important');
+            visibleCount++;
+            if (!firstVisibleId) firstVisibleId = item.dataset.pathId;
+          } else {
+            item.style.setProperty('display', 'none', 'important');
+          }
+        });
+
+        // If on desktop and the currently active path is hidden, switch detail view to the first visible path
+        if (window.innerWidth > 992 && visibleCount > 0) {
+          const currentActive = document.querySelector('.mp-path-selector-card.active');
+          if (currentActive && currentActive.style.display === 'none') {
+            selectPath(firstVisibleId);
+          }
+        }
       }
-    });
 
-    // 2. Update visible detailed panel
-    showPathDetailDOM(pathId);
+      /* ── Path Selection Management ── */
+      function selectPath(pathId) {
+        // 1. Update active states on sidebar selector list
+        document.querySelectorAll('.mp-path-selector-card').forEach(card => {
+          card.classList.remove('active');
+          if (card.dataset.pathId === pathId) {
+            card.classList.add('active');
+          }
+        });
 
-    // 3. For mobile views, trigger slide-in slide overlay animation
-    if (window.innerWidth <= 992) {
-      document.getElementById('detail-view-pane').classList.add('mobile-active');
-    }
-  }
+        // 2. Update visible detailed panel
+        showPathDetailDOM(pathId);
 
-  function showPathDetailDOM(pathId) {
-    document.querySelectorAll('.mp-path-detail-panel').forEach(panel => {
-      panel.style.display = 'none';
-    });
-    const targetPanel = document.getElementById('path-detail-' + pathId);
-    if (targetPanel) {
-      targetPanel.style.display = 'block';
-    }
-  }
-
-  /* Close detail overlay on mobile */
-  function closePathDetail() {
-    document.getElementById('detail-view-pane').classList.remove('mobile-active');
-  }
-
-  /* Scroll directly to the first incomplete timeline node */
-  function scrollToNextCourse(pathId, courseId) {
-    const node = document.getElementById('course-node-' + pathId + '-' + courseId);
-    if (node) {
-      node.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      // Add a brief highlight glow animation
-      const card = node.querySelector('.mp-timeline-card');
-      if (card) {
-        card.style.borderColor = 'var(--theme-color, #4f46e5)';
-        card.style.boxShadow = '0 0 15px rgba(79, 70, 229, 0.25)';
-        setTimeout(() => {
-          card.style.borderColor = '';
-          card.style.boxShadow = '';
-        }, 1500);
+        // 3. For mobile views, trigger slide-in slide overlay animation
+        if (window.innerWidth <= 992) {
+          document.getElementById('detail-view-pane').classList.add('mobile-active');
+        }
       }
-    }
-  }
 
-  /* ── Pinned Paths logic using localStorage ── */
-  function togglePathPin(pathId) {
-    let pinned = JSON.parse(localStorage.getItem('mp-pinned') || '[]');
-    pathId = parseInt(pathId);
-    const isPinned = pinned.includes(pathId);
-    const btn = document.getElementById('pin-btn-' + pathId);
-
-    if (isPinned) {
-      pinned = pinned.filter(id => id !== pathId);
-      if (btn) {
-        btn.classList.remove('pinned');
-        btn.innerHTML = '<i class="fa-regular fa-star"></i> Theo đuổi lộ trình';
+      function showPathDetailDOM(pathId) {
+        document.querySelectorAll('.mp-path-detail-panel').forEach(panel => {
+          panel.style.display = 'none';
+        });
+        const targetPanel = document.getElementById('path-detail-' + pathId);
+        if (targetPanel) {
+          targetPanel.style.display = 'block';
+        }
       }
-    } else {
-      pinned.push(pathId);
-      if (btn) {
-        btn.classList.add('pinned');
-        btn.innerHTML = '<i class="fa-solid fa-star" style="color: #fbbf24;"></i> Đang theo đuổi';
-      }
-    }
 
-    localStorage.setItem('mp-pinned', JSON.stringify(pinned));
-  }
-
-  // Load pinned paths on startup
-  document.addEventListener('DOMContentLoaded', () => {
-    let pinned = JSON.parse(localStorage.getItem('mp-pinned') || '[]');
-    pinned.forEach(pathId => {
-      const btn = document.getElementById('pin-btn-' + pathId);
-      if (btn) {
-        btn.classList.add('pinned');
-        btn.innerHTML = '<i class="fa-solid fa-star" style="color: #fbbf24;"></i> Đang theo đuổi';
-      }
-    });
-
-    // Handle initial responsive sizes
-    window.addEventListener('resize', () => {
-      if (window.innerWidth > 992) {
+      /* Close detail overlay on mobile */
+      function closePathDetail() {
         document.getElementById('detail-view-pane').classList.remove('mobile-active');
-        const activeSelector = document.querySelector('.mp-path-selector-card.active');
-        if (activeSelector) {
-          showPathDetailDOM(activeSelector.dataset.pathId);
+      }
+
+      /* Scroll directly to the first incomplete timeline node */
+      function scrollToNextCourse(pathId, courseId) {
+        const node = document.getElementById('course-node-' + pathId + '-' + courseId);
+        if (node) {
+          node.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          // Add a brief highlight glow animation
+          const card = node.querySelector('.mp-timeline-card');
+          if (card) {
+            card.style.borderColor = 'var(--theme-color, #4f46e5)';
+            card.style.boxShadow = '0 0 15px rgba(79, 70, 229, 0.25)';
+            setTimeout(() => {
+              card.style.borderColor = '';
+              card.style.boxShadow = '';
+            }, 1500);
+          }
         }
       }
-    });
-  });
-</script>
 
-<%- include('../partials/footer') %>
+      /* ── Pinned Paths logic using localStorage ── */
+      function togglePathPin(pathId) {
+        let pinned = JSON.parse(localStorage.getItem('mp-pinned') || '[]');
+        pathId = parseInt(pathId);
+        const isPinned = pinned.includes(pathId);
+        const btn = document.getElementById('pin-btn-' + pathId);
+
+        if (isPinned) {
+          pinned = pinned.filter(id => id !== pathId);
+          if (btn) {
+            btn.classList.remove('pinned');
+            btn.innerHTML = '<i class="fa-regular fa-star"></i> Theo đuổi lộ trình';
+          }
+        } else {
+          pinned.push(pathId);
+          if (btn) {
+            btn.classList.add('pinned');
+            btn.innerHTML = '<i class="fa-solid fa-star" style="color: #fbbf24;"></i> Đang theo đuổi';
+          }
+        }
+
+        localStorage.setItem('mp-pinned', JSON.stringify(pinned));
+      }
+
+      // Load pinned paths on startup
+      document.addEventListener('DOMContentLoaded', () => {
+        let pinned = JSON.parse(localStorage.getItem('mp-pinned') || '[]');
+        pinned.forEach(pathId => {
+          const btn = document.getElementById('pin-btn-' + pathId);
+          if (btn) {
+            btn.classList.add('pinned');
+            btn.innerHTML = '<i class="fa-solid fa-star" style="color: #fbbf24;"></i> Đang theo đuổi';
+          }
+        });
+
+        // Handle initial responsive sizes
+        window.addEventListener('resize', () => {
+          if (window.innerWidth > 992) {
+            document.getElementById('detail-view-pane').classList.remove('mobile-active');
+            const activeSelector = document.querySelector('.mp-path-selector-card.active');
+            if (activeSelector) {
+              showPathDetailDOM(activeSelector.dataset.pathId);
+            }
+          }
+        });
+      });
+    </script>
+
+    <%- include('../partials/footer') %>

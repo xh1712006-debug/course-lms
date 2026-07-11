@@ -1,12 +1,29 @@
-version: '3.8'
-
 services:
+  db:
+    image: postgres:15-alpine
+    container_name: lms_db
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: "123456"
+      POSTGRES_DB: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
   redis:
     image: redis:7-alpine
     container_name: lms_redis
     restart: always
     ports:
-      - "6378:6379"
+      - "6379:6379"
     volumes:
       - redisdata:/data
     healthcheck:
@@ -15,5 +32,30 @@ services:
       timeout: 5s
       retries: 5
 
+  app:
+    build: .
+    container_name: lms_app
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      PORT: 3000
+      DATABASE_URL: postgresql://postgres:123456@db:5432/postgres
+      REDIS_URL: redis://redis:6379
+      SESSION_SECRET: internal_lms_super_secret_session_key_12345
+      GEMINI_API_KEY: AQ.Ab8RN6KZ9DvqDYv5mDKbCVzhdBXUAjKG7MjG8Sq_9vuZ_mKJkQ
+      SMTP_HOST: smtp.gmail.com
+      SMTP_PORT: 587
+      SMTP_SECURE: "false"
+      SMTP_USER: xh1712006@gmail.com
+      SMTP_PASS: "kypr naeu vmzw xhib"
+      SMTP_FROM: "Hệ thống LMS <xh1712006@gmail.com>"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
 volumes:
+  pgdata:
   redisdata:
