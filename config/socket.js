@@ -44,27 +44,6 @@ function initSocket(server) {
       });
     }
 
-    // Học viên tham gia phòng thảo luận của một bài học cụ thể
-    socket.on('join_lesson', ({ lessonId }) => {
-      socket.join(`lesson_${lessonId}`);
-      console.log(`[Socket.io] ${socket.username} tham gia thảo luận bài học: ${lessonId}`);
-    });
-
-    // Học viên rời phòng thảo luận bài học
-    socket.on('leave_lesson', ({ lessonId }) => {
-      socket.leave(`lesson_${lessonId}`);
-      console.log(`[Socket.io] ${socket.username} rời phòng thảo luận bài học: ${lessonId}`);
-    });
-
-    // Gửi bình luận thời gian thực cho phòng bài học
-    socket.on('send_comment', ({ lessonId, content, user }) => {
-      // Phát tin nhắn cho tất cả các client khác đang trong phòng bài học này
-      io.to(`lesson_${lessonId}`).emit('receive_comment', {
-        content,
-        user,
-        created_at: new Date()
-      });
-    });
 
     // Ngắt kết nối
     socket.on('disconnect', async () => {

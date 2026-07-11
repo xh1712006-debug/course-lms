@@ -568,27 +568,36 @@
   <p style="font-size:0.82rem; color:var(--text-muted); margin:0;">Thử từ khóa khác hoặc thay đổi bộ lọc.</p>
 </div>
 
-<!-- Load more -->
-<div class="cb-load-more" id="load-more-container">
-  <button id="load-more-btn">
-    <i class="fa-solid fa-chevron-down"></i> Tải thêm khóa học
-  </button>
+<!-- Load more (Hiệu ứng tải dạng cuộn) -->
+<div class="cb-load-more" id="load-more-container" style="display: none; padding: 1.5rem 0;">
+  <span style="display: inline-flex; align-items: center; gap: 0.5rem; color: var(--text-muted); font-size: 0.85rem; font-weight: 500;">
+    <i class="fa-solid fa-spinner fa-spin" style="color: #6366f1;"></i> Đang tải thêm khóa học...
+  </span>
 </div>
 
 <script>
   document.addEventListener('DOMContentLoaded', () => {
-    const ITEMS_PER_PAGE = 8;
-    let currentIndex = ITEMS_PER_PAGE;
     let activeTab = 'all';
+    let isFetching = false;
 
     const searchInput  = document.getElementById('search-input');
     const catFilter    = document.getElementById('category-filter');
     const tabs         = document.querySelectorAll('.cb-tab');
     const cards        = Array.from(document.querySelectorAll('.cb-card.search-target'));
-    const loadMoreBtn  = document.getElementById('load-more-btn');
     const loadMoreWrap = document.getElementById('load-more-container');
     const noResults    = document.getElementById('no-results');
     const countBadge   = document.getElementById('result-count');
+
+    // Hàm lấy số lượng khóa học tương ứng với 5 dòng dựa trên CSS Grid thực tế
+    function getItemsPerBatch() {
+      const grid = document.getElementById('course-grid');
+      if (!grid) return 20; // Mặc định 4 cột * 5 dòng = 20 khóa học
+      const gridStyle = window.getComputedStyle(grid);
+      const cols = gridStyle.getPropertyValue('grid-template-columns').split(' ').filter(x => x.trim().length > 0).length;
+      return (cols || 4) * 5; 
+    }
+
+    let currentIndex = getItemsPerBatch();
 
     function matchesSearch(card) {
       const q = searchInput.value.trim().toLowerCase();
@@ -634,10 +643,40 @@
       visible.forEach(c => c.style.display = 'flex');
 
       countBadge.textContent = matched.length + ' khóa học';
-      loadMoreWrap.style.display = matched.length > currentIndex ? 'block' : 'none';
+      
+      // Ẩn spinner khi vừa render lại hoặc khi đã hết danh sách
+      loadMoreWrap.style.display = 'none';
     }
 
-    function reset() { currentIndex = ITEMS_PER_PAGE; render(); }
+    function checkScroll() {
+      if (isFetching) return;
+
+      const matched = cards.filter(c => matchesSearch(c) && matchesCategory(c) && matchesTab(c));
+      if (matched.length <= currentIndex) {
+        loadMoreWrap.style.display = 'none';
+        return;
+      }
+
+      // Kích hoạt khi cuộn đến cách đáy trang dưới 200px
+      if ((window.innerHeight + window.scrollY) >= (document.documentElement.scrollHeight - 200)) {
+        isFetching = true;
+        loadMoreWrap.style.display = 'block';
+
+        setTimeout(() => {
+          currentIndex += getItemsPerBatch();
+          render();
+          isFetching = false;
+          // Gọi đệ quy lại để tự động kiểm tra tiếp nếu kích thước trang vẫn chưa có thanh cuộn dọc
+          checkScroll();
+        }, 350); // Độ trễ nhỏ tạo cảm giác mượt mà
+      }
+    }
+
+    function reset() { 
+      currentIndex = getItemsPerBatch(); 
+      render(); 
+      checkScroll();
+    }
 
     searchInput.addEventListener('input', reset);
     catFilter.addEventListener('change', reset);
@@ -651,12 +690,11 @@
       });
     });
 
-    loadMoreBtn.addEventListener('click', () => {
-      currentIndex += ITEMS_PER_PAGE;
-      render();
-    });
+    window.addEventListener('scroll', checkScroll);
+    window.addEventListener('resize', checkScroll);
 
     render();
+    checkScroll();
   });
 </script>
 

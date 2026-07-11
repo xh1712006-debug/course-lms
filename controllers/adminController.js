@@ -398,9 +398,10 @@ module.exports = {
     if (!req.session.permissions.includes('PATH_MANAGE')) {
       return res.status(403).json({ error: 'Không có quyền tạo lộ trình học tập.' });
     }
-    const { name, description, courseIds } = req.body;
+    const { name, description, courseIds, is_public } = req.body;
     try {
-      const newPath = await LearningPath.create(name, description);
+      const isPublic = is_public === 'true' || is_public === true;
+      const newPath = await LearningPath.create(name, description, isPublic);
       
       // Xử lý mảng id khóa học
       let courses = [];
@@ -409,7 +410,7 @@ module.exports = {
         await LearningPath.addCourses(newPath.id, courses);
       }
 
-      await AuditLog.create(req.session.userId, 'PATH_CREATE', { path_id: newPath.id, name, courses });
+      await AuditLog.create(req.session.userId, 'PATH_CREATE', { path_id: newPath.id, name, courses, is_public: isPublic });
       res.redirect('/paths');
     } catch (err) {
       res.render('error', { message: 'Lỗi thêm lộ trình đào tạo.' });
@@ -421,9 +422,10 @@ module.exports = {
       return res.status(403).json({ error: 'Không có quyền cập nhật lộ trình học tập.' });
     }
     const pathId = parseInt(req.params.id);
-    const { name, description, courseIds } = req.body;
+    const { name, description, courseIds, is_public } = req.body;
     try {
-      await LearningPath.update(pathId, name, description);
+      const isPublic = is_public === 'true' || is_public === true;
+      await LearningPath.update(pathId, name, description, isPublic);
       
       // Xử lý mảng id khóa học
       let courses = [];
@@ -432,7 +434,7 @@ module.exports = {
       }
       await LearningPath.addCourses(pathId, courses);
 
-      await AuditLog.create(req.session.userId, 'PATH_UPDATE', { path_id: pathId, name, courses });
+      await AuditLog.create(req.session.userId, 'PATH_UPDATE', { path_id: pathId, name, courses, is_public: isPublic });
       res.redirect('/paths?success=' + encodeURIComponent('Đã cập nhật lộ trình đào tạo thành công.'));
     } catch (err) {
       console.error('[Admin Controller] Lỗi cập nhật lộ trình:', err);
@@ -735,10 +737,31 @@ module.exports = {
     const enrollmentId = parseInt(req.params.id);
     const { action } = req.body; // 'approved' hoặc 'rejected'
     try {
-      await Enrollment.updateStatus(enrollmentId, action);
+      const enrollment = await Enrollment.updateStatus(enrollmentId, action);
       await AuditLog.create(req.session.userId, `ENROLLMENT_${action.toUpperCase()}`, { enrollment_id: enrollmentId });
+
+      // Gửi thông báo WebSocket real-time
+      try {
+        const { emitToUser, getIO } = require('../config/socket');
+        const course = await Course.findById(enrollment.course_id);
+        if (course) {
+          emitToUser(enrollment.user_id, 'enrollment_status_changed', {
+            courseId: enrollment.course_id,
+            courseTitle: course.title,
+            action: action
+          });
+        }
+        
+        // Broadcast để giảm số lượng hàng chờ duyệt trên dashboard của các admin khác
+        const io = getIO();
+        io.emit('enroll_request_processed');
+      } catch (ioErr) {
+        console.warn('[Admin Controller] Không thể gửi Socket notification phê duyệt:', ioErr.message);
+      }
+
       res.redirect('/approvals');
     } catch (err) {
+      console.error('[Admin Controller] Lỗi cập nhật trạng thái đăng ký:', err);
       res.render('error', { message: 'Lỗi cập nhật trạng thái đăng ký.' });
     }
   },

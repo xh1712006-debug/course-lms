@@ -34,20 +34,6 @@ router.get('/my-groups', courseController.getMyGroups);
 router.get('/settings', courseController.getSettings);
 router.post('/settings/change-password', courseController.postChangePassword);
 
-// Lưu thảo luận bài học
-router.post('/courses/:lessonId/comments', async (req, res) => {
-  const { Comment } = require('../models/schema');
-  const lessonId = parseInt(req.params.lessonId);
-  const userId = req.session.userId;
-  const { content } = req.body;
-  try {
-    const saved = await Comment.create(lessonId, userId, content);
-    res.json(saved);
-  } catch (err) {
-    console.error('Lỗi lưu bình luận:', err);
-    res.status(500).json({ error: 'Không thể lưu bình luận.' });
-  }
-});
 
 // Lấy danh sách câu hỏi thi cuối khóa (Bảo mật: ẩn trường đáp án correct_answer)
 router.get('/courses/quiz/questions', async (req, res) => {

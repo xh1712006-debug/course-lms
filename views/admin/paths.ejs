@@ -467,6 +467,19 @@ const canAssignPath  = user.permissions.includes('ENROLL_ASSIGN');
         <textarea name="description" rows="3" placeholder="Nhập mục tiêu đào tạo..." required></textarea>
       </div>
       <div class="form-group">
+        <label class="form-label">Phạm vi hiển thị</label>
+        <div style="display: flex; gap: 1rem; margin-top: 0.25rem;">
+          <label style="display: inline-flex; align-items: center; gap: 0.35rem; font-size: 0.85rem; cursor: pointer;">
+            <input type="radio" name="is_public" value="true" checked style="accent-color: #6366f1;">
+            <span>Công khai</span>
+          </label>
+          <label style="display: inline-flex; align-items: center; gap: 0.35rem; font-size: 0.85rem; cursor: pointer;">
+            <input type="radio" name="is_public" value="false" style="accent-color: #6366f1;">
+            <span>Chỉ định</span>
+          </label>
+        </div>
+      </div>
+      <div class="form-group">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:.45rem;">
           <label class="form-label" style="margin:0; font-size:.84rem;">Chọn khóa học thuộc lộ trình</label>
           <button type="button" class="lp-select-all-btn" onclick="selectAllCreateCourses()">Chọn tất cả</button>
@@ -520,7 +533,18 @@ const canAssignPath  = user.permissions.includes('ENROLL_ASSIGN');
 
             <!-- Top row: name + edit/delete -->
             <div class="lp-path-top">
-              <h4 class="lp-path-name" title="<%= path.name %>"><%= path.name %></h4>
+              <div style="display: flex; align-items: center; gap: 0.5rem; flex: 1; min-width: 0; overflow: hidden;">
+                <h4 class="lp-path-name" title="<%= path.name %>" style="margin: 0;"><%= path.name %></h4>
+                <% if (path.is_public === false) { %>
+                  <span style="font-size: 0.68rem; font-weight: 700; color: #d97706; background: #fffbeb; border: 1px solid #fef3c7; padding: 0.15rem 0.4rem; border-radius: 6px; display: inline-flex; align-items: center; gap: 0.25rem; flex-shrink: 0;" title="Chỉ hiển thị cho người được chỉ định">
+                    <i class="fa-solid fa-lock"></i> Chỉ định
+                  </span>
+                <% } else { %>
+                  <span style="font-size: 0.68rem; font-weight: 700; color: #059669; background: #ecfdf5; border: 1px solid #d1fae5; padding: 0.15rem 0.4rem; border-radius: 6px; display: inline-flex; align-items: center; gap: 0.25rem; flex-shrink: 0;" title="Công khai cho tất cả mọi người">
+                    <i class="fa-solid fa-globe"></i> Công khai
+                  </span>
+                <% } %>
+              </div>
               <div class="lp-path-actions">
                 <% if (canManagePath) { %>
                   <button class="lp-icon-btn edit"
@@ -600,6 +624,19 @@ const canAssignPath  = user.permissions.includes('ENROLL_ASSIGN');
         <div class="form-group">
           <label class="form-label">Mô tả mục tiêu lộ trình</label>
           <textarea name="description" rows="3" required><%= path.description %></textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Phạm vi hiển thị</label>
+          <div style="display: flex; gap: 1rem; margin-top: 0.25rem;">
+            <label style="display: inline-flex; align-items: center; gap: 0.35rem; font-size: 0.85rem; cursor: pointer;">
+              <input type="radio" name="is_public" value="true" <%= path.is_public !== false ? 'checked' : '' %> style="accent-color: #6366f1;">
+              <span>Công khai</span>
+            </label>
+            <label style="display: inline-flex; align-items: center; gap: 0.35rem; font-size: 0.85rem; cursor: pointer;">
+              <input type="radio" name="is_public" value="false" <%= path.is_public === false ? 'checked' : '' %> style="accent-color: #6366f1;">
+              <span>Chỉ định</span>
+            </label>
+          </div>
         </div>
         <div class="form-group">
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:.45rem;">

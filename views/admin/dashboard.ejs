@@ -1,4 +1,4 @@
-﻿<%- include('../partials/header') %>
+<%- include('../partials/header') %>
 
 <div style="margin-bottom: 2rem;">
   <h1 style="font-size: 1.55rem; font-weight: 700; color: var(--text-main);">
@@ -33,7 +33,7 @@
   <% if (stats.pendingApprovals !== null) { %>
     <div class="glass-card kpi-card">
       <div class="kpi-title">Chờ HR duyệt đăng ký</div>
-      <div class="kpi-value" style="background: var(--alert-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+      <div class="kpi-value" id="kpi-pending-approvals" style="background: var(--alert-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
         <%= stats.pendingApprovals %>
       </div>
     </div>

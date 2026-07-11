@@ -84,6 +84,7 @@ CREATE TABLE learning_paths (
     id SERIAL PRIMARY KEY,
     name VARCHAR(150) NOT NULL,
     description TEXT,
+    is_public BOOLEAN DEFAULT true,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -227,52 +228,9 @@ INSERT INTO role_permissions (role_id, permission_name) VALUES
 INSERT INTO role_permissions (role_id, permission_name) VALUES
 (4, 'PATH_VIEW'), (4, 'COURSE_ENROLL_REQUEST'), (4, 'HISTORY_VIEW'), (4, 'PROGRESS_TRACK');
 
--- Gieo mầm tài khoản (Sử dụng mật khẩu dạng văn bản rõ 'password123' để dễ kiểm tra theo dõi)
-INSERT INTO users (username, email, password, role_id, department_id, status) VALUES
-('admin', 'admin@company.com', 'password123', 1, 1, 'active'),
-('hr_manager', 'hr@company.com', 'password123', 2, 3, 'active'),
-('instructor_tech', 'instructor@company.com', 'password123', 3, 2, 'active'),
-('employee_it', 'emp.it@company.com', 'password123', 4, 2, 'active'),
-('employee_mkt', 'emp.mkt@company.com', 'password123', 4, 4, 'active');
-
--- Gieo mầm khóa học mẫu
-INSERT INTO courses (id, title, description, image_url, status) VALUES
-(1, 'Lập trình Node.js & Express cơ bản', 'Khóa học cung cấp kiến thức nền tảng về NodeJS, cơ chế Single-Thread, Event Loop và cách xây dựng ứng dụng Web MVC, REST API chuyên nghiệp.', '/images/nodejs_course.svg', 'published'),
-(2, 'Bảo mật thông tin trong doanh nghiệp', 'Hướng dẫn nhân viên các quy tắc an toàn bảo mật, bảo vệ dữ liệu khách hàng, nhận diện email giả mạo (Phishing) và an toàn mật khẩu.', '/images/security_course.svg', 'published'),
-(3, 'Làm chủ Docker & Docker Compose', 'Đóng gói ứng dụng, tối ưu hóa môi trường phát triển và vận hành hệ thống container hóa hoàn chỉnh.', '/images/docker_course.svg', 'published'),
-(4, 'Kỹ năng Giao tiếp Công sở nâng cao', 'Khóa học cải thiện kỹ năng thuyết trình, trao đổi thông tin hiệu quả giữa các phòng ban trong công ty.', '/images/comm_course.svg', 'draft');
-
--- Gieo mầm bài học mẫu
-INSERT INTO lessons (id, course_id, title, content, video_url, order_index) VALUES
-(1, 1, 'Bài 1: Giới thiệu NodeJS và Kiến trúc Event Loop', 'Node.js là một runtime JavaScript xây dựng trên engine V8 của Chrome. Điểm cốt lõi của Node.js là mô hình I/O non-blocking, hướng sự kiện (event-driven). Khi có yêu cầu I/O (như đọc DB, file), Node.js sẽ ủy thác cho hệ điều hành chạy nền, giải phóng Thread chính để xử lý yêu cầu khác. Khi I/O hoàn thành, Event Loop sẽ gắp callback vào Call Stack để thực thi. Nhờ đó Node.js xử lý hàng nghìn kết nối đồng thời cực tốt chỉ với một luồng duy nhất.', 'https://www.w3schools.com/html/mov_bbb.mp4', 1),
-(2, 1, 'Bài 2: Tạo dự án MVC đầu tiên với Express', 'MVC viết tắt của Model-View-Controller. Đây là một mẫu kiến trúc phần mềm phổ biến:\n- Model: Chịu trách nhiệm về dữ liệu, tương tác với database (ví dụ qua pg pool).\n- View: Giao diện hiển thị (EJS render ở server side).\n- Controller: Xử lý logic nghiệp vụ, tiếp nhận yêu cầu từ client, gọi Model xử lý và trả ra View tương ứng. Express giúp cấu hình router cực nhanh.', 'https://www.w3schools.com/html/mov_bbb.mp4', 2),
-(3, 2, 'Bài 1: Phân loại dữ liệu và Nguyên tắc bảo vệ PII', 'Thông tin định danh cá nhân (PII - Personally Identifiable Information) bao gồm Tên, Email, Số điện thoại, Số CCCD. Quy chế công ty bắt buộc các dữ liệu này phải được khử định danh (SHA-256 Hash) trước khi đưa vào các môi trường phân tích dữ liệu hoặc AI. Tuyệt đối không hardcode mật khẩu hay API key trong mã nguồn.', 'https://www.w3schools.com/html/mov_bbb.mp4', 1);
-
--- Gieo mầm các đề kiểm tra (Quizzes)
-INSERT INTO quizzes (id, course_id, title, duration_minutes, passing_score) VALUES
-(1, 1, 'Bài kiểm tra kiến thức cơ bản Node.js', 10, 80),
-(2, 2, 'Trắc nghiệm An toàn thông tin doanh nghiệp', 5, 100);
-
--- Gieo mầm câu hỏi kiểm tra mẫu
-INSERT INTO questions (quiz_id, question_text, question_type, options, correct_answer) VALUES
-(1, 'Kiến trúc Event Loop của Node.js chạy trên bao nhiêu luồng (thread) chính?', 'multiple_choice', '["1 luồng duy nhất (Single Thread)", "2 luồng", "Đa luồng song song (Multi-threaded)", "4 luồng"]', '1 luồng duy nhất (Single Thread)'),
-(1, 'MVC viết tắt của từ gì?', 'multiple_choice', '["Model-Variable-Controller", "Model-View-Controller", "Main-View-Controller", "Model-View-Component"]', 'Model-View-Controller'),
-(2, 'Dữ liệu PII bao gồm những thông tin nào sau đây?', 'multiple_choice', '["Địa chỉ IP công cộng", "Email, Tên, Số điện thoại của khách hàng", "Mã màu thiết kế logo", "Số lượng dòng code của dự án"]', 'Email, Tên, Số điện thoại của khách hàng');
-
--- Gieo mầm lộ trình học tập mẫu
-INSERT INTO learning_paths (id, name, description) VALUES
-(1, 'Lộ trình thử việc Kỹ sư Backend Node.js', 'Lộ trình bắt buộc dành cho nhân viên thử việc tại phòng Công Nghệ, bao gồm lập trình Node.js và Docker hóa hệ thống.');
-
--- Liên kết khóa học vào lộ trình
-INSERT INTO learning_path_courses (learning_path_id, course_id, order_index) VALUES
-(1, 1, 1),
-(1, 3, 2);
-
--- Gieo mầm Đăng ký khóa học của học viên
--- Nhân viên IT tự đăng ký học khóa Node.js (progress = 50%, active)
-INSERT INTO enrollments (user_id, course_id, progress, is_assigned, status) VALUES
-(4, 1, 50, false, 'approved'),
-(4, 2, 0, true, 'approved'); -- Được HR gán bắt buộc học khóa Bảo mật
+-- Gieo mầm tài khoản Admin duy nhất
+INSERT INTO users (username, email, password, role_id, status) VALUES
+('admin', 'admin@gmail.com', 'admin@123', 1, 'active');
 
 -- Khôi phục chỉ số ID tuần tự sau khi insert cố định id
 SELECT setval('departments_id_seq', COALESCE((SELECT MAX(id)+1 FROM departments), 1), false);

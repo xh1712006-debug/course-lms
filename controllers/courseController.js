@@ -260,6 +260,7 @@ module.exports = {
           const { getIO } = require('../config/socket');
           const io = getIO();
           io.emit('enroll_request_notification', { userId, username: req.session.username, courseId, courseTitle: course.title });
+          io.emit('enroll_request_submitted');
         } catch (ioErr) {
           console.warn('[Course Controller] Không thể gửi Socket notification:', ioErr.message);
         }
@@ -369,10 +370,7 @@ module.exports = {
         }
       }
 
-      // 4. Lấy lịch sử bình luận / thảo luận bài học
-      const comments = await Comment.findByLessonId(lessonId);
-
-      // 5. Kiểm tra xem khóa học có bài kiểm tra trắc nghiệm cuối khóa không (lesson_id IS NULL)
+      // 4. Kiểm tra xem khóa học có bài kiểm tra trắc nghiệm cuối khóa không (lesson_id IS NULL)
       const quiz = await Quiz.findByCourseId(courseId);
 
       res.render('courses/lesson', {
@@ -381,7 +379,6 @@ module.exports = {
         lessons,
         currentIdx,
         enrollment,
-        comments,
         quiz,
         lessonQuiz,
         lessonQuestions,
@@ -463,6 +460,11 @@ module.exports = {
         
         const averageProgress = pathCourses.length > 0 ? Math.round(totalProgress / pathCourses.length) : 0;
         
+        // Bỏ qua nếu lộ trình là chỉ định (is_public = false) và người dùng không được giao lộ trình đó
+        if (path.is_public === false && !isMandatory) {
+          continue;
+        }
+
         pathsWithCourses.push({
           ...path,
           courses: coursesWithProgress,

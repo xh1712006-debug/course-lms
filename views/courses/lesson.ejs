@@ -263,9 +263,16 @@
       </h1>
     </div>
     
-    <button type="button" class="btn-theater-toggle" id="toggle-sidebar-btn" onclick="toggleSidebar()" title="Thu gọn/Mở rộng danh sách bài học">
-      <i class="fa-solid fa-expand"></i> <span>Chế độ tập trung</span>
-    </button>
+    <div style="display: flex; gap: 0.5rem; align-items: center;">
+      <% if (lesson.attachment_url && lesson.attachment_url.trim() !== '' && lesson.attachment_url.toLowerCase().endsWith('.pdf')) { %>
+        <a href="<%= lesson.attachment_url %>" class="btn-theater-toggle" target="_blank" style="text-decoration: none;" title="Xem toàn màn hình tài liệu PDF">
+          <i class="fa-solid fa-square-arrow-up-right"></i> <span>Xem toàn màn hình</span>
+        </a>
+      <% } %>
+      <button type="button" class="btn-theater-toggle" id="toggle-sidebar-btn" onclick="toggleSidebar()" title="Thu gọn/Mở rộng danh sách bài học">
+        <i class="fa-solid fa-expand"></i> <span>Chế độ tập trung</span>
+      </button>
+    </div>
   </div>
 
   <div class="learning-layout" id="learning-layout-container">
@@ -296,37 +303,23 @@
         </div>
         <% } %>
 
-          <!-- TABS KHU VỰC BÀI GIẢNG -->
+          <!-- KHU VỰC BÀI GIẢNG -->
           <div class="lesson-details">
-            <% const hasContent=(lesson.content && lesson.content.trim() !=='' ) || (lesson.attachment_url &&
-              lesson.attachment_url.trim() !=='' ); %>
+            <% 
+              const isDocx = lesson.attachment_url && lesson.attachment_url.toLowerCase().endsWith('.docx');
+              const isAttachmentPreviewable = lesson.attachment_url && (
+                lesson.attachment_url.toLowerCase().endsWith('.pdf') ||
+                isDocx ||
+                ['.png', '.jpg', '.jpeg', '.gif', '.svg', '.webp'].some(ext => lesson.attachment_url.toLowerCase().endsWith(ext))
+              );
+              const hasAttachment = lesson.attachment_url && lesson.attachment_url.trim() !== '';
+              const hasContent = (lesson.content && lesson.content.trim() !== '') || hasAttachment;
+            %>
             <% const hasQuiz = lesson.is_quiz && lessonQuiz && lessonQuestions && lessonQuestions.length > 0; %>
-              <div class="lesson-tab-nav">
-                <% if (hasQuiz) { %>
-                  <button class="tab-btn active" onclick="switchTab(event, 'tab-quiz')">
-                    <i class="fa-solid fa-clipboard-question"></i> Bài kiểm tra trắc nghiệm
-                  </button>
-                  <button class="tab-btn" onclick="switchTab(event, 'tab-discussion')">
-                    <i class="fa-solid fa-comments"></i> Thảo luận trực tuyến
-                  </button>
-                <% } else if (hasContent) { %>
-                  <button class="tab-btn active" onclick="switchTab(event, 'tab-content')">
-                    <i class="fa-solid fa-file-invoice"></i> Tài liệu bài học
-                  </button>
-                  <button class="tab-btn" onclick="switchTab(event, 'tab-discussion')">
-                    <i class="fa-solid fa-comments"></i> Thảo luận trực tuyến
-                  </button>
-                <% } else { %>
-                  <button class="tab-btn active" onclick="switchTab(event, 'tab-discussion')"
-                    style="width: 100%; border-radius: 8px;">
-                    <i class="fa-solid fa-comments"></i> Thảo luận trực tuyến
-                  </button>
-                <% } %>
-              </div>
 
-              <!-- Tab Bài kiểm tra trắc nghiệm -->
+              <!-- Bài kiểm tra trắc nghiệm -->
               <% if (hasQuiz) { %>
-                <div id="tab-quiz" class="tab-pane active glass-card" style="padding: 2rem;">
+                <div class="glass-card" style="padding: 2rem;">
                   <% if (isQuizPassed) { %>
                     <div style="text-align: center; padding: 2.5rem 1.5rem; background: rgba(16, 185, 129, 0.04); border-radius: 12px; border: 1px solid rgba(16, 185, 129, 0.15); margin-bottom: 1.5rem;">
                       <i class="fa-solid fa-circle-check" style="color: #10b981; font-size: 3rem; margin-bottom: 1rem; display: block;"></i>
@@ -399,117 +392,65 @@
                 </div>
               <% } %>
 
-              <!-- Tab Nội dung chi tiết bài học -->
+              <!-- Nội dung chi tiết bài học -->
               <% if (hasContent) { %>
-                <div id="tab-content" class="tab-pane active glass-card" style="padding: 1.5rem;">
-                  <% if (lesson.content && lesson.content.trim() !=='' ) { %>
+                <div class="glass-card" style="padding: 1.5rem;">
+                  <% if (lesson.content && lesson.content.trim() !== '') { %>
                     <textarea id="raw-markdown-content" style="display: none;"><%= lesson.content %></textarea>
-                    <div id="rendered-markdown-content" class="markdown-body"></div>
-                    <% } %>
+                    <div id="rendered-markdown-content" class="markdown-body" style="margin-bottom: <%= hasAttachment ? '1.5rem' : '0' %>;"></div>
+                  <% } %>
 
-                      <% if (lesson.attachment_url && lesson.attachment_url.trim() !=='' ) { %>
-                        <div class="attachment-viewer"
-                          style="<%= (lesson.content && lesson.content.trim() !== '') ? 'margin-top: 1.5rem;' : '' %>">
-                          <% if (lesson.attachment_url.toLowerCase().endsWith('.pdf')) { %>
-                            <div class="pdf-document-card" style="margin-bottom: 1.5rem; padding: 1.25rem 1.5rem; border-radius: 12px; background: rgba(79, 70, 229, 0.03); border: 1px solid rgba(79, 70, 229, 0.15); display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap;">
-                              <div style="display: flex; align-items: center; gap: 1rem;">
-                                <div style="width: 48px; height: 48px; border-radius: 10px; background: rgba(239, 68, 68, 0.1); color: #ef4444; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; flex-shrink: 0;">
-                                  <i class="fa-solid fa-file-pdf"></i>
-                                </div>
-                                <div style="min-width: 0; flex: 1;">
-                                  <h4 style="margin: 0; font-size: 0.95rem; font-weight: 700; color: var(--text-main); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"><%= lesson.title || 'Tài liệu bài học' %></h4>
-                                  <p style="margin: 0.15rem 0 0 0; font-size: 0.78rem; color: var(--text-muted);">Tài liệu học tập đính kèm (PDF)</p>
-                                </div>
-                              </div>
-                              <div style="display: flex; gap: 0.5rem; flex-shrink: 0;">
-                                <a href="<%= lesson.attachment_url %>" class="btn btn-primary" target="_blank" style="padding: 0.55rem 1.25rem; font-size: 0.8rem; border-radius: 6px; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 0.35rem; color: #fff;">
-                                  <i class="fa-solid fa-square-arrow-up-right"></i> Xem toàn màn hình
-                                </a>
-                              </div>
-                            </div>
-
-                            <div id="pdf-preview-container" style="transition: all 0.3s ease; margin-bottom: 1rem;">
-                              <iframe src="<%= lesson.attachment_url %>#toolbar=0&navpanes=0&view=FitH"
-                                style="width: 100%; height: 750px; border: 1px solid var(--border-light); border-radius: 8px; background: #fff;"
-                                title="Tài liệu bài học"></iframe>
-                            </div>
-                            <% } else if (['.png', '.jpg' , '.jpeg' , '.gif' , '.svg' , '.webp' ].some(ext=>
-                              lesson.attachment_url.toLowerCase().endsWith(ext))) { %>
-                              <div
-                                style="text-align: center; background: rgba(0,0,0,0.1); padding: 0.5rem; border-radius: 8px; border: 1px solid var(--border-light);">
-                                <img src="<%= lesson.attachment_url %>"
-                                  style="max-width: 100%; max-height: 500px; border-radius: 4px;"
-                                  alt="Tài liệu bài học">
-                              </div>
-                              <% } else { %>
-                                <div class="glass-card"
-                                  style="padding: 1.5rem; text-align: center; border-color: rgba(255,255,255,0.05); background: rgba(255,255,255,0.01);">
-                                  <i class="fa-solid fa-file-zipper"
-                                    style="font-size: 2.5rem; color: var(--text-muted); margin-bottom: 0.75rem;"></i>
-                                  <p style="margin: 0; font-size: 0.9rem; font-weight: 500;">Tài liệu đính kèm bài học
-                                  </p>
-                                  <p style="margin: 0.25rem 0 1rem; font-size: 0.75rem; color: var(--text-muted);">Định
-                                    dạng này không hỗ trợ xem trực tuyến. Vui lòng tải về máy để học tập.</p>
-                                  <a href="<%= lesson.attachment_url %>" class="btn btn-primary"
-                                    style="padding: 0.5rem 1.5rem; font-size: 0.85rem;" download>
-                                    <i class="fa-solid fa-download"></i> Tải xuống tài liệu (<%=
-                                      lesson.attachment_url.split('.').pop().toUpperCase() %>)
-                                  </a>
-                                </div>
-                                <% } %>
+                  <% if (hasAttachment) { %>
+                    <div class="attachment-viewer">
+                      <% if (lesson.attachment_url.toLowerCase().endsWith('.pdf')) { %>
+                        <div id="pdf-preview-container" style="transition: all 0.3s ease; margin-bottom: 1rem;">
+                          <iframe src="<%= lesson.attachment_url %>#toolbar=0&navpanes=0&view=FitH"
+                            style="width: 100%; height: 750px; border: 1px solid var(--border-light); border-radius: 8px; background: #fff;"
+                            title="Tài liệu bài học"></iframe>
                         </div>
-                        <% } %>
-                </div>
-                <% } %>
+                      <% } else if (isDocx) { %>
+                        <!-- docx-preview CDN Resources -->
+                        <link rel="stylesheet" href="https://unpkg.com/docx-preview/dist/docx-preview.css">
+                        <script src="https://unpkg.com/jszip/dist/jszip.min.js"></script>
+                        <script src="https://unpkg.com/docx-preview/dist/docx-preview.min.js"></script>
 
-                  <!-- Tab Thảo luận trực tuyến (WebSocket Chat) -->
-                  <div id="tab-discussion" class="tab-pane <%= !hasContent ? 'active' : '' %>">
-                    <%
-                    function formatTime(dateVal) {
-                      if (!dateVal) return '';
-                      const date = new Date(dateVal);
-                      const now = new Date();
-                      const timeStr = date.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
-                      const isToday = date.toDateString() === now.toDateString();
-                      if (isToday) {
-                        return timeStr;
-                      } else {
-                        const dateStr = date.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' });
-                        return timeStr + ' ' + dateStr;
-                      }
-                    }
-                    %>
-                    <div class="chat-container" style="background: #ffffff; border-radius: 16px; border: 1px solid var(--border-light); padding: 1rem; box-shadow: 0 4px 20px -2px rgba(0,0,0,0.02); display: flex; flex-direction: column; gap: 1rem;">
-                      <div class="chat-messages" id="chat-messages-container" style="display: flex; flex-direction: column; gap: 0.75rem; padding: 1rem; overflow-y: auto; height: 380px; background: #f8fafc; border-radius: 12px; border: 1px solid #f1f5f9;">
-                        <% comments.forEach(c=> { 
-                          const isSelf = user && (c.username === user.username);
-                        %>
-                          <div class="chat-msg <%= isSelf ? 'self' : 'other' %>" style="display: flex; flex-direction: column; max-width: 75%; padding: 0.75rem 1rem; border-radius: 14px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); <%= isSelf ? 'align-self: flex-end; background: var(--primary-gradient); color: #ffffff; border-bottom-right-radius: 4px;' : 'align-self: flex-start; background: #ffffff; color: var(--text-main); border-bottom-left-radius: 4px; border: 1px solid #e2e8f0;' %>">
-                            <% if (!isSelf) { %>
-                              <div class="chat-msg-sender" style="font-weight: 800; font-size: 0.78rem; color: #4f46e5; margin-bottom: 0.25rem;">
-                                <%= c.username %>
-                              </div>
-                            <% } %>
-                            <div class="chat-msg-text" style="font-size: 0.92rem; line-height: 1.45; word-break: break-word;">
-                              <%= c.content %>
-                            </div>
-                            <div class="chat-msg-time" style="font-size: 0.68rem; text-align: right; margin-top: 0.35rem; opacity: 0.75; <%= isSelf ? 'color: rgba(255,255,255,0.85);' : 'color: var(--text-muted);' %>">
-                              <%= formatTime(c.created_at) %>
-                            </div>
+                        <!-- Container cho docx-preview -->
+                        <div id="docx-preview-wrapper" style="margin-bottom: 1rem; border: 1px solid var(--border-light); border-radius: 12px; background: #ffffff; padding: 1.5rem; max-height: 800px; overflow-y: auto; box-shadow: 0 4px 12px rgba(0,0,0,0.03);">
+                          <!-- Loading spinner -->
+                          <div id="docx-loading" style="text-align: center; padding: 3rem 0; color: var(--text-muted);">
+                            <i class="fa-solid fa-circle-notch fa-spin" style="font-size: 2rem; color: #6366f1; margin-bottom: 0.75rem;"></i>
+                            <p style="margin: 0; font-size: 0.85rem;">Đang xử lý và kết xuất tài liệu Word...</p>
                           </div>
-                        <% }) %>
-                      </div>
-
-                      <form id="comment-form" class="chat-input-area" onsubmit="handleSendComment(event)" style="display: flex; gap: 0.5rem; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 0.4rem 0.5rem 0.4rem 1rem; align-items: center;">
-                        <input type="hidden" id="lesson-id-field" value="<%= lesson.id %>">
-                        <input type="text" id="comment-input-field" class="chat-input"
-                          placeholder="Viết câu hỏi hoặc chia sẻ thảo luận tại đây..." required style="flex: 1; border: none; background: transparent; color: var(--text-main); font-size: 0.9rem; outline: none; padding: 0.5rem 0;">
-                        <button type="submit" class="btn btn-primary" style="padding: 0.55rem 1.5rem; border-radius: 8px; font-weight: 600; font-size: 0.85rem; display: inline-flex; align-items: center; gap: 0.4rem; background: var(--primary-gradient); border: none; box-shadow: 0 4px 10px rgba(79, 70, 229, 0.15);">
-                          Gửi <i class="fa-solid fa-paper-plane" style="font-size: 0.75rem;"></i>
-                        </button>
-                      </form>
+                          <div id="docx-preview-container"></div>
+                        </div>
+                      <% } else if (['.png', '.jpg', '.jpeg', '.gif', '.svg', '.webp'].some(ext => lesson.attachment_url.toLowerCase().endsWith(ext))) { %>
+                        <div style="text-align: center; background: rgba(0,0,0,0.02); padding: 0.5rem; border-radius: 8px; border: 1px solid var(--border-light);">
+                          <img src="<%= lesson.attachment_url %>" style="max-width: 100%; max-height: 500px; border-radius: 4px;" alt="Tài liệu bài học">
+                        </div>
+                      <% } else { %>
+                        <!-- Hộp tải tài liệu được thiết kế hiện đại và đẹp mắt hơn cho các file ZIP/RAR -->
+                        <div class="glass-card" style="padding: 2rem; text-align: center; background: rgba(99, 102, 241, 0.02); border: 1px dashed rgba(99, 102, 241, 0.2); border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.5rem;">
+                          <i class="fa-solid fa-file-zipper" style="font-size: 3rem; color: var(--text-muted); margin-bottom: 0.5rem;"></i>
+                          <h4 style="margin: 0; font-size: 1.05rem; font-weight: 700; color: var(--text-main);">Tài liệu học tập đính kèm</h4>
+                          <p style="margin: 0; font-size: 0.82rem; color: var(--text-muted); max-width: 400px; line-height: 1.4;">Định dạng file (<%= lesson.attachment_url.split('.').pop().toUpperCase() %>) không hỗ trợ xem trực tiếp trên trình duyệt. Vui lòng tải về máy để xem nội dung.</p>
+                          <a href="<%= lesson.attachment_url %>" class="btn btn-primary" style="padding: 0.6rem 2rem; font-size: 0.85rem; font-weight: 600; display: inline-flex; align-items: center; gap: 0.5rem; margin-top: 0.5rem; text-decoration: none;" download>
+                            <i class="fa-solid fa-download"></i> Tải xuống tài liệu (<%= lesson.attachment_url.split('.').pop().toUpperCase() %>)
+                          </a>
+                        </div>
+                      <% } %>
                     </div>
-                  </div>
+                  <% } %>
+                </div>
+              <% } %>
+
+              <% const hasVideo = lesson.video_url && lesson.video_url.trim() !== ''; %>
+              <% if (!hasQuiz && !hasContent && !hasVideo) { %>
+                <div class="glass-card" style="padding: 3rem; text-align: center; color: var(--text-muted); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.75rem;">
+                  <i class="fa-solid fa-circle-info" style="font-size: 2.5rem; color: var(--text-muted); opacity: 0.5;"></i>
+                  <p style="margin: 0; font-size: 1rem; font-weight: 600; color: var(--text-main);">Bài học này không có nội dung học tập.</p>
+                  <p style="margin: 0; font-size: 0.85rem; color: var(--text-muted);">Vui lòng chọn bài giảng khác từ danh sách bên phải.</p>
+                </div>
+              <% } %>
           </div>
     </div>
 
@@ -669,17 +610,6 @@
         }
       }
 
-      // Chuyển đổi tab xem nội dung / Thảo luận
-      function switchTab(evt, tabId) {
-        const tabPanes = document.querySelectorAll('.tab-pane');
-        tabPanes.forEach(pane => pane.classList.remove('active'));
-
-        const tabButtons = document.querySelectorAll('.tab-btn');
-        tabButtons.forEach(btn => btn.classList.remove('active'));
-
-        document.getElementById(tabId).classList.add('active');
-        evt.currentTarget.classList.add('active');
-      }
 
       // Tự động mở khóa và chuyển bài khi video kết thúc
       document.addEventListener('DOMContentLoaded', () => {
@@ -1162,9 +1092,71 @@
       }
 
       document.addEventListener('DOMContentLoaded', () => {
+        <% if (isDocx) { %>
+          // Render tài liệu Word bằng docx-preview
+          const docxUrl = '<%= lesson.attachment_url %>';
+          const docxLoading = document.getElementById('docx-loading');
+          const docxContainer = document.getElementById('docx-preview-container');
+          const wrapper = document.getElementById('docx-preview-wrapper');
+          
+          function checkDocxProgress() {
+            if (progressChecked) return;
+            if (wrapper) {
+              const scrollableHeight = wrapper.scrollHeight - wrapper.clientHeight;
+              if (scrollableHeight <= 10) {
+                markLessonAsCompleted();
+              } else {
+                const scrollPct = (wrapper.scrollTop / scrollableHeight) * 100;
+                if (scrollPct >= 90) {
+                  markLessonAsCompleted();
+                }
+              }
+            }
+          }
+
+          if (wrapper) {
+            wrapper.addEventListener('scroll', checkDocxProgress);
+          }
+          
+          if (docxContainer) {
+            fetch(docxUrl)
+              .then(res => {
+                if (!res.ok) throw new Error('Không thể tải tệp tin DOCX');
+                return res.blob();
+              })
+              .then(blob => {
+                if (docxLoading) docxLoading.style.display = 'none';
+                docx.renderAsync(blob, docxContainer)
+                  .then(() => {
+                    console.log('[LMS] DOCX rendered successfully.');
+                    // Tự động kiểm tra sau khi render xong phòng trường hợp tài liệu ngắn
+                    setTimeout(checkDocxProgress, 1000);
+                  })
+                  .catch(err => {
+                    console.error('Lỗi khi render DOCX:', err);
+                    if (docxLoading) {
+                      docxLoading.innerHTML = `
+                        <i class="fa-solid fa-triangle-exclamation" style="font-size: 2rem; color: #ef4444; margin-bottom: 0.75rem;"></i>
+                        <p style="margin:0; font-size:0.85rem; color:#ef4444;">Không thể hiển thị nội dung tài liệu Word. Vui lòng tải xuống để xem.</p>
+                      `;
+                    }
+                  });
+              })
+              .catch(err => {
+                console.error('Lỗi khi tải tệp DOCX:', err);
+                if (docxLoading) {
+                  docxLoading.innerHTML = `
+                    <i class="fa-solid fa-triangle-exclamation" style="font-size: 2rem; color: #ef4444; margin-bottom: 0.75rem;"></i>
+                    <p style="margin:0; font-size:0.85rem; color:#ef4444;">Lỗi kết nối hoặc không tìm thấy tệp tin từ máy chủ.</p>
+                  `;
+                }
+              });
+          }
+        <% } %>
+
         // Tự động kiểm tra hoàn thành cho các bài học không có nội dung lẫn video
         const hasVideo = <%= lesson.video_url && lesson.video_url.trim() !== '' ? 'true' : 'false' %>;
-        const hasContent = <%= (lesson.content && lesson.content.trim() !== '') || (lesson.attachment_url && lesson.attachment_url.trim() !== '') ? 'true' : 'false' %>;
+        const hasContent = <%= ((lesson.content && lesson.content.trim() !== '') || hasAttachment) ? 'true' : 'false' %>;
         const isQuiz = <%= lesson.is_quiz ? 'true' : 'false' %>;
 
         if (!hasVideo && !hasContent && !isQuiz) {

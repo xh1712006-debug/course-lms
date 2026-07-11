@@ -707,9 +707,9 @@ module.exports = {
       return res.rows;
     },
 
-    create: async (name, description) => {
-      const sql = `INSERT INTO learning_paths (name, description) VALUES ($1, $2) RETURNING *`;
-      const res = await db.query(sql, [name, description]);
+    create: async (name, description, isPublic = true) => {
+      const sql = `INSERT INTO learning_paths (name, description, is_public) VALUES ($1, $2, $3) RETURNING *`;
+      const res = await db.query(sql, [name, description, isPublic]);
       return res.rows[0];
     },
 
@@ -735,14 +735,14 @@ module.exports = {
       }
     },
 
-    update: async (id, name, description) => {
+    update: async (id, name, description, isPublic = true) => {
       const sql = `
         UPDATE learning_paths 
-        SET name = $1, description = $2 
-        WHERE id = $3 
+        SET name = $1, description = $2, is_public = $3 
+        WHERE id = $4 
         RETURNING *
       `;
-      const res = await db.query(sql, [name, description, id]);
+      const res = await db.query(sql, [name, description, isPublic, id]);
       return res.rows[0];
     },
 
