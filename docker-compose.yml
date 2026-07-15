@@ -1,14 +1,16 @@
+name: khoa-hoc
+
 services:
   db:
     image: postgres:15-alpine
-    container_name: lms_db
+    container_name: khoa-hoc-db
     restart: always
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: "123456"
       POSTGRES_DB: postgres
     ports:
-      - "5432:5432"
+      - "5436:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
       - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
@@ -20,10 +22,10 @@ services:
 
   redis:
     image: redis:7-alpine
-    container_name: lms_redis
+    container_name: khoa-hoc-redis
     restart: always
     ports:
-      - "6379:6379"
+      - "6380:6379"
     volumes:
       - redisdata:/data
     healthcheck:
@@ -34,22 +36,21 @@ services:
 
   app:
     build: .
-    container_name: lms_app
+    container_name: khoa-hoc-app
     restart: always
     ports:
-      - "3000:3000"
+      - "3005:3000"
     environment:
       PORT: 3000
       DATABASE_URL: postgresql://postgres:123456@db:5432/postgres
       REDIS_URL: redis://redis:6379
-      SESSION_SECRET: internal_lms_super_secret_session_key_12345
-      GEMINI_API_KEY: AQ.Ab8RN6KZ9DvqDYv5mDKbCVzhdBXUAjKG7MjG8Sq_9vuZ_mKJkQ
-      SMTP_HOST: smtp.gmail.com
-      SMTP_PORT: 587
-      SMTP_SECURE: "false"
-      SMTP_USER: xh1712006@gmail.com
-      SMTP_PASS: "kypr naeu vmzw xhib"
-      SMTP_FROM: "Hệ thống LMS <xh1712006@gmail.com>"
+      SESSION_SECRET: ${SESSION_SECRET:-internal_lms_super_secret_session_key_12345}
+      SMTP_HOST: ${SMTP_HOST}
+      SMTP_PORT: ${SMTP_PORT}
+      SMTP_SECURE: ${SMTP_SECURE}
+      SMTP_USER: ${SMTP_USER}
+      SMTP_PASS: ${SMTP_PASS}
+      SMTP_FROM: ${SMTP_FROM}
     depends_on:
       db:
         condition: service_healthy
