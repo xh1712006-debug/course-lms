@@ -471,6 +471,13 @@ function getPathIcon(name) {
 </style>
 
 <div class="cd-wrapper">
+  <!-- Back Button -->
+  <div style="margin-bottom: 1.25rem;">
+    <a href="/courses" class="cd-btn-action outline" style="padding: 0.45rem 1rem; border-radius: 8px; font-size: 0.82rem; text-decoration: none;">
+      <i class="fa-solid fa-arrow-left" style="margin-right: 0.35rem;"></i> Quay lại
+    </a>
+  </div>
+
   <!-- Course Intro Hero Section -->
   <div class="cd-hero-card">
     <div class="cd-img-wrapper">
@@ -579,8 +586,16 @@ function getPathIcon(name) {
         <i class="fa-solid fa-list-check"></i> Giáo trình & Nội dung chi tiết bài học
       </h2>
 
+      <style>
+        details > summary { list-style: none; }
+        details > summary::-webkit-details-marker { display: none; }
+        details[open] > summary .toggle-icon { transform: rotate(180deg); }
+        details > summary:hover { background: #f1f5f9 !important; }
+        details .cd-lesson-card:last-child { border-bottom: none !important; }
+      </style>
+
       <div class="cd-curriculum-list">
-        <% if (lessons.length === 0) { %>
+        <% if (!chapters || chapters.length === 0 || (chapters.length === 1 && chapters[0].lessons && chapters[0].lessons.length === 0)) { %>
           <div class="glass-card" style="padding: 3rem 2rem; text-align: center; border-style: dashed;">
             <i class="fa-solid fa-folder-open fa-2x" style="color: var(--text-muted); margin-bottom: 0.75rem; opacity: 0.4;"></i>
             <p style="color: var(--text-muted); font-size: 0.88rem; margin: 0;">
@@ -588,35 +603,57 @@ function getPathIcon(name) {
             </p>
           </div>
         <% } else { %>
-          <% 
-            const isUnlocked = enrollment && enrollment.status === 'approved';
-          %>
-          <% lessons.forEach((lesson, index) => { %>
-            <div class="cd-lesson-card <%= !isUnlocked ? 'locked' : '' %>">
-              <div class="cd-lesson-left">
-                <span class="cd-lesson-num">#<%= index + 1 %></span>
-                <div style="min-width: 0;">
-                  <h4 class="cd-lesson-title"><%= lesson.title %></h4>
-                  <p class="cd-lesson-desc">
-                    <% if (lesson.is_quiz) { %>
-                      <span style="color: #d97706; font-weight: 700;"><i class="fa-solid fa-circle-question"></i> Bài kiểm tra trắc nghiệm AI</span>
-                    <% } else { %>
-                      <%= lesson.content || 'Không có mô tả chi tiết cho bài giảng này.' %>
-                    <% } %>
-                  </p>
-                </div>
-              </div>
+          <% const isUnlocked = enrollment && enrollment.status === 'approved'; %>
+          <% let globalLessonIndex = 1; %>
+          <% chapters.forEach((chapter, chapIdx) => { %>
+            <% if (chapter.lessons && chapter.lessons.length > 0 || (chapter.title && chapter.title !== 'Bài học khác')) { %>
+              <details class="cd-chapter-group" style="margin-bottom: 1rem; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.02);">
+                <summary style="font-size: 1.05rem; font-weight: 700; color: var(--text-main); padding: 1rem 1.25rem; background: #f8fafc; cursor: pointer; display: flex; align-items: center; user-select: none; transition: background 0.2s;">
+                  <i class="fa-solid fa-folder-open" style="color: #6366f1; margin-right: 0.75rem; font-size: 1.1rem;"></i>
+                  <span style="flex: 1;"><%= chapter.title || 'Chương học' %></span>
+                  <span style="font-size: 0.8rem; font-weight: 500; color: var(--text-muted); background: #e2e8f0; padding: 0.15rem 0.6rem; border-radius: 20px; margin-right: 0.75rem;">
+                    <%= chapter.lessons ? chapter.lessons.length : 0 %> bài học
+                  </span>
+                  <i class="fa-solid fa-chevron-down toggle-icon" style="color: var(--text-muted); font-size: 0.85rem; transition: transform 0.3s;"></i>
+                </summary>
+                
+                <div class="cd-chapter-lessons" style="display: flex; flex-direction: column; gap: 0; padding: 0;">
+                  <% if (chapter.lessons && chapter.lessons.length > 0) { %>
+                    <% chapter.lessons.forEach((lesson, index) => { %>
+                      <div class="cd-lesson-card <%= !isUnlocked ? 'locked' : '' %>" style="margin-bottom: 0; border-radius: 0; border: none; border-bottom: 1px solid #f1f5f9; padding: 1rem 1.25rem; box-shadow: none;">
+                        <div class="cd-lesson-left">
+                          <span class="cd-lesson-num" style="background: rgba(99, 102, 241, 0.1); color: #4f46e5;">#<%= globalLessonIndex++ %></span>
+                          <div style="min-width: 0;">
+                            <h4 class="cd-lesson-title"><%= lesson.title %></h4>
+                            <p class="cd-lesson-desc">
+                              <% if (lesson.is_quiz) { %>
+                                <span style="color: #d97706; font-weight: 700;"><i class="fa-solid fa-circle-question"></i> Bài kiểm tra trắc nghiệm</span>
+                              <% } else { %>
+                                <%= lesson.content || 'Không có mô tả chi tiết cho bài giảng này.' %>
+                              <% } %>
+                            </p>
+                          </div>
+                        </div>
 
-              <div>
-                <% if (isUnlocked) { %>
-                  <a href="/courses/<%= course.id %>/lessons/<%= lesson.id %>" class="cd-btn-action outline" style="padding: 0.4rem 0.85rem; font-size: 0.75rem;">
-                    Vào xem <i class="fa-solid fa-chevron-right" style="font-size: 0.65rem;"></i>
-                  </a>
-                <% } else { %>
-                  <i class="fa-solid fa-lock" style="color: var(--text-muted); font-size: 0.88rem; padding-right: 0.5rem;" title="Đăng ký học để mở khóa bài học này"></i>
-                <% } %>
-              </div>
-            </div>
+                        <div>
+                          <% if (isUnlocked) { %>
+                            <a href="/courses/<%= course.id %>/lessons/<%= lesson.id %>" class="cd-btn-action outline" style="padding: 0.4rem 0.85rem; font-size: 0.75rem;">
+                              Vào xem <i class="fa-solid fa-chevron-right" style="font-size: 0.65rem;"></i>
+                            </a>
+                          <% } else { %>
+                            <i class="fa-solid fa-lock" style="color: var(--text-muted); font-size: 0.88rem; padding-right: 0.5rem;" title="Đăng ký học để mở khóa bài học này"></i>
+                          <% } %>
+                        </div>
+                      </div>
+                    <% }) %>
+                  <% } else { %>
+                    <div style="padding: 1.5rem; text-align: center;">
+                      <p style="color: var(--text-muted); font-size: 0.85rem; font-style: italic; margin: 0;">Chưa có bài học nào trong thư mục này.</p>
+                    </div>
+                  <% } %>
+                </div>
+              </details>
+            <% } %>
           <% }) %>
         <% } %>
       </div>
@@ -661,37 +698,19 @@ function getPathIcon(name) {
         <% } %>
       </div>
 
-      <!-- Associated Learning Paths Card -->
-      <div class="cd-sidebar-block">
-        <h3 class="cd-sidebar-title"><i class="fa-solid fa-route"></i> Lộ trình liên kết</h3>
-        <% if (associatedPaths.length === 0) { %>
-          <div style="text-align: center; padding: 0.5rem 0;">
-            <i class="fa-solid fa-info-circle" style="color: var(--text-muted); opacity: 0.5; font-size: 1.5rem; margin-bottom: 0.4rem; display: block;"></i>
-            <p style="color: var(--text-muted); font-size: 0.78rem; margin: 0; line-height: 1.4;">Khóa học này không thuộc lộ trình đào tạo cụ thể nào.</p>
-          </div>
-        <% } else { %>
-          <p style="font-size: 0.78rem; color: var(--text-muted); margin: 0 0 0.85rem 0; line-height: 1.4;">
-            Hoàn thành khóa học này đóng góp trực tiếp vào tiến độ của các lộ trình học tập sau:
-          </p>
-          <div class="cd-associated-paths-list">
-            <% associatedPaths.forEach(path => { %>
-              <a href="/my-paths?pathId=<%= path.id %>" class="cd-path-link-card" title="Xem vị trí khóa học trong lộ trình <%= path.name %>">
-                <div class="cd-path-card-icon-box">
-                  <i class="fa-solid <%= getPathIcon(path.name) %>"></i>
-                </div>
-                <div class="cd-path-card-info">
-                  <h4 class="cd-path-card-name"><%= path.name %></h4>
-                  <div class="cd-path-card-step">Bước <%= path.order_index %> / <%= path.total_courses %> khóa học</div>
-                </div>
-                <i class="fa-solid fa-chevron-right cd-path-card-chevron"></i>
-              </a>
-            <% }) %>
-          </div>
-        <% } %>
-      </div>
+
     </aside>
 
   </div>
 </div>
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    // Tự động thu nhỏ menu sidebar khi vào trang chi tiết khóa học
+    if (!document.body.classList.contains('sidebar-collapsed')) {
+      document.body.classList.add('sidebar-collapsed');
+      localStorage.setItem('main-sidebar-collapsed', 'true');
+    }
+  });
+</script>
 
 <%- include('../partials/footer') %>

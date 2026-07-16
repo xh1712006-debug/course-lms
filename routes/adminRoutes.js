@@ -14,6 +14,7 @@ router.get('/management', adminController.getDashboard);
 // ==========================================
 router.get('/course-management', requirePermission('COURSE_VIEW'), adminController.getCourses);
 router.post('/course-management', requirePermission('COURSE_CREATE'), adminController.createCourse);
+router.post('/course-management/bulk', requirePermission('COURSE_CREATE'), adminController.createBulkCourses);
 router.post('/course-management/:id/update', requirePermission('COURSE_UPDATE'), adminController.updateCourse);
 router.post('/course-management/:id/delete', requirePermission('COURSE_DELETE'), adminController.deleteCourse);
 router.post('/course-management/:id/publish', requirePermission('COURSE_PUBLISH'), adminController.publishCourse);
@@ -28,7 +29,11 @@ router.get('/course-management/:courseId/lessons', requirePermission('COURSE_VIE
 router.post('/course-management/:courseId/lessons', requirePermission('LESSON_CREATE'), adminController.createLesson);
 router.post('/course-management/:courseId/lessons/:id/update', requirePermission('LESSON_MANAGE'), adminController.updateLesson);
 router.post('/course-management/:courseId/lessons/:id/delete', requirePermission('LESSON_MANAGE'), adminController.deleteLesson);
-
+router.post('/course-management/:courseId/chapters', requirePermission('LESSON_CREATE'), adminController.createChapter);
+router.post('/course-management/:courseId/chapters/:id/update', requirePermission('LESSON_MANAGE'), adminController.updateChapter);
+router.post('/course-management/:courseId/chapters/:id/delete', requirePermission('LESSON_MANAGE'), adminController.deleteChapter);
+router.post('/course-management/:courseId/chapters/bulk', requirePermission('LESSON_CREATE'), adminController.createChaptersBulk);
+router.post('/course-management/:courseId/lessons/bulk', requirePermission('LESSON_CREATE'), adminController.createLessonsBulk);
 // ==========================================
 // NHÓM 3: QUẢN LÝ ĐỀ THI & NGÂN HÀNG CÂU HỎI
 // ==========================================
@@ -37,11 +42,7 @@ router.get('/grade', requirePermission('QUIZ_GRADE'), adminController.getGradeLi
 // ==========================================
 // NHÓM 4: QUẢN LÝ LỘ TRÌNH ĐÀO TẠO & ĐĂNG KÝ
 // ==========================================
-router.get('/paths', requirePermission('PATH_MANAGE'), adminController.getLearningPaths);
-router.post('/paths', requirePermission('PATH_MANAGE'), adminController.createLearningPath);
-router.post('/paths/:id/update', requirePermission('PATH_MANAGE'), adminController.updateLearningPath);
-router.post('/paths/:id/delete', requirePermission('PATH_MANAGE'), adminController.deleteLearningPath);
-router.post('/paths/:id/assign', requirePermission('ENROLL_ASSIGN'), adminController.assignLearningPath);
+
 router.post('/course-management/assign', requirePermission('ENROLL_ASSIGN'), adminController.assignMandatoryCourse);
 router.get('/approvals', requirePermission('ENROLL_APPROVE'), adminController.getEnrollmentApprovals);
 router.post('/approvals/:id', requirePermission('ENROLL_APPROVE'), adminController.approveEnrollment);

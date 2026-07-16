@@ -133,6 +133,23 @@ async function seedRichCourses() {
 
     // 6. Gieo mầm dữ liệu học tập cho người học (Enrollments)
     console.log('7. Đang gieo mầm dữ liệu tiến trình đăng ký học tập...');
+    
+    // Đảm bảo có đủ users để gieo mầm enrollments
+    const userCheck = await client.query('SELECT count(*) FROM users');
+    const userCount = parseInt(userCheck.rows[0].count, 10);
+    if (userCount < 5) {
+      console.log('  - Tạo thêm người dùng mẫu để gieo mầm tiến trình đăng ký...');
+      await client.query(`
+        INSERT INTO users (id, username, email, password, role_id, status) VALUES
+        (2, 'hr_manager', 'hr@gmail.com', 'hr@123', 2, 'active'),
+        (3, 'instructor_dev', 'instructor@gmail.com', 'instructor@123', 3, 'active'),
+        (4, 'employee_it', 'employee4@gmail.com', 'emp@123', 4, 'active'),
+        (5, 'employee_mkt', 'employee5@gmail.com', 'emp@123', 4, 'active')
+        ON CONFLICT (id) DO NOTHING;
+      `);
+      await client.query("SELECT setval('users_id_seq', COALESCE((SELECT MAX(id)+1 FROM users), 1), false)");
+    }
+
     // Lấy ID người dùng employee_it (id=4) và employee_mkt (id=5) để gieo mầm đăng ký học tập
     // Đăng ký học NodeJS cho employee_it với tiến độ 50%
     await client.query(`

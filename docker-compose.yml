@@ -40,6 +40,10 @@ services:
     restart: always
     ports:
       - "3005:3000"
+    volumes:
+      - .:/app
+      - /app/node_modules
+    command: npm run dev
     environment:
       PORT: 3000
       DATABASE_URL: postgresql://postgres:123456@db:5432/postgres

@@ -1,7 +1,7 @@
 const redis = require('../config/redis');
 const { emitToUser } = require('../config/socket');
 const { 
-  Course, Lesson, Quiz, Question, QuizSubmission, 
+  Course, Lesson, Chapter, Quiz, Question, QuizSubmission, 
   LearningPath, Enrollment, User, Department, Role, AuditLog,
   Assessment, AssessmentSubmission
 } = require('../models/schema');
@@ -130,9 +130,40 @@ module.exports = {
       // Xóa cache
       await invalidateCourseCache();
 
-      res.redirect('/course-management');
+      // Redirect đến trang bài giảng (lessons) để người dùng tiếp tục thêm video
+      res.redirect(`/course-management/${newCourse.id}/lessons?success=${encodeURIComponent('Đã tạo khóa học thành công. Vui lòng thêm bài giảng!')}`);
     } catch (err) {
       res.render('error', { message: 'Không thể tạo khóa học mới.' });
+    }
+  },
+
+  createBulkCourses: async (req, res) => {
+    if (!req.session.permissions.includes('COURSE_CREATE')) {
+      return res.status(403).json({ error: 'Bạn không có quyền tạo khóa học.' });
+    }
+    const { bulk_titles } = req.body;
+    try {
+      if (!bulk_titles || bulk_titles.trim() === '') {
+        return res.redirect('/course-management?error=' + encodeURIComponent('Vui lòng nhập ít nhất một khóa học.'));
+      }
+      
+      const titles = bulk_titles.split('\n').map(t => t.trim()).filter(t => t !== '');
+      if (titles.length === 0) {
+        return res.redirect('/course-management?error=' + encodeURIComponent('Vui lòng nhập ít nhất một khóa học hợp lệ.'));
+      }
+
+      let createdCount = 0;
+      for (const title of titles) {
+        const newCourse = await Course.create(title, '', '/images/default_course.svg', 'draft', 'open');
+        await AuditLog.create(req.session.userId, 'COURSE_CREATE', { course_id: newCourse.id, title, note: 'Bulk created' });
+        createdCount++;
+      }
+
+      await invalidateCourseCache();
+      res.redirect(`/course-management?success=${encodeURIComponent(`Đã tạo hàng loạt ${createdCount} khóa học thành công.`)}`);
+    } catch (err) {
+      console.error('Lỗi khi tạo hàng loạt khóa học:', err);
+      res.redirect('/course-management?error=' + encodeURIComponent('Có lỗi xảy ra khi tạo hàng loạt.'));
     }
   },
 
@@ -226,13 +257,22 @@ module.exports = {
     const courseId = parseInt(req.params.courseId);
     try {
       const course = await Course.findById(courseId);
-      const lessons = await Lesson.findByCourseId(courseId);
+      const allLessons = await Lesson.findByCourseId(courseId);
+      const chapters = await Chapter.findByCourseId(courseId);
+
+      // Group lessons by chapter
+      const chaptersData = chapters.map(ch => ({
+        ...ch,
+        lessons: allLessons.filter(l => l.chapter_id === ch.id)
+      }));
+
       if (req.query.json === 'true') {
-        return res.json(lessons);
+        return res.json({ chapters: chaptersData });
       }
       res.render('admin/lessons', { 
         course, 
-        lessons
+        chapters: chaptersData,
+        lessons: allLessons // keep it just in case
       });
     } catch (err) {
       if (req.query.json === 'true') {
@@ -242,22 +282,187 @@ module.exports = {
     }
   },
 
+  createChapter: async (req, res) => {
+    if (!req.session.permissions.includes('LESSON_CREATE')) {
+      return res.status(403).json({ error: 'Không có quyền tạo chương.' });
+    }
+    const courseId = parseInt(req.params.courseId);
+    const { title, description, order_index } = req.body;
+    try {
+      await Chapter.create(courseId, title, description, parseInt(order_index) || 1);
+      res.redirect(`/course-management/${courseId}/lessons`);
+    } catch (err) {
+      res.render('error', { message: 'Lỗi tạo chương học.' });
+    }
+  },
+
+  updateChapter: async (req, res) => {
+    if (!req.session.permissions.includes('LESSON_MANAGE')) {
+      return res.status(403).json({ error: 'Không có quyền sửa chương.' });
+    }
+    const courseId = parseInt(req.params.courseId);
+    const { id } = req.params;
+    const { title, description, order_index } = req.body;
+    try {
+      await Chapter.update(parseInt(id), title, description, parseInt(order_index) || 1);
+      res.redirect(`/course-management/${courseId}/lessons`);
+    } catch (err) {
+      res.render('error', { message: 'Lỗi cập nhật chương học.' });
+    }
+  },
+
+  deleteChapter: async (req, res) => {
+    if (!req.session.permissions.includes('LESSON_MANAGE')) {
+      return res.status(403).json({ error: 'Không có quyền xóa chương.' });
+    }
+    const courseId = parseInt(req.params.courseId);
+    const { id } = req.params;
+    try {
+      await Chapter.delete(parseInt(id));
+      res.redirect(`/course-management/${courseId}/lessons`);
+    } catch (err) {
+      res.render('error', { message: 'Lỗi xóa chương học.' });
+    }
+  },
+
+  createChaptersBulk: async (req, res) => {
+    if (!req.session.permissions.includes('LESSON_CREATE')) {
+      return res.status(403).json({ error: 'Không có quyền tạo chương.' });
+    }
+    const courseId = parseInt(req.params.courseId);
+    const { bulk_titles, start_order_index } = req.body;
+    try {
+      const titles = bulk_titles.split('\n').map(t => t.trim()).filter(t => t.length > 0);
+      let orderIndex = parseInt(start_order_index) || 1;
+      for (const title of titles) {
+        await Chapter.create(courseId, title, '', orderIndex++);
+      }
+      res.redirect(`/course-management/${courseId}/lessons`);
+    } catch (err) {
+      console.error('[Admin Controller] Lỗi tạo nhiều chương:', err);
+      res.render('error', { message: 'Lỗi tạo nhiều chương học.' });
+    }
+  },
+
+  createLessonsBulk: async (req, res) => {
+    if (!req.session.permissions.includes('LESSON_CREATE')) {
+      return res.status(403).json({ error: 'Không có quyền tạo bài học.' });
+    }
+    const courseId = parseInt(req.params.courseId);
+    const { chapter_id, start_order_index, titles, types, video_urls, attachment_urls } = req.body;
+    try {
+      if (!titles || !Array.isArray(titles)) {
+        return res.status(400).json({ error: 'Dữ liệu bài học không hợp lệ.' });
+      }
+
+      let orderIndex = parseInt(start_order_index) || 1;
+      
+      for (let i = 0; i < titles.length; i++) {
+        const title = titles[i].trim();
+        if (!title) continue;
+        
+        const type = types && types[i] ? types[i] : 'theory';
+        const isQuiz = (type === 'quiz');
+        
+        const video = video_urls && video_urls[i] ? video_urls[i] : '';
+        const attachment = attachment_urls && attachment_urls[i] ? attachment_urls[i] : '';
+        
+        const lesson = await Lesson.create(courseId, parseInt(chapter_id), title, '', video, attachment, orderIndex++, isQuiz);
+        await AuditLog.create(req.session.userId, 'LESSON_CREATE', { course_id: courseId, chapter_id, lesson_title: title, is_quiz: isQuiz });
+        
+        // Nested Quiz handling
+        if (isQuiz) {
+          const lessonIndex = i + 1; // Frontend uses 1-indexed for tabs
+          const qTextArray = req.body[`q_text_${lessonIndex}`];
+          const qOptA = req.body[`q_optA_${lessonIndex}`];
+          const qOptB = req.body[`q_optB_${lessonIndex}`];
+          const qOptC = req.body[`q_optC_${lessonIndex}`];
+          const qOptD = req.body[`q_optD_${lessonIndex}`];
+          const qCorrect = req.body[`q_correct_${lessonIndex}`];
+
+          if (qTextArray && Array.isArray(qTextArray)) {
+            const db = require('../config/db');
+            
+            // 1. Tạo Quiz
+            const quizRes = await db.query(
+              `INSERT INTO quizzes (course_id, title, duration_minutes, passing_score, lesson_id) VALUES ($1, $2, $3, $4, $5) RETURNING id`,
+              [courseId, title, 15, 80, lesson.id]
+            );
+            const quizId = quizRes.rows[0].id;
+            
+            // 2. Tạo câu hỏi
+            for (let j = 0; j < qTextArray.length; j++) {
+              const text = qTextArray[j].trim();
+              if (!text) continue;
+              
+              const options = [
+                { id: 'A', text: qOptA[j] || '', is_correct: qCorrect[j] === 'A' },
+                { id: 'B', text: qOptB[j] || '', is_correct: qCorrect[j] === 'B' },
+                { id: 'C', text: qOptC[j] || '', is_correct: qCorrect[j] === 'C' },
+                { id: 'D', text: qOptD[j] || '', is_correct: qCorrect[j] === 'D' }
+              ];
+              
+              await db.query(
+                `INSERT INTO questions (quiz_id, question_text, question_type, options, correct_answer) VALUES ($1, $2, $3, $4, $5)`,
+                [quizId, text, 'multiple_choice', JSON.stringify(options), qCorrect[j]]
+              );
+            }
+          }
+        }
+      }
+      res.redirect(`/course-management/${courseId}/lessons`);
+    } catch (err) {
+      console.error('[Admin Controller] Lỗi tạo nhiều bài học:', err);
+      res.render('error', { message: 'Lỗi tạo nhiều bài học.' });
+    }
+  },
+
   createLesson: async (req, res) => {
     if (!req.session.permissions.includes('LESSON_CREATE')) {
       return res.status(403).json({ error: 'Không có quyền tạo bài học.' });
     }
     const courseId = parseInt(req.params.courseId);
-    const { title, content, video_url, attachment_url, order_index, is_quiz } = req.body;
-    const isQuiz = is_quiz === 'true' || is_quiz === true;
+    const { chapter_id, title, content, video_url, attachment_url, order_index, lesson_type, q_text, q_optA, q_optB, q_optC, q_optD, q_correct } = req.body;
+    const isQuiz = lesson_type === 'quiz';
 
-    // Yêu cầu quyền CONTENT_UPLOAD nếu đính kèm video hoặc tài liệu học liệu
     if ((video_url || attachment_url) && !req.session.permissions.includes('CONTENT_UPLOAD')) {
       return res.status(403).render('error', { message: 'Bạn không có quyền tải lên video hoặc đính kèm tài liệu học tập.' });
     }
 
     try {
-      await Lesson.create(courseId, title, content, video_url, attachment_url, parseInt(order_index), isQuiz);
-      await AuditLog.create(req.session.userId, 'LESSON_CREATE', { course_id: courseId, lesson_title: title, is_quiz: isQuiz });
+      const lesson = await Lesson.create(courseId, parseInt(chapter_id), title, content, video_url, attachment_url, parseInt(order_index) || 1, isQuiz);
+      await AuditLog.create(req.session.userId, 'LESSON_CREATE', { course_id: courseId, chapter_id, lesson_title: title, is_quiz: isQuiz });
+
+      // Nếu là quiz và có truyền lên mảng câu hỏi
+      if (isQuiz && q_text && Array.isArray(q_text)) {
+        const db = require('../config/db');
+        
+        // 1. Tạo bản ghi Quiz liên kết với Lesson
+        const quizRes = await db.query(
+          `INSERT INTO quizzes (course_id, title, duration_minutes, passing_score, lesson_id) VALUES ($1, $2, $3, $4, $5) RETURNING id`,
+          [courseId, title, 15, 80, lesson.id]
+        );
+        const quizId = quizRes.rows[0].id;
+        
+        // 2. Chạy vòng lặp tạo câu hỏi
+        for (let i = 0; i < q_text.length; i++) {
+          const text = q_text[i].trim();
+          if (!text) continue;
+          
+          const options = [
+            { id: 'A', text: q_optA[i] || '', is_correct: q_correct[i] === 'A' },
+            { id: 'B', text: q_optB[i] || '', is_correct: q_correct[i] === 'B' },
+            { id: 'C', text: q_optC[i] || '', is_correct: q_correct[i] === 'C' },
+            { id: 'D', text: q_optD[i] || '', is_correct: q_correct[i] === 'D' }
+          ];
+          
+          await db.query(
+            `INSERT INTO questions (quiz_id, question_text, question_type, options, correct_answer) VALUES ($1, $2, $3, $4, $5)`,
+            [quizId, text, 'multiple_choice', JSON.stringify(options), q_correct[i]]
+          );
+        }
+      }
+
       res.redirect(`/course-management/${courseId}/lessons`);
     } catch (err) {
       console.error('[Admin Controller] Lỗi thêm bài giảng:', err);
@@ -270,16 +475,15 @@ module.exports = {
       return res.status(403).json({ error: 'Không có quyền chỉnh sửa bài học.' });
     }
     const { courseId, id } = req.params;
-    const { title, content, video_url, attachment_url, order_index, is_quiz } = req.body;
-    const isQuiz = is_quiz === 'true' || is_quiz === true;
+    const { chapter_id, title, content, video_url, attachment_url, order_index, lesson_type } = req.body;
+    const isQuiz = lesson_type === 'quiz';
 
-    // Yêu cầu quyền CONTENT_UPLOAD nếu đính kèm video hoặc tài liệu học liệu
     if ((video_url || attachment_url) && !req.session.permissions.includes('CONTENT_UPLOAD')) {
       return res.status(403).render('error', { message: 'Bạn không có quyền tải lên video hoặc đính kèm tài liệu học tập.' });
     }
 
     try {
-      await Lesson.update(parseInt(id), title, content, video_url, attachment_url, parseInt(order_index), isQuiz);
+      await Lesson.update(parseInt(id), parseInt(chapter_id), title, content, video_url, attachment_url, parseInt(order_index) || 1, isQuiz);
       await AuditLog.create(req.session.userId, 'LESSON_UPDATE', { lesson_id: id, title, is_quiz: isQuiz });
       res.redirect(`/course-management/${courseId}/lessons`);
     } catch (err) {
@@ -354,238 +558,6 @@ module.exports = {
     }
   },
 
-  // ==========================================
-  // NHÓM 4: QUẢN LÝ LỘ TRÌNH ĐÀO TẠO & ĐĂNG KÝ (LEARNING PATH)
-  // ==========================================
-
-  getLearningPaths: async (req, res) => {
-    if (!req.session.permissions.includes('PATH_MANAGE')) {
-      return res.status(403).render('error', { message: 'Không có quyền quản lý lộ trình học tập.' });
-    }
-    try {
-      const success = req.query.success || null;
-      const error = req.query.error || null;
-
-      const paths = await LearningPath.findAll();
-      const courses = await Course.findAllPublished();
-      const users = await User.findAll();
-      const departments = await Department.findAll();
-      
-      const pathsWithCourses = [];
-      for (let p of paths) {
-        const pathCourses = await LearningPath.getCourses(p.id);
-        pathsWithCourses.push({
-          ...p,
-          courses: pathCourses
-        });
-      }
-
-      res.render('admin/paths', { 
-        paths: pathsWithCourses, 
-        courses, 
-        users,
-        departments,
-        success,
-        error
-      });
-    } catch (err) {
-      console.error('[Admin Controller] Lỗi tải lộ trình học tập:', err);
-      res.render('error', { message: 'Lỗi tải lộ trình học tập.' });
-    }
-  },
-
-  createLearningPath: async (req, res) => {
-    if (!req.session.permissions.includes('PATH_MANAGE')) {
-      return res.status(403).json({ error: 'Không có quyền tạo lộ trình học tập.' });
-    }
-    const { name, description, courseIds, is_public } = req.body;
-    try {
-      const isPublic = is_public === 'true' || is_public === true;
-      const newPath = await LearningPath.create(name, description, isPublic);
-      
-      // Xử lý mảng id khóa học
-      let courses = [];
-      if (courseIds) {
-        courses = Array.isArray(courseIds) ? courseIds.map(Number) : [Number(courseIds)];
-        await LearningPath.addCourses(newPath.id, courses);
-      }
-
-      await AuditLog.create(req.session.userId, 'PATH_CREATE', { path_id: newPath.id, name, courses, is_public: isPublic });
-      res.redirect('/paths');
-    } catch (err) {
-      res.render('error', { message: 'Lỗi thêm lộ trình đào tạo.' });
-    }
-  },
-
-  updateLearningPath: async (req, res) => {
-    if (!req.session.permissions.includes('PATH_MANAGE')) {
-      return res.status(403).json({ error: 'Không có quyền cập nhật lộ trình học tập.' });
-    }
-    const pathId = parseInt(req.params.id);
-    const { name, description, courseIds, is_public } = req.body;
-    try {
-      const isPublic = is_public === 'true' || is_public === true;
-      await LearningPath.update(pathId, name, description, isPublic);
-      
-      // Xử lý mảng id khóa học
-      let courses = [];
-      if (courseIds) {
-        courses = Array.isArray(courseIds) ? courseIds.map(Number) : [Number(courseIds)];
-      }
-      await LearningPath.addCourses(pathId, courses);
-
-      await AuditLog.create(req.session.userId, 'PATH_UPDATE', { path_id: pathId, name, courses, is_public: isPublic });
-      res.redirect('/paths?success=' + encodeURIComponent('Đã cập nhật lộ trình đào tạo thành công.'));
-    } catch (err) {
-      console.error('[Admin Controller] Lỗi cập nhật lộ trình:', err);
-      res.redirect('/paths?error=' + encodeURIComponent('Không thể cập nhật lộ trình đào tạo.'));
-    }
-  },
-
-  deleteLearningPath: async (req, res) => {
-    if (!req.session.permissions.includes('PATH_MANAGE')) {
-      return res.status(403).json({ error: 'Không có quyền xóa lộ trình học tập.' });
-    }
-    const pathId = parseInt(req.params.id);
-    try {
-      await LearningPath.delete(pathId);
-      
-      await AuditLog.create(req.session.userId, 'PATH_DELETE', { learning_path_id: pathId });
-      res.redirect('/paths?success=' + encodeURIComponent('Đã xóa lộ trình đào tạo thành công.'));
-    } catch (err) {
-      console.error('[Admin Controller] Lỗi xóa lộ trình:', err);
-      res.redirect('/paths?error=' + encodeURIComponent('Không thể xóa lộ trình đào tạo.'));
-    }
-  },
-
-  assignLearningPath: async (req, res) => {
-    if (!req.session.permissions.includes('ENROLL_ASSIGN')) {
-      return res.status(403).json({ error: 'Không có quyền giao lộ trình học tập.' });
-    }
-    const pathId = parseInt(req.params.id);
-    const { userIds, departmentIds, timeLimitDays } = req.body;
-
-    try {
-      const path = await LearningPath.findById(pathId);
-      if (!path) {
-        return res.redirect('/paths?error=' + encodeURIComponent('Lộ trình đào tạo không tồn tại.'));
-      }
-
-      const pathCourses = await LearningPath.getCourses(pathId);
-      if (pathCourses.length === 0) {
-        return res.redirect('/paths?error=' + encodeURIComponent('Lộ trình này chưa có khóa học nào để giao.'));
-      }
-
-      // Chuẩn hóa danh sách ID từ form submit
-      let uIds = [];
-      if (userIds) {
-        uIds = Array.isArray(userIds) ? userIds.map(Number) : [Number(userIds)];
-      }
-      let dIds = [];
-      if (departmentIds) {
-        dIds = Array.isArray(departmentIds) ? departmentIds.map(Number) : [Number(departmentIds)];
-      }
-
-      if (uIds.length === 0 && dIds.length === 0) {
-        return res.redirect('/paths?error=' + encodeURIComponent('Vui lòng chọn ít nhất một cá nhân hoặc phòng ban để giao lộ trình.'));
-      }
-
-      // Sử dụng Set để tránh gán trùng lặp cho một nhân sự
-      const targetUserIds = new Set(uIds);
-
-      // Tìm tất cả user active thuộc các phòng ban được chọn
-      for (let deptId of dIds) {
-        const sql = 'SELECT id FROM users WHERE department_id = $1 AND status = \'active\'';
-        const usersInDept = await require('../config/db').query(sql, [deptId]);
-        for (let u of usersInDept.rows) {
-          targetUserIds.add(u.id);
-        }
-      }
-
-      if (targetUserIds.size === 0) {
-        return res.redirect('/paths?error=' + encodeURIComponent('Không tìm thấy nhân sự phù hợp nào trong đối tượng đã chọn.'));
-      }
-
-      // Tính toán deadline dựa trên số ngày chỉ định
-      let deadline = null;
-      if (timeLimitDays && !isNaN(timeLimitDays) && parseInt(timeLimitDays) > 0) {
-        deadline = new Date();
-        deadline.setDate(deadline.getDate() + parseInt(timeLimitDays));
-      }
-
-      const adminId = req.session.userId;
-      const targetUserIdArray = Array.from(targetUserIds);
-
-      // Respond immediately to the administrator
-      res.redirect('/paths?success=' + encodeURIComponent(`Đang tiến hành giao lộ trình "${path.name}" trong nền. Hệ thống sẽ thông báo khi hoàn thành.`));
-
-      // Start background assignment task in batches
-      setImmediate(async () => {
-        try {
-          const batchSize = 10;
-          let assignedCount = 0;
-          
-          for (let i = 0; i < targetUserIdArray.length; i += batchSize) {
-            const batch = targetUserIdArray.slice(i, i + batchSize);
-            
-            // Process the current batch of users
-            for (const uId of batch) {
-              for (const c of pathCourses) {
-                await Enrollment.create(uId, c.id, true, 'approved', deadline);
-              }
-              assignedCount++;
-            }
-            
-            // Yield execution back to the Event Loop
-            await new Promise(resolve => setImmediate(resolve));
-          }
-
-          // Save aggregate Audit Log
-          await AuditLog.create(adminId, 'PATH_ASSIGN_BULK', {
-            learning_path_id: pathId,
-            user_count: assignedCount,
-            course_count: pathCourses.length,
-            selected_users: uIds,
-            selected_departments: dIds
-          });
-
-          // Send real-time notifications
-          try {
-            const { getIO, emitToUser } = require('../config/socket');
-            const io = getIO();
-            
-            // Notify learners
-            io.emit('path_assigned_notification', { pathId, userIds: uIds, departmentIds: dIds });
-            
-            // Notify the admin who triggered the action
-            emitToUser(adminId, 'path_assign_completed', {
-              pathName: path.name,
-              assignedCount: assignedCount,
-              success: true
-            });
-          } catch (ioErr) {
-            console.warn('[Background Job] Lỗi gửi Socket notification:', ioErr.message);
-          }
-
-        } catch (bgErr) {
-          console.error('[Background Job] Lỗi khi chạy ngầm giao lộ trình:', bgErr);
-          try {
-            const { emitToUser } = require('../config/socket');
-            emitToUser(adminId, 'path_assign_completed', {
-              pathName: path.name,
-              success: false,
-              error: bgErr.message || 'Lỗi cơ sở dữ liệu.'
-            });
-          } catch (emitErr) {
-            console.warn('[Background Job] Không thể thông báo lỗi cho admin:', emitErr.message);
-          }
-        }
-      });
-    } catch (err) {
-      console.error('[Admin Controller] Lỗi giao lộ trình:', err);
-      res.redirect('/paths?error=' + encodeURIComponent('Lỗi hệ thống khi giao lộ trình đào tạo.'));
-    }
-  },
 
   assignMandatoryCourse: async (req, res) => {
     if (!req.session.permissions.includes('ENROLL_ASSIGN')) {

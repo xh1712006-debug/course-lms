@@ -29,9 +29,6 @@ Chào mừng bạn đến với **CompanyLMS** – một nền tảng quản lý
 * **Lộ trình học tập cá nhân hóa (Learning Paths):** Quản trị viên HR gán lộ trình học bắt buộc theo phòng ban.
 * **Chứng chỉ kỹ thuật số:** Tự động cấp chứng chỉ PDF/HTML có mã số xác thực khi học viên hoàn thành khóa học đạt chuẩn.
 
-### 5. Trợ lý học tập AI (Gemini AI Assistant)
-* Tích hợp chatbot hỗ trợ học tập trực tiếp bằng Google Gemini AI API, giúp giải đáp thắc mắc bài học và gợi ý câu hỏi ôn tập theo ngữ cảnh cho học viên.
-
 ---
 
 ## 🛠️ Công nghệ sử dụng
@@ -41,7 +38,6 @@ Chào mừng bạn đến với **CompanyLMS** – một nền tảng quản lý
 * **Database:** PostgreSQL (Lưu trữ quan hệ dữ liệu người dùng, phòng ban, khóa học, audit logs)
 * **Caching & Session:** Redis (Quản lý phiên đăng nhập và đồng bộ hóa quyền hạn)
 * **Real-time Engine:** Socket.io (Đồng bộ đổi vai trò và thông báo trực tuyến)
-* **AI integration:** Google Generative AI (Gemini API)
 * **Security:** bcryptjs (Mã hóa mật khẩu), Session-based Auth với cơ chế bảo vệ CSRF/XSS cơ bản.
 
 ---
@@ -51,14 +47,14 @@ Chào mừng bạn đến với **CompanyLMS** – một nền tảng quản lý
 ```text
 ├── .antigravity/         # Cấu trúc kỹ năng và quy tắc tương tác AI Agent
 ├── config/               # Cấu hình kết nối cơ sở dữ liệu (PostgreSQL, Redis, Socket)
-├── controllers/          # Bộ điều hướng logic (Auth, Admin, Courses, AI)
+├── controllers/          # Bộ điều hướng logic (Auth, Admin, Courses)
 ├── docs/                 # Tài liệu đặc tả hệ thống và hướng dẫn phát triển
 ├── middleware/           # Lớp lọc trung gian (Bảo mật quyền hạn, xác thực session)
 ├── models/               # Định nghĩa các truy vấn SQL và schema dữ liệu
 ├── public/               # Tài nguyên tĩnh (CSS, JS Client-side, hình ảnh SVG)
 ├── research/             # Mã nguồn chạy thử nghiệm huấn luyện và các suite test
 ├── routes/               # Định nghĩa định tuyến đường dẫn API và giao diện Web
-├── services/             # Dịch vụ gửi Email, Data Pipeline, kết nối Gemini AI
+├── services/             # Dịch vụ gửi Email, Data Pipeline
 ├── views/                # Thư mục chứa giao diện EJS (được phân chia theo quyền hạn)
 ├── app.js                # Điểm khởi chạy ứng dụng chính
 ├── Dockerfile            # Hướng dẫn đóng gói container ứng dụng
@@ -93,9 +89,6 @@ DB_PORT=5432
 # Cấu hình Redis
 REDIS_HOST=127.0.0.1
 REDIS_PORT=6379
-
-# Cấu hình Google Gemini AI (Tùy chọn cho tính năng Chatbot AI)
-GEMINI_API_KEY=your_gemini_api_key
 ```
 
 ### 3. Khởi tạo Cơ sở dữ liệu

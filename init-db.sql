@@ -6,8 +6,6 @@ DROP TABLE IF EXISTS questions CASCADE;
 DROP TABLE IF EXISTS quizzes CASCADE;
 DROP TABLE IF EXISTS comments CASCADE;
 DROP TABLE IF EXISTS enrollments CASCADE;
-DROP TABLE IF EXISTS learning_path_courses CASCADE;
-DROP TABLE IF EXISTS learning_paths CASCADE;
 DROP TABLE IF EXISTS lessons CASCADE;
 DROP TABLE IF EXISTS courses CASCADE;
 DROP TABLE IF EXISTS assessment_submissions CASCADE;
@@ -66,10 +64,21 @@ CREATE TABLE courses (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- 6. Bảng bài học (Lessons)
+-- 6. Bảng chương (Chapters)
+CREATE TABLE chapters (
+    id SERIAL PRIMARY KEY,
+    course_id INTEGER REFERENCES courses(id) ON DELETE CASCADE,
+    title VARCHAR(150) NOT NULL,
+    description TEXT,
+    order_index INTEGER NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 7. Bảng bài học (Lessons)
 CREATE TABLE lessons (
     id SERIAL PRIMARY KEY,
     course_id INTEGER REFERENCES courses(id) ON DELETE CASCADE,
+    chapter_id INTEGER REFERENCES chapters(id) ON DELETE CASCADE,
     title VARCHAR(150) NOT NULL,
     content TEXT,
     video_url VARCHAR(255),
@@ -79,22 +88,6 @@ CREATE TABLE lessons (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- 7. Bảng lộ trình đào tạo (Learning Paths)
-CREATE TABLE learning_paths (
-    id SERIAL PRIMARY KEY,
-    name VARCHAR(150) NOT NULL,
-    description TEXT,
-    is_public BOOLEAN DEFAULT true,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
--- 8. Bảng liên kết Lộ trình - Khóa học (Learning Path Courses)
-CREATE TABLE learning_path_courses (
-    learning_path_id INTEGER REFERENCES learning_paths(id) ON DELETE CASCADE,
-    course_id INTEGER REFERENCES courses(id) ON DELETE CASCADE,
-    order_index INTEGER NOT NULL,
-    PRIMARY KEY (learning_path_id, course_id)
-);
 
 -- 9. Bảng đăng ký khóa học (Enrollments)
 CREATE TABLE enrollments (
@@ -239,8 +232,6 @@ SELECT setval('courses_id_seq', COALESCE((SELECT MAX(id)+1 FROM courses), 1), fa
 SELECT setval('lessons_id_seq', COALESCE((SELECT MAX(id)+1 FROM lessons), 1), false);
 SELECT setval('quizzes_id_seq', COALESCE((SELECT MAX(id)+1 FROM quizzes), 1), false);
 SELECT setval('questions_id_seq', COALESCE((SELECT MAX(id)+1 FROM questions), 1), false);
-SELECT setval('learning_paths_id_seq', COALESCE((SELECT MAX(id)+1 FROM learning_paths), 1), false);
-
 -- ============================================================
 -- FEATURE: Bài Kiểm Tra Doanh Nghiệp (Assessment)
 -- ============================================================

@@ -27,8 +27,6 @@ router.get('/courses/:courseId/lessons/:lessonId', courseController.getLesson);
 router.post('/courses/:courseId/lessons/:lessonId/complete', courseController.completeLesson);
 
 // Các trang Suite học viên mới
-router.get('/my-paths', requirePermission('PATH_VIEW'), courseController.getMyPaths);
-
 router.get('/my-deadlines', requirePermission('PROGRESS_TRACK'), courseController.getMyDeadlines);
 router.get('/my-groups', courseController.getMyGroups);
 router.get('/settings', courseController.getSettings);

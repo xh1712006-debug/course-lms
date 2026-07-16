@@ -94,7 +94,7 @@
 
   <%
     let layoutStyle = "display: grid; gap: 2.25rem;";
-    if ((user.permissions.includes('COURSE_ENROLL_REQUEST') || user.permissions.includes('PROGRESS_TRACK')) && (user.permissions.includes('PATH_VIEW') || user.permissions.includes('HISTORY_VIEW'))) {
+    if ((user.permissions.includes('COURSE_ENROLL_REQUEST') || user.permissions.includes('PROGRESS_TRACK')) && user.permissions.includes('HISTORY_VIEW')) {
       layoutStyle += " grid-template-columns: 1.9fr 1.1fr;";
     } else {
       layoutStyle += " grid-template-columns: 1fr;";
@@ -113,11 +113,7 @@
             <h2 style="font-size: 1.4rem; display: flex; align-items: center; gap: 0.5rem; color: var(--text-main); margin: 0; font-weight: 800;">
               <i class="fa-solid fa-graduation-cap" style="color: var(--text-accent);"></i> Khóa học của tôi
             </h2>
-            <% if (enrollments.length > 2) { %>
-              <a href="/my-paths" class="btn btn-secondary" style="padding: 0.45rem 1rem; font-size: 0.82rem; border-radius: 8px; font-weight: 600; display: inline-flex; align-items: center; gap: 0.25rem;">
-                Xem tất cả (<%= enrollments.length %>) <i class="fa-solid fa-arrow-right" style="font-size: 0.75rem;"></i>
-              </a>
-            <% } %>
+
           </div>
 
           <% if (enrollments.length === 0) { %>
@@ -193,7 +189,7 @@
     <% } %>
 
     <!-- Cột bên phải (Sidebar): Lộ trình, Deadline & Trạng thái đăng ký -->
-    <% if (user.permissions.includes('PATH_VIEW') || user.permissions.includes('HISTORY_VIEW')) { %>
+    <% if (user.permissions.includes('HISTORY_VIEW')) { %>
       <div style="display: flex; flex-direction: column; gap: 2rem;">
         
         <!-- Bài kiểm tra sắp tới -->
@@ -254,45 +250,7 @@
           </div>
         <% } %>
 
-        <!-- Lộ trình học gợi ý dạng Timeline -->
-        <% if (user.permissions.includes('PATH_VIEW')) { %>
-          <div>
-            <h2 style="font-size: 1.3rem; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem; color: var(--text-main); font-weight: 800;">
-              <i class="fa-solid fa-route" style="color: #06b6d4;"></i> Lộ trình gợi ý
-            </h2>
-            <div class="glass-card" style="padding: 1.5rem; border-radius: 16px;">
-              <% if (pathsWithCourses.length === 0) { %>
-                <p style="color: var(--text-muted); font-size: 0.85rem; text-align: center; margin: 0.5rem 0;">Chưa cấu hình lộ trình học gợi ý.</p>
-              <% } else { %>
-                <!-- Scroll panel to prevent form overflow -->
-                <div class="sidebar-scroll-panel">
-                  <% pathsWithCourses.forEach(path => { %>
-                    <div style="margin-bottom: 1rem; &:last-child { margin-bottom: 0; }">
-                      <h4 style="color: var(--text-accent); font-size: 0.95rem; margin: 0 0 0.75rem 0; font-weight: 700; display: flex; align-items: center; gap: 0.4rem;">
-                        <i class="fa-regular fa-compass"></i> <%= path.name %>
-                      </h4>
-                      
-                      <!-- Timeline Container -->
-                      <div class="roadmap-timeline-wrapper">
-                        <% path.courses.forEach((c, idx) => { %>
-                          <div class="roadmap-node">
-                            <div class="roadmap-dot"></div>
-                            <span style="font-size: 0.82rem; font-weight: 600; color: var(--text-main); display: block; line-height: 1.3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="<%= c.title %>">
-                              <%= c.title %>
-                            </span>
-                          </div>
-                        <% }) %>
-                      </div>
-                    </div>
-                  <% }) %>
-                </div>
-                <a href="/my-paths" class="btn btn-secondary" style="margin-top: 0.75rem; width: 100%; justify-content: center; font-size: 0.8rem; padding: 0.5rem; border-radius: 8px; font-weight: 600; display: flex; align-items: center; gap: 0.25rem; border-color: rgba(6, 182, 212, 0.2); color: #0891b2;">
-                  Xem tất cả lộ trình <i class="fa-solid fa-arrow-right" style="font-size: 0.75rem;"></i>
-                </a>
-              <% } %>
-            </div>
-          </div>
-        <% } %>
+
 
         <!-- Trạng thái phê duyệt khóa học (HR Approvals) -->
         <% 
@@ -498,7 +456,7 @@
           'LESSON_CREATE': 'Thêm bài giảng',
           'LESSON_UPDATE': 'Sửa bài giảng',
           'LESSON_DELETE': 'Xóa bài giảng',
-          'PATH_CREATE': 'Tạo lộ trình đào tạo',
+
           'DEPARTMENT_CREATE': 'Tạo phòng ban mới',
           'DEPARTMENT_DELETE': 'Xóa phòng ban',
           'DEPARTMENT_UPDATE': 'Cập nhật phòng ban',
@@ -517,7 +475,7 @@
           'QUIZ_SETTING_UPDATE': 'Cập nhật cài đặt đề thi',
           'QUIZ_GRADE': 'Chấm điểm đề thi',
           'QUIZ_SUBMIT': 'Nộp bài thi trắc nghiệm',
-          'PATH_ASSIGN_BULK': 'Giao lộ trình hàng loạt',
+
           'ENROLL_REQUEST': 'Yêu cầu đăng ký khóa học',
           'ENROLL_DIRECT': 'Vào học trực tiếp',
           'ASSESSMENT_CREATE_MANUAL': 'Tạo bài kiểm tra thủ công',
@@ -561,8 +519,7 @@
           'score': 'Điểm số',
           'is_passed': 'Kết quả đạt',
           'submission_id': 'Mã bài nộp',
-          'path_id': 'Mã lộ trình',
-          'courses': 'Mã các khóa học',
+
           'users': 'Số nhân sự nhận',
           'target_username': 'Tài khoản bị đóng vai',
           'original_user_id': 'Mã người quản trị',

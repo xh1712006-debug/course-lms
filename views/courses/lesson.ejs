@@ -253,23 +253,19 @@
     }
   </style>
 
-  <div style="margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; flex-wrap: wrap;">
-    <div style="flex: 1; min-width: 250px;">
-      <a href="/courses/<%= courseId %>" style="font-size: 0.9rem; font-weight: 500; color: var(--text-muted); text-decoration: none;" onmouseover="this.style.color='var(--text-accent)'" onmouseout="this.style.color='inherit'">
-        <i class="fa-solid fa-chevron-left" style="font-size: 0.8rem; margin-right: 0.25rem;"></i> Quay lại danh mục khóa học
+  <!-- COMPACT TOP BAR -->
+  <div style="margin-bottom: 1.25rem; display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap; background: #ffffff; padding: 0.75rem 1.25rem; border-radius: 12px; border: 1px solid var(--border-light); box-shadow: 0 2px 8px rgba(0,0,0,0.02);">
+    <div style="display: flex; align-items: center; gap: 1rem; flex: 1; min-width: 0;">
+      <a href="/courses/<%= courseId %>" style="display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; border-radius: 8px; background: rgba(15, 23, 42, 0.04); color: var(--text-muted); text-decoration: none; transition: all 0.2s;" onmouseover="this.style.background='rgba(15, 23, 42, 0.08)'; this.style.color='var(--text-main)';" onmouseout="this.style.background='rgba(15, 23, 42, 0.04)'; this.style.color='var(--text-muted)';" title="Quay lại danh mục khóa học">
+        <i class="fa-solid fa-chevron-left" style="font-size: 0.95rem;"></i>
       </a>
-      <h1 style="font-size: 1.8rem; font-weight: 800; margin-top: 0.5rem; color: var(--text-main); margin-bottom: 0; line-height: 1.25;">
+      <h1 style="font-size: 1.25rem; font-weight: 700; color: var(--text-main); margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.2;">
         <%= lesson.title && lesson.title.trim() !== '' ? lesson.title : 'Bài học ' + (currentIdx + 1) %>
       </h1>
     </div>
     
-    <div style="display: flex; gap: 0.5rem; align-items: center;">
-      <% if (lesson.attachment_url && lesson.attachment_url.trim() !== '' && lesson.attachment_url.toLowerCase().endsWith('.pdf')) { %>
-        <a href="<%= lesson.attachment_url %>" class="btn-theater-toggle" target="_blank" style="text-decoration: none;" title="Xem toàn màn hình tài liệu PDF">
-          <i class="fa-solid fa-square-arrow-up-right"></i> <span>Xem toàn màn hình</span>
-        </a>
-      <% } %>
-      <button type="button" class="btn-theater-toggle" id="toggle-sidebar-btn" onclick="toggleSidebar()" title="Thu gọn/Mở rộng danh sách bài học">
+    <div style="display: flex; gap: 0.5rem; align-items: center; flex-shrink: 0;">
+      <button type="button" class="btn-theater-toggle" id="toggle-sidebar-btn" onclick="toggleSidebar()" title="Thu gọn/Mở rộng không gian học">
         <i class="fa-solid fa-expand"></i> <span>Chế độ tập trung</span>
       </button>
     </div>
@@ -321,19 +317,19 @@
               <% if (hasQuiz) { %>
                 <div class="glass-card" style="padding: 2rem;">
                   <% if (isQuizPassed) { %>
-                    <div style="text-align: center; padding: 2.5rem 1.5rem; background: rgba(16, 185, 129, 0.04); border-radius: 12px; border: 1px solid rgba(16, 185, 129, 0.15); margin-bottom: 1.5rem;">
-                      <i class="fa-solid fa-circle-check" style="color: #10b981; font-size: 3rem; margin-bottom: 1rem; display: block;"></i>
-                      <h4 style="color: #064e3b; font-weight: 700; margin-bottom: 0.5rem; font-size: 1.15rem;">Bạn đã hoàn thành bài kiểm tra này!</h4>
-                      <p style="color: #047857; font-size: 0.9rem; margin-bottom: 0;">Chúc mừng bạn đã trả lời đúng 100% câu hỏi và vượt qua bài học thành công.</p>
+                    <div style="padding: 0.5rem 0.85rem; background: rgba(16, 185, 129, 0.1); border-radius: 6px; border: 1px solid rgba(16, 185, 129, 0.3); margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem; color: #064e3b; font-weight: 600; font-size: 0.85rem;">
+                      <i class="fa-solid fa-circle-check" style="color: #10b981; font-size: 1rem;"></i>
+                      Bạn đã hoàn thành bài kiểm tra này!
                     </div>
-                  <% } else { %>
-                    <div id="quiz-result-alert" class="alert" style="display: none; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; font-size: 0.9rem; font-weight: 600;"></div>
-                    
-                    <form id="lesson-quiz-form" onsubmit="submitLessonQuiz(event)">
-                      <input type="hidden" id="lesson-quiz-id" value="<%= lessonQuiz.id %>">
+                  <% } %>
+                  
+                  <div id="quiz-result-alert" class="alert" style="display: none; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; font-size: 0.9rem; font-weight: 600;"></div>
+                  
+                  <form id="lesson-quiz-form" onsubmit="submitLessonQuiz(event)">
+                    <input type="hidden" id="lesson-quiz-id" value="<%= lessonQuiz.id %>">
                       
                       <!-- Thanh tiến trình & Bộ điều hướng ở trên -->
-                      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 2rem; background: rgba(99, 102, 241, 0.03); padding: 1rem 1.25rem; border-radius: 12px; border: 1px solid rgba(99, 102, 241, 0.08); gap: 1rem; flex-wrap: wrap;">
+                      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; background: rgba(99, 102, 241, 0.03); padding: 0.75rem 1rem; border-radius: 8px; border: 1px solid rgba(99, 102, 241, 0.08); gap: 0.75rem; flex-wrap: wrap;">
                         <div style="font-size: 0.85rem; font-weight: 700; color: #4f46e5; min-width: 80px;">
                           Tiến trình: <span id="quiz-progress-text">1 / <%= lessonQuestions.length %></span>
                         </div>
@@ -363,9 +359,13 @@
                             
                             <div style="display: flex; flex-direction: column; gap: 0.75rem; margin-bottom: 1.5rem;">
                               <% q.options.forEach((opt, oIdx) => { %>
-                                <label class="quiz-option-label" onclick="highlightSelectedOption(this); markDotAnswered(<%= qIdx %>)" style="display: flex; align-items: center; gap: 0.75rem; background: #ffffff; padding: 0.85rem 1.25rem; border-radius: 12px; border: 1px solid #e2e8f0; cursor: pointer; transition: all 0.25s; box-shadow: 0 1px 3px rgba(0,0,0,0.02);">
-                                  <input type="radio" name="q-<%= q.id %>" value="<%= opt %>" required style="cursor: pointer; width: 1.05rem; height: 1.05rem;">
-                                  <span style="font-size: 0.95rem; color: var(--text-main); font-weight: 500;"><%= opt %></span>
+                                <% 
+                                  let optValue = typeof opt === 'object' && opt !== null ? opt.id || opt.text : opt; 
+                                  let optText = typeof opt === 'object' && opt !== null ? opt.text : opt;
+                                %>
+                                <label class="quiz-option-label" onclick="highlightSelectedOption(this); markDotAnswered(<%= qIdx %>)" style="display: flex; align-items: center; gap: 0.75rem; background: #ffffff; padding: 0.75rem 1rem; border-radius: 8px; border: 1px solid #e2e8f0; cursor: pointer; transition: all 0.25s; box-shadow: 0 1px 2px rgba(0,0,0,0.02);">
+                                  <input type="radio" name="q-<%= q.id %>" value="<%= optValue %>" required style="cursor: pointer; width: 1.05rem; height: 1.05rem;">
+                                  <span style="font-size: 0.9rem; color: var(--text-main); font-weight: 500;"><%= optText %></span>
                                 </label>
                               <% }) %>
                             </div>
@@ -383,29 +383,29 @@
                           Câu sau <i class="fa-solid fa-chevron-right"></i>
                         </button>
                         
-                        <button type="submit" id="btn-submit-lesson-quiz" class="btn btn-primary" style="padding: 0.65rem 2.25rem; font-size: 0.9rem; font-weight: 600; display: none; margin-left: auto; background: var(--secondary-gradient); border: none; box-shadow: 0 4px 12px rgba(20, 184, 166, 0.2);">
+                        <button type="submit" id="btn-submit-lesson-quiz" class="btn btn-primary" style="padding: 0.55rem 2rem; font-size: 0.85rem; font-weight: 600; display: none; margin-left: auto; background: var(--secondary-gradient); border: none; box-shadow: 0 4px 12px rgba(20, 184, 166, 0.2);">
                           <i class="fa-solid fa-paper-plane"></i> Nộp bài kiểm tra
                         </button>
                       </div>
                     </form>
-                  <% } %>
                 </div>
               <% } %>
 
               <!-- Nội dung chi tiết bài học -->
               <% if (hasContent) { %>
-                <div class="glass-card" style="padding: 1.5rem;">
+                <% const onlyPdf = hasAttachment && lesson.attachment_url.toLowerCase().endsWith('.pdf') && (!lesson.content || lesson.content.trim() === ''); %>
+                <div class="<%= onlyPdf ? '' : 'glass-card' %>" style="<%= onlyPdf ? 'height: calc(100vh - 110px); display: flex; flex-direction: column;' : 'padding: 1.5rem;' %>">
                   <% if (lesson.content && lesson.content.trim() !== '') { %>
                     <textarea id="raw-markdown-content" style="display: none;"><%= lesson.content %></textarea>
                     <div id="rendered-markdown-content" class="markdown-body" style="margin-bottom: <%= hasAttachment ? '1.5rem' : '0' %>;"></div>
                   <% } %>
 
                   <% if (hasAttachment) { %>
-                    <div class="attachment-viewer">
+                    <div class="attachment-viewer" style="<%= onlyPdf ? 'flex: 1; height: 100%;' : '' %>">
                       <% if (lesson.attachment_url.toLowerCase().endsWith('.pdf')) { %>
-                        <div id="pdf-preview-container" style="transition: all 0.3s ease; margin-bottom: 1rem;">
-                          <iframe src="<%= lesson.attachment_url %>#toolbar=0&navpanes=0&view=FitH"
-                            style="width: 100%; height: 750px; border: 1px solid var(--border-light); border-radius: 8px; background: #fff;"
+                        <div id="pdf-preview-container" style="transition: all 0.3s ease; <%= onlyPdf ? 'height: 100%; border: 1px solid var(--border-light); border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); overflow: hidden;' : 'margin-bottom: 1rem;' %>">
+                          <iframe src="<%= lesson.attachment_url %>"
+                            style="width: 100%; height: <%= onlyPdf ? '100%' : '750px' %>; border: <%= onlyPdf ? 'none' : '1px solid var(--border-light)' %>; border-radius: <%= onlyPdf ? '0' : '8px' %>; background: #525659;"
                             title="Tài liệu bài học"></iframe>
                         </div>
                       <% } else if (isDocx) { %>
@@ -469,26 +469,50 @@
             style="width: 100%; padding: 0.55rem 1rem 0.55rem 2.2rem; background: rgba(15,23,42,0.02); border: 1px solid var(--border-light); border-radius: 8px; color: var(--text-main); font-size: 0.82rem; outline: none; box-sizing: border-box; transition: all 0.2s;">
         </div>
 
-        <div class="lesson-list-sidebar">
-          <% lessons.forEach((l, idx)=> {
-            const isCompleted = completedLessonIds.includes(l.id); %>
-            <a href="/courses/<%= courseId %>/lessons/<%= l.id %>"
-              class="lesson-list-item <%= l.id === lesson.id ? 'active' : '' %>">
-              <div style="display: flex; align-items: center; gap: 0.5rem;">
-                <span style="font-weight: 700; font-size: 0.85rem; color: var(--text-accent);">#<%= idx + 1 %></span>
-                <span
-                  style="font-size: 0.85rem; font-weight: 500; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden;">
-                  <%= l.title && l.title.trim() !== '' ? l.title : 'Bài học ' + (idx + 1) %>
-                </span>
+        <style>
+          .sidebar-chapter details > summary { list-style: none; }
+          .sidebar-chapter details > summary::-webkit-details-marker { display: none; }
+          .sidebar-chapter details[open] > summary .toggle-icon { transform: rotate(180deg); }
+        </style>
+        <div class="lesson-list-sidebar" style="display: flex; flex-direction: column; gap: 0.75rem;">
+          <% let globalSideIdx = 1; %>
+          <% chapters.forEach(chapter => { %>
+            <% if (chapter.lessons && chapter.lessons.length > 0 || (chapter.title && chapter.title !== 'Bài học khác')) { %>
+              <div class="sidebar-chapter">
+                <details <%= chapter.lessons && chapter.lessons.some(l => l.id === lesson.id) ? 'open' : '' %>>
+                  <summary style="font-weight: 700; font-size: 0.85rem; color: var(--text-muted); padding: 0.5rem 0.75rem; background: rgba(15, 23, 42, 0.02); border-radius: 6px; margin-bottom: 0.25rem; cursor: pointer; display: flex; align-items: center; justify-content: space-between; user-select: none;">
+                    <div style="display: flex; align-items: center;">
+                      <i class="fa-solid fa-folder-open" style="margin-right: 0.4rem; color: #6366f1;"></i> 
+                      <span style="flex: 1;"><%= chapter.title || 'Chương học' %></span>
+                    </div>
+                    <i class="fa-solid fa-chevron-down toggle-icon" style="font-size: 0.75rem; transition: transform 0.3s;"></i>
+                  </summary>
+                  <div style="display: flex; flex-direction: column; padding-left: 0.25rem;">
+                    <% if (chapter.lessons && chapter.lessons.length > 0) { %>
+                      <% chapter.lessons.forEach(l => {
+                        const isCompleted = completedLessonIds.includes(l.id); %>
+                        <a href="/courses/<%= courseId %>/lessons/<%= l.id %>"
+                          class="lesson-list-item <%= l.id === lesson.id ? 'active' : '' %>" style="border-left: 2px solid <%= l.id === lesson.id ? '#4f46e5' : 'transparent' %>; border-radius: 0 8px 8px 0; margin-bottom: 0.15rem;">
+                        <div style="display: flex; align-items: center; gap: 0.5rem; flex: 1; min-width: 0;">
+                          <span style="font-weight: 700; font-size: 0.8rem; color: var(--text-accent);">#<%= globalSideIdx++ %></span>
+                          <span style="font-size: 0.82rem; font-weight: 500; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.3;">
+                            <%= l.title && l.title.trim() !== '' ? l.title : 'Bài học ' + (globalSideIdx - 1) %>
+                          </span>
+                        </div>
+                        <% if (isCompleted) { %>
+                          <i class="fa-solid fa-circle-check" style="color: #10b981; font-size: 0.85rem; flex-shrink: 0;"></i>
+                        <% } else if (l.id === lesson.id) { %>
+                          <i class="fa-solid fa-circle-play" style="color: #6366f1; font-size: 0.85rem; flex-shrink: 0;"></i>
+                        <% } else { %>
+                          <i class="fa-solid fa-circle" style="color: var(--text-muted); font-size: 0.75rem; flex-shrink: 0; opacity: 0.5;"></i>
+                        <% } %>
+                      </a>
+                    <% }) %>
+                  <% } %>
+                  </div>
+                </details>
               </div>
-              <% if (isCompleted) { %>
-                <i class="fa-solid fa-circle-check" style="color: #10b981; font-size: 0.85rem;"></i>
-              <% } else if (l.id === lesson.id) { %>
-                <i class="fa-solid fa-circle-play" style="color: #6366f1; font-size: 0.85rem;"></i>
-              <% } else { %>
-                <i class="fa-solid fa-circle" style="color: var(--text-muted); font-size: 0.75rem;"></i>
-              <% } %>
-            </a>
+            <% } %>
           <% }) %>
         </div>
 
@@ -553,8 +577,16 @@
         
         const willCollapse = !container.classList.contains('sidebar-collapsed');
         if (willCollapse) {
+          // Ẩn sidebar phải
           container.classList.add('sidebar-collapsed');
           localStorage.setItem('lesson-sidebar-collapsed', 'true');
+          
+          // Khuyến nghị thu gọn cả menu trái để tối đa không gian
+          if (typeof toggleMainSidebar !== 'undefined' && !document.body.classList.contains('sidebar-collapsed')) {
+             document.body.classList.add('sidebar-collapsed');
+             localStorage.setItem('main-sidebar-collapsed', 'true');
+          }
+          
           if (btn) {
             btn.classList.add('active');
             btn.querySelector('span').textContent = 'Mở rộng màn hình';
@@ -696,7 +728,7 @@
             const currentIdx = parseInt('<%= currentIdx %>');
             const totalLessons = parseInt('<%= lessons.length %>');
             if (currentIdx + 1 < totalLessons) {
-              alert('Chúc mừng bạn đã hoàn thành bài học! Hệ thống sẽ tự động chuyển sang bài giảng tiếp theo.');
+              showSuccessToast('Bạn đã hoàn thành bài học! Đang tự động chuyển bài...');
               // Tìm link bài tiếp theo trong sidebar để chuyển trang
               const links = document.querySelectorAll('.lesson-list-sidebar a');
               // Lọc ra các a tag vì có các div.locked xen kẽ
@@ -717,14 +749,16 @@
                   }
                 });
                 if (nextLink) {
-                  window.location.href = nextLink.href;
+                  setTimeout(() => {
+                    window.location.href = nextLink.href;
+                  }, 2500);
                   return;
                 }
               }
-              window.location.reload();
+              setTimeout(() => window.location.reload(), 2500);
             } else {
-              alert('Chúc mừng bạn đã học xong toàn bộ bài giảng của khóa học này! Hãy tiến hành làm bài kiểm tra cuối khóa.');
-              window.location.reload();
+              showSuccessToast('Tuyệt vời! Bạn đã hoàn thành toàn bộ bài giảng. Hãy làm bài kiểm tra cuối khóa nhé.');
+              setTimeout(() => window.location.reload(), 3000);
             }
           };
         }
@@ -854,12 +888,87 @@
             if (progressText && data.progress !== undefined) {
               progressText.textContent = data.progress + '%';
             }
+            
+            // Hiện thông báo toast
+            showSuccessToast('Tuyệt vời! Bạn đã hoàn thành yêu cầu nội dung của bài học này.');
           }
         })
         .catch(err => {
           console.error('[LMS] Lỗi khi gửi yêu cầu hoàn thành bài học:', err);
           progressChecked = false;
         });
+      }
+
+      function showSuccessToast(message) {
+        const toast = document.createElement('div');
+        toast.innerHTML = `<i class="fa-solid fa-circle-check" style="font-size: 1.15rem;"></i> <span>${message}</span>`;
+        Object.assign(toast.style, {
+          position: 'fixed',
+          bottom: '2rem',
+          right: '2rem',
+          backgroundColor: '#10b981',
+          color: '#ffffff',
+          padding: '1rem 1.5rem',
+          borderRadius: '12px',
+          boxShadow: '0 10px 25px -5px rgba(16, 185, 129, 0.4)',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '0.75rem',
+          fontWeight: '600',
+          fontSize: '0.95rem',
+          zIndex: '9999',
+          opacity: '0',
+          transform: 'translateY(20px)',
+          transition: 'all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)'
+        });
+        document.body.appendChild(toast);
+        
+        requestAnimationFrame(() => {
+          toast.style.opacity = '1';
+          toast.style.transform = 'translateY(0)';
+        });
+        
+        setTimeout(() => {
+          toast.style.opacity = '0';
+          toast.style.transform = 'translateY(20px)';
+          setTimeout(() => toast.remove(), 400);
+        }, 5000);
+      }
+
+      function showDangerToast(message) {
+        const toast = document.createElement('div');
+        toast.innerHTML = `<i class="fa-solid fa-triangle-exclamation" style="font-size: 1.15rem;"></i> <span>${message}</span>`;
+        Object.assign(toast.style, {
+          position: 'fixed',
+          bottom: '2rem',
+          right: '2rem',
+          backgroundColor: '#ef4444',
+          color: '#ffffff',
+          padding: '1rem 1.5rem',
+          borderRadius: '12px',
+          boxShadow: '0 10px 25px -5px rgba(239, 68, 68, 0.4)',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '0.75rem',
+          fontWeight: '600',
+          fontSize: '0.95rem',
+          zIndex: '9999',
+          opacity: '0',
+          transform: 'translateY(20px)',
+          transition: 'all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)'
+        });
+        document.body.appendChild(toast);
+        
+        requestAnimationFrame(() => {
+          toast.style.opacity = '1';
+          toast.style.transform = 'translateY(0)';
+        });
+        
+        setTimeout(() => {
+          toast.style.opacity = '0';
+          toast.style.transform = 'translateY(20px)';
+          setTimeout(() => toast.remove(), 400);
+        }, 5000);
       }
 
       // YouTube Player API
@@ -1078,16 +1187,16 @@
         .then(res => res.json())
         .then(data => {
           if (data.is_passed) {
-            alert(`Chúc mừng! Bạn đã vượt qua bài thi cuối khóa với điểm số ${data.score}/100. Tiến trình khóa học đạt 100%!`);
+            showSuccessToast(`Chúc mừng! Bạn vượt qua với ${data.score}/100 điểm. Tiến trình khóa học đạt 100%!`);
             closeFinalQuizModal();
-            window.location.reload();
+            setTimeout(() => window.location.reload(), 3000);
           } else {
-            alert(`Rất tiếc! Điểm của bạn là ${data.score}/100. Cần đạt điểm tối thiểu để đạt. Vui lòng thi lại.`);
+            showDangerToast(`Rất tiếc! Điểm của bạn là ${data.score}/100. Chưa đủ để qua bài. Vui lòng thi lại.`);
           }
         })
         .catch(err => {
           console.error(err);
-          alert('Có lỗi xảy ra khi nộp bài thi cuối khóa.');
+          showDangerToast('Có lỗi xảy ra khi nộp bài thi cuối khóa.');
         });
       }
 

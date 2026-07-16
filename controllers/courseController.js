@@ -1,5 +1,5 @@
 const redis = require('../config/redis');
-const { Course, Lesson, Enrollment, Comment, Quiz, Question, QuizSubmission, LearningPath, User, AuditLog } = require('../models/schema');
+const { Course, Lesson, Chapter, Enrollment, Comment, Quiz, Question, QuizSubmission, LearningPath, User, AuditLog } = require('../models/schema');
 
 module.exports = {
   // Trang tổng quan tích hợp (Unified Dashboard)
@@ -49,18 +49,6 @@ module.exports = {
           submissions = await QuizSubmission.findByUser(userId);
         }
 
-        if (permissions.includes('PATH_VIEW')) {
-          const learningPaths = await LearningPath.findAll();
-          // Lấy tối đa 3 lộ trình mới nhất để gợi ý trên dashboard
-          const latestPaths = learningPaths.slice(0, 3);
-          for (let path of latestPaths) {
-            const pathCourses = await LearningPath.getCourses(path.id);
-            pathsWithCourses.push({
-              ...path,
-              courses: pathCourses
-            });
-          }
-        }
 
         // Lấy danh sách bài kiểm tra doanh nghiệp được phân phối
         const { Assessment } = require('../models/schema');
@@ -102,7 +90,6 @@ module.exports = {
         pendingEnrollments,
         rejectedEnrollments,
         submissions,
-        pathsWithCourses,
         myAssessments
       });
     } catch (err) {
@@ -184,7 +171,17 @@ module.exports = {
         return res.status(404).render('error', { message: 'Khóa học không tồn tại hoặc chưa được xuất bản.' });
       }
 
-      const lessons = await Lesson.findByCourseId(courseId);
+      const allLessons = await Lesson.findByCourseId(courseId);
+      const chapters = await Chapter.findByCourseId(courseId);
+      const chaptersData = chapters.map(ch => ({
+        ...ch,
+        lessons: allLessons.filter(l => l.chapter_id === ch.id)
+      }));
+      const unassignedLessons = allLessons.filter(l => !l.chapter_id);
+      if (unassignedLessons.length > 0) {
+        chaptersData.push({ id: null, title: 'Bài học khác', lessons: unassignedLessons });
+      }
+
       let enrollment = await Enrollment.findByUserAndCourse(userId, courseId);
       const quiz = await Quiz.findByCourseId(courseId);
 
@@ -206,28 +203,12 @@ module.exports = {
         };
       }
 
-      // Lấy danh sách lộ trình học tập chứa khóa học này
-      const db = require('../config/db');
-      const pathsRes = await db.query(`
-        SELECT lp.id, lp.name, lpc.order_index,
-               (
-                 SELECT COUNT(*)::int 
-                 FROM learning_path_courses lpc2 
-                 WHERE lpc2.learning_path_id = lp.id
-               ) as total_courses
-        FROM learning_path_courses lpc
-        JOIN learning_paths lp ON lpc.learning_path_id = lp.id
-        WHERE lpc.course_id = $1
-        ORDER BY lp.name ASC
-      `, [courseId]);
-      const associatedPaths = pathsRes.rows;
-
       res.render('courses/detail', {
         course,
-        lessons,
+        lessons: allLessons,
+        chapters: chaptersData,
         enrollment,
-        quiz,
-        associatedPaths
+        quiz
       });
     } catch (err) {
       console.error('[Course Controller] Lỗi tải chi tiết khóa học:', err);
@@ -306,6 +287,15 @@ module.exports = {
 
       // 2. Lấy danh sách tất cả bài học trong khóa
       const lessons = await Lesson.findByCourseId(courseId);
+      const chapters = await Chapter.findByCourseId(courseId);
+      const chaptersData = chapters.map(ch => ({
+        ...ch,
+        lessons: lessons.filter(l => l.chapter_id === ch.id)
+      }));
+      const unassignedLessons = lessons.filter(l => !l.chapter_id);
+      if (unassignedLessons.length > 0) {
+        chaptersData.push({ id: null, title: 'Bài học khác', lessons: unassignedLessons });
+      }
       if (lessons.length === 0) {
         return res.status(404).render('error', { message: 'Khóa học này chưa có bài học nào.' });
       }
@@ -377,6 +367,7 @@ module.exports = {
         courseId,
         lesson,
         lessons,
+        chapters: chaptersData,
         currentIdx,
         enrollment,
         quiz,

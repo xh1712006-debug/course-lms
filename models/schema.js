@@ -302,10 +302,53 @@ module.exports = {
     }
   },
 
+  // 4.5. Quản lý Chương (Chapters)
+  Chapter: {
+    findByCourseId: async (courseId) => {
+      const sql = `SELECT * FROM chapters WHERE course_id = $1 ORDER BY order_index ASC, id ASC`;
+      const res = await db.query(sql, [courseId]);
+      return res.rows;
+    },
+    findById: async (id) => {
+      const sql = `SELECT * FROM chapters WHERE id = $1`;
+      const res = await db.query(sql, [id]);
+      return res.rows[0];
+    },
+    create: async (courseId, title, description, orderIndex) => {
+      const sql = `
+        INSERT INTO chapters (course_id, title, description, order_index)
+        VALUES ($1, $2, $3, $4)
+        RETURNING *
+      `;
+      const res = await db.query(sql, [courseId, title, description, orderIndex]);
+      return res.rows[0];
+    },
+    update: async (id, title, description, orderIndex) => {
+      const sql = `
+        UPDATE chapters 
+        SET title = $1, description = $2, order_index = $3
+        WHERE id = $4
+        RETURNING *
+      `;
+      const res = await db.query(sql, [title, description, orderIndex, id]);
+      return res.rows[0];
+    },
+    delete: async (id) => {
+      const sql = `DELETE FROM chapters WHERE id = $1`;
+      await db.query(sql, [id]);
+    }
+  },
+
   // 5. Quản lý Bài học (Lessons)
   Lesson: {
     findByCourseId: async (courseId) => {
-      const sql = `SELECT * FROM lessons WHERE course_id = $1 ORDER BY order_index ASC, id ASC`;
+      const sql = `
+        SELECT l.* 
+        FROM lessons l
+        LEFT JOIN chapters c ON l.chapter_id = c.id
+        WHERE l.course_id = $1 
+        ORDER BY c.order_index ASC NULLS LAST, l.order_index ASC, l.id ASC
+      `;
       const res = await db.query(sql, [courseId]);
       return res.rows;
     },
@@ -327,24 +370,24 @@ module.exports = {
       return res.rows[0];
     },
 
-    create: async (courseId, title, content, videoUrl, attachmentUrl, orderIndex, isQuiz = false) => {
+    create: async (courseId, chapterId, title, content, videoUrl, attachmentUrl, orderIndex, isQuiz = false) => {
       const sql = `
-        INSERT INTO lessons (course_id, title, content, video_url, attachment_url, order_index, is_quiz)
-        VALUES ($1, $2, $3, $4, $5, $6, $7)
+        INSERT INTO lessons (course_id, chapter_id, title, content, video_url, attachment_url, order_index, is_quiz)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
         RETURNING *
       `;
-      const res = await db.query(sql, [courseId, title, content, videoUrl, attachmentUrl, orderIndex, isQuiz]);
+      const res = await db.query(sql, [courseId, chapterId, title, content, videoUrl, attachmentUrl, orderIndex, isQuiz]);
       return res.rows[0];
     },
 
-    update: async (id, title, content, videoUrl, attachmentUrl, orderIndex, isQuiz = false) => {
+    update: async (id, chapterId, title, content, videoUrl, attachmentUrl, orderIndex, isQuiz = false) => {
       const sql = `
         UPDATE lessons 
-        SET title = $1, content = $2, video_url = $3, attachment_url = $4, order_index = $5, is_quiz = $6
-        WHERE id = $7
+        SET chapter_id = $1, title = $2, content = $3, video_url = $4, attachment_url = $5, order_index = $6, is_quiz = $7
+        WHERE id = $8
         RETURNING *
       `;
-      const res = await db.query(sql, [title, content, videoUrl, attachmentUrl, orderIndex, isQuiz, id]);
+      const res = await db.query(sql, [chapterId, title, content, videoUrl, attachmentUrl, orderIndex, isQuiz, id]);
       return res.rows[0];
     },
 
@@ -678,77 +721,6 @@ module.exports = {
       `;
       const res = await db.query(sql, [userId, quizId]);
       return res.rows[0];
-    }
-  },
-
-  // 9. Lộ trình học tập (Learning Paths)
-  LearningPath: {
-    findAll: async () => {
-      const sql = `SELECT * FROM learning_paths ORDER BY id DESC`;
-      const res = await db.query(sql);
-      return res.rows;
-    },
-
-    findById: async (id) => {
-      const sql = `SELECT * FROM learning_paths WHERE id = $1`;
-      const res = await db.query(sql, [id]);
-      return res.rows[0];
-    },
-
-    getCourses: async (pathId) => {
-      const sql = `
-        SELECT c.*, lpc.order_index 
-        FROM learning_path_courses lpc
-        JOIN courses c ON lpc.course_id = c.id
-        WHERE lpc.learning_path_id = $1
-        ORDER BY lpc.order_index ASC
-      `;
-      const res = await db.query(sql, [pathId]);
-      return res.rows;
-    },
-
-    create: async (name, description, isPublic = true) => {
-      const sql = `INSERT INTO learning_paths (name, description, is_public) VALUES ($1, $2, $3) RETURNING *`;
-      const res = await db.query(sql, [name, description, isPublic]);
-      return res.rows[0];
-    },
-
-    addCourses: async (pathId, courseIds) => {
-      const client = await db.pool.connect();
-      try {
-        await client.query('BEGIN');
-        await client.query('DELETE FROM learning_path_courses WHERE learning_path_id = $1', [pathId]);
-        if (courseIds && courseIds.length > 0) {
-          for (let i = 0; i < courseIds.length; i++) {
-            await client.query(
-              'INSERT INTO learning_path_courses (learning_path_id, course_id, order_index) VALUES ($1, $2, $3)',
-              [pathId, courseIds[i], i + 1]
-            );
-          }
-        }
-        await client.query('COMMIT');
-      } catch (err) {
-        await client.query('ROLLBACK');
-        throw err;
-      } finally {
-        client.release();
-      }
-    },
-
-    update: async (id, name, description, isPublic = true) => {
-      const sql = `
-        UPDATE learning_paths 
-        SET name = $1, description = $2, is_public = $3 
-        WHERE id = $4 
-        RETURNING *
-      `;
-      const res = await db.query(sql, [name, description, isPublic, id]);
-      return res.rows[0];
-    },
-
-    delete: async (id) => {
-      const sql = `DELETE FROM learning_paths WHERE id = $1`;
-      await db.query(sql, [id]);
     }
   },
 

@@ -119,11 +119,7 @@
                       <span>Học tập</span>
                     </li>
 
-                    <% if (perms.includes('PATH_VIEW')) { %>
-                      <li class="nav-item">
-                        <a href="/my-paths"><i class="fa-solid fa-route"></i> <span>Lộ trình của tôi</span></a>
-                      </li>
-                      <% } %>
+
                         <% if (perms.includes('COURSE_ENROLL_REQUEST')) { %>
                           <li class="nav-item">
                             <a href="/courses"><i class="fa-solid fa-book"></i> <span>Kho khóa học</span></a>
@@ -159,7 +155,6 @@
                                           perms.includes('LESSON_CREATE') ||
                                           perms.includes('LESSON_MANAGE') || 
                                           perms.includes('QUIZ_GRADE') ||
-                                          perms.includes('PATH_MANAGE') || 
                                           perms.includes('ENROLL_APPROVE') ||
                                           perms.includes('ENROLL_ASSIGN'); 
 
@@ -222,11 +217,7 @@
                                                             </li>
                                                             <% } %>
 
-                                                              <% if (perms.includes('PATH_MANAGE')) { %>
-                                                                <li class="nav-item">
-                                                                  <a href="/paths"><i class="fa-solid fa-route"></i> <span>Lộ trình đào tạo</span></a>
-                                                                </li>
-                                                                <% } %>
+
 
                                                                   <% if (perms.includes('ENROLL_APPROVE')) { %>
                                                                     <li class="nav-item">
