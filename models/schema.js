@@ -370,24 +370,24 @@ module.exports = {
       return res.rows[0];
     },
 
-    create: async (courseId, chapterId, title, content, videoUrl, attachmentUrl, orderIndex, isQuiz = false) => {
+    create: async (courseId, chapterId, title, content, videoUrl, attachmentUrl, orderIndex, isQuiz = false, subtitleUrl = null) => {
       const sql = `
-        INSERT INTO lessons (course_id, chapter_id, title, content, video_url, attachment_url, order_index, is_quiz)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+        INSERT INTO lessons (course_id, chapter_id, title, content, video_url, attachment_url, order_index, is_quiz, subtitle_url)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
         RETURNING *
       `;
-      const res = await db.query(sql, [courseId, chapterId, title, content, videoUrl, attachmentUrl, orderIndex, isQuiz]);
+      const res = await db.query(sql, [courseId, chapterId, title, content, videoUrl, attachmentUrl, orderIndex, isQuiz, subtitleUrl]);
       return res.rows[0];
     },
 
-    update: async (id, chapterId, title, content, videoUrl, attachmentUrl, orderIndex, isQuiz = false) => {
+    update: async (id, chapterId, title, content, videoUrl, attachmentUrl, orderIndex, isQuiz = false, subtitleUrl = null) => {
       const sql = `
         UPDATE lessons 
-        SET chapter_id = $1, title = $2, content = $3, video_url = $4, attachment_url = $5, order_index = $6, is_quiz = $7
-        WHERE id = $8
+        SET chapter_id = $1, title = $2, content = $3, video_url = $4, attachment_url = $5, order_index = $6, is_quiz = $7, subtitle_url = $8
+        WHERE id = $9
         RETURNING *
       `;
-      const res = await db.query(sql, [chapterId, title, content, videoUrl, attachmentUrl, orderIndex, isQuiz, id]);
+      const res = await db.query(sql, [chapterId, title, content, videoUrl, attachmentUrl, orderIndex, isQuiz, subtitleUrl, id]);
       return res.rows[0];
     },
 

@@ -251,6 +251,16 @@
     .quiz-question-step {
       animation: quizFadeIn 0.35s ease-out forwards;
     }
+
+    /* Style cho phụ đề Video: Nền đen trong suốt, chữ trắng */
+    video::cue {
+      background-color: rgba(0, 0, 0, 0.55);
+      color: #ffffff;
+      font-family: 'Inter', sans-serif;
+      font-size: 1.1rem;
+      text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.9);
+      padding: 0.25rem 0.5rem;
+    }
   </style>
 
   <!-- COMPACT TOP BAR -->
@@ -291,10 +301,21 @@
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
               allowfullscreen></iframe>
             <% } else { %>
-              <video id="lesson-video" controls poster="/images/video_poster.svg">
+              <video id="lesson-video" controls poster="/images/video_poster.svg" crossorigin="anonymous">
                 <source src="<%= lesson.video_url %>" type="video/mp4">
+                <% if (lesson.subtitle_url) { %>
+                  <track id="lesson-subtitle-track" src="<%= lesson.subtitle_url %>" kind="subtitles" srclang="vi" label="Tiếng Việt" default>
+                <% } %>
                 Trình duyệt của bạn không hỗ trợ định dạng video.
               </video>
+              <% } %>
+              
+              <% if (!ytEmbedUrl && lesson.subtitle_url) { %>
+                <div style="margin-top: 0.5rem; display: flex; justify-content: flex-end;">
+                  <button type="button" class="btn btn-outline" id="toggle-subtitle-btn" onclick="toggleSubtitle()" style="font-size: 0.85rem; padding: 0.35rem 0.75rem; border-radius: 6px; border-color: #cbd5e1; color: #475569;">
+                    <i class="fa-solid fa-closed-captioning"></i> <span id="toggle-subtitle-text">Tắt Phụ đề</span>
+                  </button>
+                </div>
               <% } %>
         </div>
         <% } %>
@@ -1276,5 +1297,21 @@
           setTimeout(checkDocumentProgress, 1000);
         }
       });
-    </script>
+
+    // Toggle Subtitle
+    function toggleSubtitle() {
+      const video = document.getElementById('lesson-video');
+      const btnText = document.getElementById('toggle-subtitle-text');
+      if (video && video.textTracks && video.textTracks.length > 0) {
+        const track = video.textTracks[0];
+        if (track.mode === 'showing') {
+          track.mode = 'hidden';
+          if (btnText) btnText.innerText = 'Bật Phụ đề';
+        } else {
+          track.mode = 'showing';
+          if (btnText) btnText.innerText = 'Tắt Phụ đề';
+        }
+      }
+    }
+  </script>
     <%- include('../partials/footer') %>

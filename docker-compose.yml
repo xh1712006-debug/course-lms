@@ -43,7 +43,7 @@ services:
     volumes:
       - .:/app
       - /app/node_modules
-    command: npm run dev
+    command: npm start
     environment:
       PORT: 3000
       DATABASE_URL: postgresql://postgres:123456@db:5432/postgres

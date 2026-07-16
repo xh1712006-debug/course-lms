@@ -29,6 +29,15 @@ pool.query(`
   console.error('[PostgreSQL] Lỗi khi tạo bảng lesson_completions:', err);
 });
 
+// Đảm bảo cột subtitle_url tồn tại trong bảng lessons
+pool.query(`
+  ALTER TABLE lessons ADD COLUMN IF NOT EXISTS subtitle_url TEXT;
+`).then(() => {
+  console.log('[PostgreSQL] Đảm bảo cột subtitle_url trong bảng lessons đã được cấu hình thành công.');
+}).catch(err => {
+  console.error('[PostgreSQL] Lỗi khi thêm cột subtitle_url vào bảng lessons:', err);
+});
+
 // Lắng nghe sự kiện lỗi kết nối để xử lý tránh sập ứng dụng
 pool.on('error', (err) => {
   console.error('[PostgreSQL] Lỗi kết nối CSDL đột ngột:', err);

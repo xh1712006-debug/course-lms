@@ -35,12 +35,12 @@ const upload = multer({
   storage: storage,
   limits: { fileSize: 100 * 1024 * 1024 },
   fileFilter: function (req, file, cb) {
-    const filetypes = /pdf|ppt|pptx|doc|docx|xls|xlsx|zip|rar|png|jpg|jpeg|gif|mp4|webm|ogg|mov|avi|mkv/;
+    const filetypes = /pdf|ppt|pptx|doc|docx|xls|xlsx|zip|rar|png|jpg|jpeg|gif|mp4|webm|ogg|mov|avi|mkv|vtt|srt/;
     const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
     if (extname) {
       return cb(null, true);
     } else {
-      cb(new Error('Chỉ chấp nhận các định dạng tài liệu (PDF, Office, Zip), hình ảnh hoặc video bài giảng.'));
+      cb(new Error('Chỉ chấp nhận các định dạng tài liệu (PDF, Office, Zip), hình ảnh, video bài giảng hoặc phụ đề (.vtt, .srt).'));
     }
   }
 }).single('file');
@@ -422,15 +422,15 @@ module.exports = {
       return res.status(403).json({ error: 'Không có quyền tạo bài học.' });
     }
     const courseId = parseInt(req.params.courseId);
-    const { chapter_id, title, content, video_url, attachment_url, order_index, lesson_type, q_text, q_optA, q_optB, q_optC, q_optD, q_correct } = req.body;
+    const { chapter_id, title, content, video_url, attachment_url, order_index, lesson_type, q_text, q_optA, q_optB, q_optC, q_optD, q_correct, subtitle_url } = req.body;
     const isQuiz = lesson_type === 'quiz';
 
-    if ((video_url || attachment_url) && !req.session.permissions.includes('CONTENT_UPLOAD')) {
-      return res.status(403).render('error', { message: 'Bạn không có quyền tải lên video hoặc đính kèm tài liệu học tập.' });
+    if ((video_url || attachment_url || subtitle_url) && !req.session.permissions.includes('CONTENT_UPLOAD')) {
+      return res.status(403).render('error', { message: 'Bạn không có quyền tải lên video, đính kèm hoặc phụ đề.' });
     }
 
     try {
-      const lesson = await Lesson.create(courseId, parseInt(chapter_id), title, content, video_url, attachment_url, parseInt(order_index) || 1, isQuiz);
+      const lesson = await Lesson.create(courseId, parseInt(chapter_id), title, content, video_url, attachment_url, parseInt(order_index) || 1, isQuiz, subtitle_url);
       await AuditLog.create(req.session.userId, 'LESSON_CREATE', { course_id: courseId, chapter_id, lesson_title: title, is_quiz: isQuiz });
 
       // Nếu là quiz và có truyền lên mảng câu hỏi
@@ -475,15 +475,15 @@ module.exports = {
       return res.status(403).json({ error: 'Không có quyền chỉnh sửa bài học.' });
     }
     const { courseId, id } = req.params;
-    const { chapter_id, title, content, video_url, attachment_url, order_index, lesson_type } = req.body;
+    const { chapter_id, title, content, video_url, attachment_url, order_index, lesson_type, subtitle_url } = req.body;
     const isQuiz = lesson_type === 'quiz';
 
-    if ((video_url || attachment_url) && !req.session.permissions.includes('CONTENT_UPLOAD')) {
-      return res.status(403).render('error', { message: 'Bạn không có quyền tải lên video hoặc đính kèm tài liệu học tập.' });
+    if ((video_url || attachment_url || subtitle_url) && !req.session.permissions.includes('CONTENT_UPLOAD')) {
+      return res.status(403).render('error', { message: 'Bạn không có quyền tải lên video, đính kèm hoặc phụ đề.' });
     }
 
     try {
-      await Lesson.update(parseInt(id), parseInt(chapter_id), title, content, video_url, attachment_url, parseInt(order_index) || 1, isQuiz);
+      await Lesson.update(parseInt(id), parseInt(chapter_id), title, content, video_url, attachment_url, parseInt(order_index) || 1, isQuiz, subtitle_url);
       await AuditLog.create(req.session.userId, 'LESSON_UPDATE', { lesson_id: id, title, is_quiz: isQuiz });
       res.redirect(`/course-management/${courseId}/lessons`);
     } catch (err) {
