@@ -29,15 +29,6 @@ pool.query(`
   console.error('[PostgreSQL] Lỗi khi tạo bảng lesson_completions:', err);
 });
 
-// Đảm bảo cột is_public tồn tại trong bảng learning_paths
-pool.query(`
-  ALTER TABLE learning_paths ADD COLUMN IF NOT EXISTS is_public BOOLEAN DEFAULT true;
-`).then(() => {
-  console.log('[PostgreSQL] Đảm bảo cột is_public trong bảng learning_paths đã được cấu hình thành công.');
-}).catch(err => {
-  console.error('[PostgreSQL] Lỗi khi thêm cột is_public vào bảng learning_paths:', err);
-});
-
 // Lắng nghe sự kiện lỗi kết nối để xử lý tránh sập ứng dụng
 pool.on('error', (err) => {
   console.error('[PostgreSQL] Lỗi kết nối CSDL đột ngột:', err);
