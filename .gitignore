@@ -16,3 +16,7 @@ redis_data/
 # OS metadata
 .DS_Store
 Thumbs.db
+
+# Ignore uploads except .gitkeep
+public/uploads/*
+!public/uploads/.gitkeep
