@@ -36,17 +36,16 @@ jobs:
 
       # 4. Giao tiếp qua mạng LAN: Nén và đẩy trực tiếp sang Docker Windows để chạy
       - name: Stream Docker Image to Windows & Restart App
-        env:
-          DOCKER_HOST: tcp://${{ env.WINDOWS_HOST_IP }}:2375
         run: |
           echo "Đang truyền Docker Image sang Windows qua mạng LAN..."
-          docker save ${{ env.APP_NAME }}:latest | docker load
+          # Nén image ở Ubuntu và đẩy sang Docker Windows
+          docker save ${{ env.APP_NAME }}:latest | docker -H tcp://${{ env.WINDOWS_HOST_IP }}:2375 load
           
           echo "Đang khởi động lại Container nằm TRONG NHÓM lms-course trên máy Windows..."
-          # Gọi compose để nó chui vào đúng nhóm, thay vì đứng lẻ loi bên ngoài
-          docker compose up -d --no-deps app
+          # Dùng docker compose qua TCP để cập nhật app
+          docker compose -H tcp://${{ env.WINDOWS_HOST_IP }}:2375 up -d --no-deps app
             
           # Dọn dẹp bộ nhớ Docker dư thừa trên Windows
-          docker image prune -f
+          docker -H tcp://${{ env.WINDOWS_HOST_IP }}:2375 image prune -f
           
           echo "=== DEPLOY TỰ ĐỘNG THÀNH CÔNG HOÀN TOÀN! ==="
