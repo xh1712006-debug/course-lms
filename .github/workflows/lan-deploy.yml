@@ -1,0 +1,57 @@
+name: LAN Network CI/CD (Ubuntu VM to Windows Host)
+
+on:
+  push:
+    branches:
+      - main # Tự động kích hoạt khi push code vào nhánh main
+
+jobs:
+  ci-and-deploy:
+    runs-on: self-hosted # Chạy lệnh trực tiếp trên máy ảo Ubuntu bạn vừa cài runner
+
+    env:
+      WINDOWS_HOST_IP: ${{ secrets.WINDOWS_HOST_IP }}
+      APP_NAME: "course-lms-app"
+
+    steps:
+      # 1. Kéo code mới nhất từ GitHub về máy ảo Ubuntu
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      # 2. Setup môi trường và cài đặt (Thay đổi node-version tùy theo phiên bản NodeJS của dự án bạn)
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies & Test
+        run: |
+          npm ci
+          npm run test:integration --if-present
+
+      # 3. Đóng gói Docker Image ngay trên máy ảo Ubuntu
+      - name: Build Docker Image Locally
+        run: |
+          docker build -t ${{ env.APP_NAME }}:latest .
+
+      # 4. Giao tiếp qua mạng LAN: Nén và đẩy trực tiếp sang Docker Windows để chạy
+      - name: Stream Docker Image to Windows & Restart App
+        run: |
+          echo "Đang truyền Docker Image sang Windows qua mạng LAN..."
+          docker save ${{ env.APP_NAME }}:latest | docker -H tcp://${{ env.WINDOWS_HOST_IP }}:2375 load
+          
+          echo "Đang khởi động lại Container trên máy Windows..."
+          docker -H tcp://${{ env.WINDOWS_HOST_IP }}:2375 stop ${{ env.APP_NAME }} || true
+          docker -H tcp://${{ env.WINDOWS_HOST_IP }}:2375 rm ${{ env.APP_NAME }} || true
+          
+          # Chạy ứng dụng trên cổng 80 của Windows thật (trỏ vào cổng nội bộ của app, ví dụ 3000 hoặc 5000)
+          docker -H tcp://${{ env.WINDOWS_HOST_IP }}:2375 run -d \
+            --name ${{ env.APP_NAME }} \
+            -p 80:3000 \
+            --restart always \
+            ${{ env.APP_NAME }}:latest
+            
+          # Dọn dẹp bộ nhớ Docker dư thừa trên Windows
+          docker -H tcp://${{ env.WINDOWS_HOST_IP }}:2375 image prune -f
+          
+          echo "=== DEPLOY TỰ ĐỘNG THÀNH CÔNG HOÀN TOÀN! ==="

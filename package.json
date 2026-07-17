@@ -5,7 +5,8 @@
   "main": "app.js",
   "scripts": {
     "start": "node app.js",
-    "dev": "node --watch-path=app.js --watch-path=config --watch-path=controllers --watch-path=middleware --watch-path=models --watch-path=routes --watch-path=services app.js"
+    "dev": "node --watch-path=app.js --watch-path=config --watch-path=controllers --watch-path=middleware --watch-path=models --watch-path=routes --watch-path=services app.js",
+    "test:integration": "jest"
   },
   "dependencies": {
     "@google/generative-ai": "^0.11.0",
@@ -21,5 +22,9 @@
     "nodemailer": "^9.0.1",
     "pg": "^8.12.0",
     "socket.io": "^4.7.5"
+  },
+  "devDependencies": {
+    "jest": "^30.4.2",
+    "supertest": "^7.2.2"
   }
 }
