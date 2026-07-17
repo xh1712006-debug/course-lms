@@ -1,9 +1,8 @@
-name: khoa-hoc
+name: lms-course
 
 services:
   db:
     image: postgres:15-alpine
-    container_name: khoa-hoc-db
     restart: always
     environment:
       POSTGRES_USER: postgres
@@ -22,7 +21,6 @@ services:
 
   redis:
     image: redis:7-alpine
-    container_name: khoa-hoc-redis
     restart: always
     ports:
       - "6380:6379"
@@ -35,15 +33,10 @@ services:
       retries: 5
 
   app:
-    build: .
-    container_name: khoa-hoc-app
+    image: course-lms-app:latest
     restart: always
     ports:
-      - "3005:3000"
-    volumes:
-      - .:/app
-      - /app/node_modules
-    command: npm start
+      - "80:3000"
     environment:
       PORT: 3000
       DATABASE_URL: postgresql://postgres:123456@db:5432/postgres
