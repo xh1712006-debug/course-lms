@@ -53,7 +53,7 @@ jobs:
           
           echo "Đang khởi động lại Container nằm TRONG NHÓM lms-course trên máy Windows..."
           # Dùng docker compose (plugin) qua TCP để cập nhật app
-          docker compose -H tcp://${{ env.WINDOWS_HOST_IP }}:2375 up -d --no-deps app
+          docker -H tcp://${{ env.WINDOWS_HOST_IP }}:2375 compose up -d --no-deps app
             
           # Dọn dẹp bộ nhớ Docker dư thừa trên Windows
           docker -H tcp://${{ env.WINDOWS_HOST_IP }}:2375 image prune -f
